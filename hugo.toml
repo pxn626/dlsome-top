@@ -1,0 +1,63 @@
+baseURL = "https://dlsome.top/"
+languageCode = "zh-cn"
+title = "dlsome.top"
+theme = "PaperMod"
+
+# Pagination
+paginate = 10
+
+# Default content language
+defaultContentLanguage = "zh"
+
+# Enable emoji & social icons
+enableRobotsTXT = true
+
+[params]
+  env = "production"
+  description = "dlsome.top — 工具站矩阵第二极(暂未启用)"
+  author = "dlsome.top"
+  ShowReadingTime = false
+  ShowShareButtons = false
+  ShowPostNavLinks = false
+  ShowBreadCrumbs = false
+  disableSpecial1stPost = true
+
+  [params.assets]
+    favicon = "/favicon.ico"
+
+  [params.profileMode]
+    enabled = false
+
+  [params.homeInfoParams]
+    Title = "dlsome.top"
+    Content = """
+    工具站矩阵第二极 · 暂未启用
+    方向待定 · 暂不开放
+    """
+
+[[menu.main]]
+  identifier = "home"
+  name = "首页"
+  url = "/"
+  weight = 1
+
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
+  [markup.highlight]
+    noClasses = false
+    codeFences = true
+    guessSyntax = true
+    lineNos = true
+
+[outputs]
+  home = ["HTML", "RSS"]
+  page = ["HTML"]
+  section = ["HTML", "RSS"]
+  taxonomy = ["HTML", "RSS"]
+  term = ["HTML", "RSS"]
+
+[permalinks]
+  posts = "/:slug/"
+  post = "/:slug/"

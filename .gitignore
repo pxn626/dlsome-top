@@ -1,0 +1,16 @@
+# Hugo default ignores
+/public/
+/resources/
+.hugo_build.lock
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Local config overrides
+config/_default/config.toml.local
+
+# Logs
+*.log
