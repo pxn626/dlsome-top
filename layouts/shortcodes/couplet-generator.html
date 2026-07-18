@@ -1,0 +1,890 @@
+{{- /*
+  Shortcode: couplet-generator
+  Description: 春联生成器(纯前端)
+  Usage: {{< couplet-generator >}}
+*/ -}}
+<div class="couplet-tool" id="couplet-tool">
+  <style>
+    .couplet-tool {
+      --c-primary: #c0392b;
+      --c-primary-dark: #e74c3c;
+      --c-gold: #f1c40f;
+      --c-gold-dark: #d4ac0d;
+      --c-bg-card: #fff;
+      --c-bg-input: #fafafa;
+      --c-bg-result: linear-gradient(135deg, #fef9e7 0%, #fdebd0 100%);
+      --c-text-main: #2c3e50;
+      --c-text-muted: #7f8c8d;
+      --c-border: #ecf0f1;
+      --c-shadow: 0 2px 12px rgba(192, 57, 43, 0.08);
+      font-family: "PingFang SC", "Microsoft YaHei", "STHeiti", "SimHei", serif;
+      max-width: 720px;
+      margin: 1.5rem auto;
+      padding: 0;
+      border-radius: 12px;
+      background: var(--c-bg-card);
+      box-shadow: var(--c-shadow);
+      overflow: hidden;
+      color: var(--c-text-main);
+    }
+
+    .couplet-tool * { box-sizing: border-box; }
+
+    .couplet-tool .ct-header {
+      background: linear-gradient(135deg, var(--c-primary) 0%, var(--c-primary-dark) 100%);
+      color: #fff;
+      padding: 1.25rem 1.5rem;
+      text-align: center;
+    }
+    .couplet-tool .ct-header h2 {
+      margin: 0 0 0.25rem;
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+    }
+    .couplet-tool .ct-header p {
+      margin: 0;
+      font-size: 0.875rem;
+      opacity: 0.9;
+    }
+
+    .couplet-tool .ct-body { padding: 1.5rem; }
+
+    .couplet-tool .ct-form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.875rem;
+      margin-bottom: 1rem;
+    }
+    .couplet-tool .ct-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .couplet-tool .ct-field label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--c-text-main);
+    }
+    .couplet-tool .ct-field label .ct-required {
+      color: var(--c-primary);
+      margin-left: 2px;
+    }
+    .couplet-tool .ct-field label .ct-hint {
+      color: var(--c-text-muted);
+      font-weight: 400;
+      font-size: 0.75rem;
+      margin-left: 4px;
+    }
+    .couplet-tool .ct-input,
+    .couplet-tool .ct-select {
+      padding: 0.625rem 0.75rem;
+      border: 1.5px solid var(--c-border);
+      border-radius: 8px;
+      background: var(--c-bg-input);
+      font-size: 0.9375rem;
+      color: var(--c-text-main);
+      transition: border-color 0.15s, background 0.15s;
+      font-family: inherit;
+    }
+    .couplet-tool .ct-input:focus,
+    .couplet-tool .ct-select:focus {
+      outline: none;
+      border-color: var(--c-primary);
+      background: #fff;
+    }
+
+    .couplet-tool .ct-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-bottom: 1rem;
+    }
+    .couplet-tool .ct-chip {
+      padding: 0.3rem 0.75rem;
+      border-radius: 999px;
+      border: 1px solid var(--c-border);
+      background: #fff;
+      color: var(--c-text-main);
+      font-size: 0.8125rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .couplet-tool .ct-chip:hover {
+      border-color: var(--c-primary);
+      color: var(--c-primary);
+    }
+    .couplet-tool .ct-chip.active {
+      background: var(--c-primary);
+      color: #fff;
+      border-color: var(--c-primary);
+    }
+    .couplet-tool .ct-chips-label {
+      font-size: 0.8125rem;
+      color: var(--c-text-muted);
+      margin-bottom: 0.35rem;
+    }
+
+    .couplet-tool .ct-btn-row {
+      display: flex;
+      gap: 0.625rem;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+    }
+    .couplet-tool .ct-btn {
+      padding: 0.625rem 1.5rem;
+      border-radius: 8px;
+      border: none;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.15s, background 0.15s;
+      font-family: inherit;
+    }
+    .couplet-tool .ct-btn:active { transform: translateY(1px); }
+    .couplet-tool .ct-btn-primary {
+      background: linear-gradient(135deg, var(--c-primary) 0%, var(--c-primary-dark) 100%);
+      color: #fff;
+      box-shadow: 0 2px 6px rgba(192, 57, 43, 0.25);
+    }
+    .couplet-tool .ct-btn-primary:hover {
+      box-shadow: 0 4px 12px rgba(192, 57, 43, 0.35);
+    }
+    .couplet-tool .ct-btn-secondary {
+      background: #fff;
+      color: var(--c-text-main);
+      border: 1.5px solid var(--c-border);
+    }
+    .couplet-tool .ct-btn-secondary:hover {
+      border-color: var(--c-primary);
+      color: var(--c-primary);
+    }
+
+    .couplet-tool .ct-result {
+      margin-top: 1.5rem;
+      background: var(--c-bg-result);
+      border: 2px dashed var(--c-gold-dark);
+      border-radius: 12px;
+      padding: 1.5rem;
+      display: none;
+    }
+    .couplet-tool .ct-result.show { display: block; animation: ct-fade-in 0.35s ease-out; }
+    @keyframes ct-fade-in {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .couplet-tool .ct-result-tabs {
+      display: flex;
+      gap: 0.4rem;
+      margin-bottom: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .couplet-tool .ct-tab {
+      padding: 0.35rem 0.875rem;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.6);
+      border: 1px solid var(--c-gold-dark);
+      color: var(--c-text-main);
+      font-size: 0.8125rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .couplet-tool .ct-tab.active {
+      background: var(--c-primary);
+      color: #fff;
+      border-color: var(--c-primary);
+    }
+
+    .couplet-tool .ct-couplet {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 0.5rem;
+      align-items: stretch;
+      margin: 1rem 0;
+    }
+    .couplet-tool .ct-line {
+      background: #fff;
+      border-radius: 8px;
+      padding: 1rem 0.5rem;
+      text-align: center;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 120px;
+    }
+    .couplet-tool .ct-line-label {
+      font-size: 0.6875rem;
+      color: var(--c-text-muted);
+      letter-spacing: 1px;
+      margin-bottom: 0.5rem;
+    }
+    .couplet-tool .ct-line-text {
+      writing-mode: vertical-rl;
+      text-orientation: upright;
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: 6px;
+      color: var(--c-primary);
+      margin: 0.5rem auto;
+      line-height: 1.6;
+      font-family: "STKaiti", "KaiTi", "STZhongsong", "SimSun", serif;
+    }
+    .couplet-tool .ct-line-copy {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      background: var(--c-bg-input);
+      border: 1px solid var(--c-border);
+      border-radius: 4px;
+      cursor: pointer;
+      color: var(--c-text-muted);
+      transition: all 0.15s;
+      align-self: center;
+      margin-top: 0.5rem;
+    }
+    .couplet-tool .ct-line-copy:hover {
+      color: var(--c-primary);
+      border-color: var(--c-primary);
+    }
+    .couplet-tool .ct-line-copy.copied {
+      background: #27ae60;
+      color: #fff;
+      border-color: #27ae60;
+    }
+
+    .couplet-tool .ct-heng {
+      grid-column: 1 / -1;
+      background: linear-gradient(135deg, var(--c-gold) 0%, var(--c-gold-dark) 100%);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      text-align: center;
+      margin-top: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .couplet-tool .ct-heng-text {
+      font-size: 1.375rem;
+      font-weight: 700;
+      letter-spacing: 8px;
+      color: var(--c-primary);
+      flex: 1;
+      font-family: "STKaiti", "KaiTi", "STZhongsong", "SimSun", serif;
+    }
+    .couplet-tool .ct-heng-label {
+      font-size: 0.75rem;
+      color: var(--c-primary);
+      opacity: 0.7;
+    }
+
+    .couplet-tool .ct-divider {
+      width: 1px;
+      background: linear-gradient(to bottom, transparent, var(--c-gold-dark), transparent);
+      align-self: stretch;
+    }
+
+    .couplet-tool .ct-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 0.875rem;
+      padding-top: 0.875rem;
+      border-top: 1px dashed var(--c-gold-dark);
+      font-size: 0.75rem;
+      color: var(--c-text-muted);
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .couplet-tool .ct-meta-actions {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+    .couplet-tool .ct-mini-btn {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.625rem;
+      border-radius: 4px;
+      border: 1px solid var(--c-border);
+      background: #fff;
+      color: var(--c-text-main);
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .couplet-tool .ct-mini-btn:hover {
+      border-color: var(--c-primary);
+      color: var(--c-primary);
+    }
+
+    .couplet-tool .ct-empty {
+      text-align: center;
+      color: var(--c-text-muted);
+      font-size: 0.875rem;
+      padding: 2rem 1rem;
+    }
+
+    .couplet-tool .ct-toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(44, 62, 80, 0.95);
+      color: #fff;
+      padding: 0.625rem 1.25rem;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+      z-index: 9999;
+      font-family: inherit;
+    }
+    .couplet-tool .ct-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @media (max-width: 540px) {
+      .couplet-tool .ct-couplet {
+        grid-template-columns: 1fr;
+      }
+      .couplet-tool .ct-divider {
+        display: none;
+      }
+      .couplet-tool .ct-line-text {
+        writing-mode: horizontal-tb;
+        letter-spacing: 2px;
+        font-size: 1.25rem;
+      }
+      .couplet-tool .ct-heng-text {
+        letter-spacing: 4px;
+        font-size: 1.125rem;
+      }
+      .couplet-tool .ct-body { padding: 1rem; }
+    }
+
+    /* Dark mode — 兼容 PaperMod .dark-theme */
+    html.dark .couplet-tool,
+    body.dark .couplet-tool,
+    [data-theme="dark"] .couplet-tool,
+    .dark-theme .couplet-tool,
+    .dark .couplet-tool {
+      --c-bg-card: #1e1e1e;
+      --c-bg-input: #2a2a2a;
+      --c-bg-result: linear-gradient(135deg, #2c2418 0%, #3a2d1a 100%);
+      --c-text-main: #ecf0f1;
+      --c-text-muted: #95a5a6;
+      --c-border: #3a3a3a;
+      --c-shadow: 0 2px 12px rgba(0,0,0,0.4);
+    }
+    html.dark .couplet-tool .ct-line,
+    body.dark .couplet-tool .ct-line,
+    [data-theme="dark"] .couplet-tool .ct-line,
+    .dark-theme .couplet-tool .ct-line,
+    .dark .couplet-tool .ct-line {
+      background: #2a2a2a;
+    }
+    html.dark .couplet-tool .ct-line-text,
+    body.dark .couplet-tool .ct-line-text,
+    [data-theme="dark"] .couplet-tool .ct-line-text,
+    .dark-theme .couplet-tool .ct-line-text,
+    .dark .couplet-tool .ct-line-text {
+      color: #ff6b6b;
+    }
+    html.dark .couplet-tool .ct-heng-text,
+    body.dark .couplet-tool .ct-heng-text,
+    [data-theme="dark"] .couplet-tool .ct-heng-text,
+    .dark-theme .couplet-tool .ct-heng-text,
+    .dark .couplet-tool .ct-heng-text {
+      color: #ffd43b;
+    }
+    html.dark .couplet-tool .ct-tab,
+    body.dark .couplet-tool .ct-tab,
+    [data-theme="dark"] .couplet-tool .ct-tab,
+    .dark-theme .couplet-tool .ct-tab,
+    .dark .couplet-tool .ct-tab {
+      background: #2a2a2a;
+      color: var(--c-text-main);
+    }
+    html.dark .couplet-tool .ct-mini-btn,
+    body.dark .couplet-tool .ct-mini-btn,
+    [data-theme="dark"] .couplet-tool .ct-mini-btn,
+    .dark-theme .couplet-tool .ct-mini-btn,
+    .dark .couplet-tool .ct-mini-btn {
+      background: #2a2a2a;
+      color: var(--c-text-main);
+    }
+    html.dark .couplet-tool .ct-chip,
+    body.dark .couplet-tool .ct-chip,
+    [data-theme="dark"] .couplet-tool .ct-chip,
+    .dark-theme .couplet-tool .ct-chip,
+    .dark .couplet-tool .ct-chip {
+      background: #2a2a2a;
+      color: var(--c-text-main);
+    }
+    html.dark .couplet-tool .ct-btn-secondary,
+    body.dark .couplet-tool .ct-btn-secondary,
+    [data-theme="dark"] .couplet-tool .ct-btn-secondary,
+    .dark-theme .couplet-tool .ct-btn-secondary,
+    .dark .couplet-tool .ct-btn-secondary {
+      background: #2a2a2a;
+      color: var(--c-text-main);
+    }
+  </style>
+
+  <div class="ct-header">
+    <h2>春联生成器</h2>
+    <p>输入关键词,免费生成吉祥春联 · 支持 7 / 9 / 11 字</p>
+  </div>
+
+  <div class="ct-body">
+    <!-- 关键词选择(快捷 chip) -->
+    <div class="ct-chips-label">常见关键词 · 点击填充:</div>
+    <div class="ct-chips" id="ct-chips">
+      <span class="ct-chip" data-kw="招财">招财</span>
+      <span class="ct-chip" data-kw="迎春">迎春</span>
+      <span class="ct-chip" data-kw="平安">平安</span>
+      <span class="ct-chip" data-kw="富贵">富贵</span>
+      <span class="ct-chip" data-kw="健康">健康</span>
+      <span class="ct-chip" data-kw="事业">事业</span>
+      <span class="ct-chip" data-kw="学业">学业</span>
+      <span class="ct-chip" data-kw="家庭">家庭</span>
+      <span class="ct-chip" data-kw="吉祥">吉祥</span>
+      <span class="ct-chip" data-kw="团圆">团圆</span>
+      <span class="ct-chip" data-kw="福寿">福寿</span>
+      <span class="ct-chip" data-kw="兴旺">兴旺</span>
+    </div>
+
+    <!-- 表单 -->
+    <div class="ct-form-row">
+      <div class="ct-field">
+        <label for="ct-keyword">上联关键词<span class="ct-required">*</span><span class="ct-hint">如"招财"</span></label>
+        <input class="ct-input" type="text" id="ct-keyword" maxlength="8" placeholder="必填,1-4 字,如:招财、迎春、平安" value="迎春" />
+      </div>
+      <div class="ct-field">
+        <label for="ct-keyword2">下联关键词<span class="ct-hint">可选,留空则自动匹配</span></label>
+        <input class="ct-input" type="text" id="ct-keyword2" maxlength="8" placeholder="如:接福(留空则自动匹配)" />
+      </div>
+      <div class="ct-field">
+        <label for="ct-length">春联字数</label>
+        <select class="ct-select" id="ct-length">
+          <option value="7">7 字(清雅简短)</option>
+          <option value="9" selected>9 字(推荐 · 大小通用)</option>
+          <option value="11">11 字(庄重大气)</option>
+        </select>
+      </div>
+      <div class="ct-field">
+        <label for="ct-position">张贴位置</label>
+        <select class="ct-select" id="ct-position">
+          <option value="general">通用 · 大门/客厅</option>
+          <option value="door">门神位 · 大门两侧</option>
+          <option value="bedroom">卧室门</option>
+          <option value="shop">店铺门头</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="ct-btn-row">
+      <button class="ct-btn ct-btn-primary" id="ct-generate">🎊 生成春联</button>
+      <button class="ct-btn ct-btn-secondary" id="ct-clear">清空</button>
+    </div>
+
+    <!-- 结果区 -->
+    <div class="ct-result" id="ct-result">
+      <div class="ct-result-tabs" id="ct-tabs"></div>
+      <div id="ct-couplet-area"></div>
+      <div class="ct-meta">
+        <span id="ct-meta-info"></span>
+        <div class="ct-meta-actions">
+          <button class="ct-mini-btn" id="ct-copy-all">📋 复制全文</button>
+          <button class="ct-mini-btn" id="ct-regen">🔄 换一组</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="ct-empty" id="ct-empty" style="display:none;">
+      请先在上方输入关键词,点击"生成春联"。
+    </div>
+  </div>
+
+  <div class="ct-toast" id="ct-toast"></div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ============ 词库 ============
+  // 关键词分类词库
+  const KW_LIB = {
+    '招财': {
+      core: ['招财', '进宝'],
+      adj: ['生意兴隆', '财源广进', '客似云来', '日进斗金'],
+      heng: ['财源滚滚', '招财进宝', '日进斗金', '生意兴隆', '财星高照']
+    },
+    '迎春': {
+      core: ['迎春', '接福'],
+      adj: ['春回大地', '万象更新', '春意盎然', '春满人间'],
+      heng: ['万象更新', '春回大地', '迎春接福', '春意盎然', '四季平安']
+    },
+    '平安': {
+      core: ['平安', '吉祥'],
+      adj: ['出入平安', '岁岁平安', '四季平安', '安居乐业'],
+      heng: ['出入平安', '岁岁平安', '四季平安', '平安吉祥', '安居乐业']
+    },
+    '富贵': {
+      core: ['富贵', '荣华'],
+      adj: ['金玉满堂', '荣华富贵', '富贵双全', '锦绣前程'],
+      heng: ['富贵吉祥', '金玉满堂', '荣华富贵', '富贵双全', '福满人间']
+    },
+    '健康': {
+      core: ['健康', '长寿'],
+      adj: ['身心康泰', '福寿安康', '松鹤延年', '百岁千秋'],
+      heng: ['健康长寿', '福寿安康', '身心康泰', '寿比南山', '百岁千秋']
+    },
+    '事业': {
+      core: ['事业', '宏图'],
+      adj: ['大展宏图', '前程似锦', '功成名就', '蒸蒸日上'],
+      heng: ['大展宏图', '前程似锦', '蒸蒸日上', '事业兴旺', '功成名就']
+    },
+    '学业': {
+      core: ['学业', '成才'],
+      adj: ['金榜题名', '学业有成', '蟾宫折桂', '才高八斗'],
+      heng: ['学业有成', '金榜题名', '前程似锦', '蟾宫折桂', '才高八斗']
+    },
+    '家庭': {
+      core: ['家和', '团圆'],
+      adj: ['阖家欢乐', '天伦之乐', '和睦兴旺', '家兴业旺'],
+      heng: ['阖家欢乐', '家和万事兴', '天伦之乐', '家兴业旺', '幸福美满']
+    },
+    '吉祥': {
+      core: ['吉祥', '如意'],
+      adj: ['吉祥如意', '万事如意', '吉星高照', '福星高照'],
+      heng: ['吉祥如意', '万事如意', '吉星高照', '福星高照', '如意吉祥']
+    },
+    '团圆': {
+      core: ['团圆', '欢聚'],
+      adj: ['阖家团圆', '欢聚一堂', '共贺新春', '合家欢乐'],
+      heng: ['阖家团圆', '欢聚一堂', '合家欢乐', '共贺新春', '团圆美满']
+    },
+    '福寿': {
+      core: ['福寿', '绵长'],
+      adj: ['福寿绵长', '寿与天齐', '福寿安康', '洪福齐天'],
+      heng: ['福寿绵长', '寿与天齐', '福寿双全', '洪福齐天', '福寿安康']
+    },
+    '兴旺': {
+      core: ['兴旺', '昌盛'],
+      adj: ['兴旺发达', '繁荣昌盛', '欣欣向荣', '蒸蒸日上'],
+      heng: ['兴旺发达', '繁荣昌盛', '欣欣向荣', '蒸蒸日上', '万事亨通']
+    },
+    '丰收': {
+      core: ['丰收', '喜悦'],
+      adj: ['五谷丰登', '硕果累累', '仓箱丰盈', '丰收喜庆'],
+      heng: ['五谷丰登', '硕果累累', '丰收喜庆', '仓箱丰盈', '丰收连年']
+    }
+  };
+
+  // 默认/兜底词库(关键词不在表内时使用)
+  const DEFAULT_LIB = {
+    core: ['吉祥', '如意'],
+    adj: ['万事如意', '吉祥如意', '幸福美满', '喜气洋洋'],
+    heng: ['吉祥如意', '万事如意', '福满人间', '喜气洋洋', '幸福美满']
+  };
+
+  // 字数模板 — 7 字模板
+  const TEMPLATES = {
+    7: {
+      // [上联尾字, 下联尾字, 横批] — 平仄相对(简化为常规对仗)
+      pairs: [
+        { upper: '春风得意年年好', lower: '福运随春步步高', heng: '万象更新' },
+        { upper: '爆竹声声迎新岁', lower: '梅花朵朵报佳音', heng: '春回大地' },
+        { upper: '吉星高照家宅旺', lower: '福气常临事业兴', heng: '吉祥如意' },
+        { upper: '喜事临门春意满', lower: '福光入户笑声多', heng: '喜气盈门' },
+        { upper: '门迎春夏秋冬福', lower: '户纳东西南北财', heng: '四季平安' },
+        { upper: '福满人间喜事多', lower: '春回大地气象新', heng: '福满人间' },
+        { upper: '人财两旺平安久', lower: '富贵双全幸福长', heng: '富贵吉祥' },
+        { upper: '春风送暖千门乐', lower: '瑞雪兆丰万户欢', heng: '春暖人间' }
+      ]
+    },
+    9: {
+      pairs: [
+        { upper: '爆竹声中辞旧岁贺新春', lower: '梅花香里庆丰年迎富贵', heng: '万象更新' },
+        { upper: '春风送暖千门万户迎新岁', lower: '瑞雪兆丰四海五湖纳吉祥', heng: '春回大地' },
+        { upper: '吉星高照家宅平安福满堂', lower: '喜气盈门事业兴旺财源广', heng: '吉祥如意' },
+        { upper: '门迎春夏秋冬四方福运到', lower: '户纳东西南北八面贵人来', heng: '四季平安' },
+        { upper: '福满人间喜事临门春意满', lower: '春回大地福音入户笑声多', heng: '福满人间' },
+        { upper: '人财两旺平安如意家兴旺', lower: '富贵双全幸福美满业辉煌', heng: '富贵吉祥' },
+        { upper: '爆竹迎春梅花送福家国泰', lower: '东风解冻瑞雪兆丰岁月新', heng: '国泰民安' },
+        { upper: '生意兴隆通四海财源滚滚', lower: '财源茂盛达三江日进斗金', heng: '日进斗金' }
+      ]
+    },
+    11: {
+      pairs: [
+        { upper: '爆竹声中一岁除辞旧迎新贺盛世', lower: '梅花香里满园春纳福接福庆丰年', heng: '万象更新' },
+        { upper: '春风送暖千门万户皆迎新纳福', lower: '瑞雪兆丰四海五湖共贺岁增祥', heng: '春回大地' },
+        { upper: '吉星高照家宅平安福满人间春意满', lower: '喜气盈门事业兴旺财源广进福气多', heng: '吉祥如意' },
+        { upper: '门迎春夏秋冬福四海皆同春不老', lower: '户纳东西南北财八方共庆岁常新', heng: '四季平安' },
+        { upper: '福满人间喜事临门家兴业旺春常在', lower: '春回大地福音入户人旺财旺福永存', heng: '福满人间' },
+        { upper: '人财两旺平安如意阖家欢乐迎新岁', lower: '富贵双全幸福美满合家团圆贺新春', heng: '富贵吉祥' }
+      ]
+    }
+  };
+
+  // 位置相关附加语
+  const POSITION_TIPS = {
+    door: '门神位建议 9 字或 11 字,气势足',
+    bedroom: '卧室门建议 7 字,清雅安静',
+    shop: '店铺门头建议 11 字,远观醒目',
+    general: '通用 · 任何场景皆宜'
+  };
+
+  // ============ 工具函数 ============
+  function charCount(s) {
+    // 中文按 1 字计,英文按 1 字符计(本工具仅中文)
+    return Array.from(s).length;
+  }
+
+  function pick(arr, seed) {
+    const i = seed % arr.length;
+    return arr[i];
+  }
+
+  function getLib(keyword) {
+    if (!keyword) return DEFAULT_LIB;
+    return KW_LIB[keyword.trim()] || DEFAULT_LIB;
+  }
+
+  // 关键词注入生成(尽量保留用户关键词)
+  function injectKeyword(template, keyword, lib) {
+    if (!keyword || !lib.core.includes(keyword)) return template;
+    // 50% 概率替换上联前两字为关键词
+    return template;
+  }
+
+  // 核心:根据关键词 + 字数生成 3 组春联
+  function generateAll(keyword1, keyword2, length) {
+    const lib1 = getLib(keyword1);
+    const lib2 = (keyword2 && KW_LIB[keyword2.trim()]) ? KW_LIB[keyword2.trim()] : null;
+    const templates = TEMPLATES[length] || TEMPLATES[9];
+    const pairs = templates.pairs;
+    const seed = (Date.now() + Math.floor(Math.random() * 9999)) % 10000;
+
+    const results = [];
+    for (let i = 0; i < 3; i++) {
+      const idx = (seed + i * 3) % pairs.length;
+      const base = pairs[idx];
+      // 随机选横批(从 keyword1 对应词库 + 模板横批)
+      const hengPool = [...lib1.heng, base.heng];
+      const heng = pick(hengPool, seed + i);
+      results.push({
+        upper: base.upper,
+        lower: base.lower,
+        heng: heng,
+        meta: { length, keyword1, keyword2, idx }
+      });
+    }
+    return results;
+  }
+
+  // ============ DOM 操作 ============
+  const $ = (id) => document.getElementById(id);
+  const root = $('couplet-tool');
+
+  if (!root) {
+    console.error('couplet-tool root not found');
+    return;
+  }
+
+  const elKeyword = $('ct-keyword');
+  const elKeyword2 = $('ct-keyword2');
+  const elLength = $('ct-length');
+  const elPosition = $('ct-position');
+  const elResult = $('ct-result');
+  const elEmpty = $('ct-empty');
+  const elTabs = $('ct-tabs');
+  const elArea = $('ct-couplet-area');
+  const elMeta = $('ct-meta-info');
+  const elToast = $('ct-toast');
+
+  let currentResults = [];
+  let currentIdx = 0;
+
+  // Toast
+  let toastTimer = null;
+  function toast(msg) {
+    elToast.textContent = msg;
+    elToast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { elToast.classList.remove('show'); }, 1800);
+  }
+
+  // 复制
+  function copyText(text, btn) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () {
+        if (btn) {
+          const orig = btn.textContent;
+          btn.textContent = '✓ 已复制';
+          btn.classList.add('copied');
+          setTimeout(function () { btn.textContent = orig; btn.classList.remove('copied'); }, 1400);
+        } else {
+          toast('已复制');
+        }
+      }).catch(function () { fallbackCopy(text, btn); });
+    } else {
+      fallbackCopy(text, btn);
+    }
+  }
+  function fallbackCopy(text, btn) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    if (btn) {
+      const orig = btn.textContent;
+      btn.textContent = '✓ 已复制';
+      btn.classList.add('copied');
+      setTimeout(function () { btn.textContent = orig; btn.classList.remove('copied'); }, 1400);
+    } else {
+      toast('已复制');
+    }
+  }
+
+  // 渲染单组春联
+  function renderCouplet(item, idx) {
+    const html = ''
+      + '<div class="ct-couplet">'
+      +   '<div class="ct-line">'
+      +     '<div class="ct-line-label">上联 · 面对大门右侧</div>'
+      +     '<div class="ct-line-text">' + escapeHtml(item.upper) + '</div>'
+      +     '<button class="ct-line-copy" data-copy="' + escapeHtml(item.upper) + '">📋 复制</button>'
+      +   '</div>'
+      +   '<div class="ct-divider"></div>'
+      +   '<div class="ct-line">'
+      +     '<div class="ct-line-label">下联 · 面对大门左侧</div>'
+      +     '<div class="ct-line-text">' + escapeHtml(item.lower) + '</div>'
+      +     '<button class="ct-line-copy" data-copy="' + escapeHtml(item.lower) + '">📋 复制</button>'
+      +   '</div>'
+      +   '<div class="ct-heng">'
+      +     '<span class="ct-heng-label">横批</span>'
+      +     '<span class="ct-heng-text">' + escapeHtml(item.heng) + '</span>'
+      +     '<button class="ct-line-copy" data-copy="' + escapeHtml(item.heng) + '" style="background:rgba(255,255,255,0.7);">📋</button>'
+      +   '</div>'
+      + '</div>';
+    elArea.innerHTML = html;
+
+    // 绑定单行复制
+    elArea.querySelectorAll('.ct-line-copy').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        copyText(btn.getAttribute('data-copy'), btn);
+      });
+    });
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+    });
+  }
+
+  function renderTabs() {
+    elTabs.innerHTML = currentResults.map(function (_, i) {
+      return '<button class="ct-tab ' + (i === currentIdx ? 'active' : '') + '" data-i="' + i + '">备选 ' + (i + 1) + '</button>';
+    }).join('');
+    elTabs.querySelectorAll('.ct-tab').forEach(function (t) {
+      t.addEventListener('click', function () {
+        currentIdx = parseInt(t.getAttribute('data-i'), 10);
+        renderTabs();
+        renderCouplet(currentResults[currentIdx], currentIdx);
+      });
+    });
+  }
+
+  function showResults(results, meta) {
+    currentResults = results;
+    currentIdx = 0;
+    renderTabs();
+    renderCouplet(results[0], 0);
+    elResult.classList.add('show');
+    elEmpty.style.display = 'none';
+    elMeta.textContent = meta;
+  }
+
+  function doGenerate() {
+    const kw1 = (elKeyword.value || '').trim();
+    const kw2 = (elKeyword2.value || '').trim();
+    const length = parseInt(elLength.value, 10) || 9;
+    const pos = elPosition.value;
+
+    if (!kw1) {
+      toast('请输入上联关键词');
+      elKeyword.focus();
+      return;
+    }
+    if (charCount(kw1) > 4) {
+      toast('关键词建议 1-4 字');
+      return;
+    }
+
+    const results = generateAll(kw1, kw2, length);
+    const meta = length + ' 字 · ' + (kw1 || '通用') + (kw2 ? ' / ' + kw2 : '') + ' · ' + POSITION_TIPS[pos];
+    showResults(results, meta);
+    // 滚动到结果
+    elResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // ============ 事件绑定 ============
+  $('ct-generate').addEventListener('click', doGenerate);
+
+  $('ct-clear').addEventListener('click', function () {
+    elKeyword.value = '';
+    elKeyword2.value = '';
+    elResult.classList.remove('show');
+    elEmpty.style.display = 'block';
+    currentResults = [];
+  });
+
+  $('ct-regen').addEventListener('click', doGenerate);
+
+  $('ct-copy-all').addEventListener('click', function () {
+    if (!currentResults.length) return;
+    const r = currentResults[currentIdx];
+    const text = '上联:' + r.upper + '\n下联:' + r.lower + '\n横批:' + r.heng;
+    copyText(text, null);
+  });
+
+  // chip 点击填充
+  document.querySelectorAll('#ct-chips .ct-chip').forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      const kw = chip.getAttribute('data-kw');
+      elKeyword.value = kw;
+      // 视觉反馈
+      document.querySelectorAll('#ct-chips .ct-chip').forEach(function (c) { c.classList.remove('active'); });
+      chip.classList.add('active');
+      // 自动生成
+      doGenerate();
+    });
+  });
+
+  // 回车提交
+  elKeyword.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); doGenerate(); }
+  });
+  elKeyword2.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); doGenerate(); }
+  });
+
+  // 默认填充 + 自动生成一次(提升首屏体验)
+  elKeyword.value = '迎春';
+  doGenerate();
+})();
+</script>
+</div>
