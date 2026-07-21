@@ -1,0 +1,85 @@
+{{- /*
+  Partial: extend-head.html (project-level override)
+
+  Site-wide <head> injections. PaperMod's head.html calls
+  {{ partial "extend_head.html" . }} at the end; this project-level
+  partial takes precedence over the empty theme placeholder.
+
+  Currently scoped to the Markdown <-> HTML Converter tool page so the
+  FAQPage JSON-LD only emits on the relevant URL.
+*/ -}}
+
+{{- if and (eq .Kind "page") (eq .Section "tools") (eq .Slug "markdown-html-converter") -}}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Is this tool free? Do I need to sign up?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes, it's completely free. There's no account, no signup, and no usage limit. Open the page and start converting."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is my data sent to your servers?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. The converter runs entirely in your browser using JavaScript. Your Markdown and HTML never leave your device. You can verify this by checking the network tab \u2014 there are no upload requests when you convert."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What Markdown syntax is supported?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "We support CommonMark plus GitHub Flavored Markdown (GFM) extensions: tables, task lists, strikethrough, autolinks, and fenced code blocks with language hints. Standard inline formatting (bold, italic, links, images) works as expected."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I convert HTML back to Markdown?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. The converter is bidirectional \u2014 paste HTML into the input panel and you'll get clean Markdown output. This is useful for migrating content from CMS platforms back into static site generators or version-controlled Markdown files."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does it work on mobile?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. The interface is responsive and adapts to phone and tablet screens. You can paste, convert, and copy on any modern mobile browser."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I download the output?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. After conversion, use the download button to save the output as a .html or .md file. The file extension matches the output format."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is there a keyboard shortcut?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Press Ctrl+Enter (Windows/Linux) or Cmd+Enter (macOS) to run the conversion without clicking the button."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is GFM?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "GFM stands for GitHub Flavored Markdown. It's a popular superset of CommonMark that adds features GitHub uses in READMEs, issues, and comments \u2014 most notably tables, task lists, and strikethrough. This tool supports GFM because most developers write Markdown for GitHub, docs sites, or static blogs that follow the same conventions."
+      }
+    }
+  ]
+}
+</script>
+{{- end -}}
