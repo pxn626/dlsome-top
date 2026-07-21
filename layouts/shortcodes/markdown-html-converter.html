@@ -1,0 +1,759 @@
+{{- /*
+  Shortcode: markdown-html-converter
+
+  Bidirectional Markdown <-> HTML converter with live preview, code highlighting,
+  copy, download, sample data, resizable split-pane, and keyboard shortcuts.
+
+  Single-file self-contained. Loads three CDN libraries (marked, turndown,
+  turndown-plugin-gfm) via SRI-integrity-protected <script> tags.
+
+  CSS variables integrate with PaperMod's `.dark` class so the tool follows
+  the page's light/dark theme. Dark-first palette preferred.
+
+  Usage:
+    {{< markdown-html-converter >}}
+*/ -}}
+
+<div class="mdhc" data-mdhc-root>
+  <div class="mdhc-toolbar">
+    <div class="mdhc-modes" role="tablist" aria-label="Conversion direction">
+      <button type="button" class="mdhc-mode mdhc-mode-active" data-mdhc-mode="md2html" role="tab" aria-selected="true" title="Markdown to HTML">MD &rarr; HTML</button>
+      <button type="button" class="mdhc-mode" data-mdhc-mode="html2md" role="tab" aria-selected="false" title="HTML to Markdown">HTML &rarr; MD</button>
+    </div>
+    <div class="mdhc-actions">
+      <button type="button" class="mdhc-action" data-mdhc-action="sample" title="Load sample data (Ctrl/&#8984;+L)">Sample</button>
+      <button type="button" class="mdhc-action" data-mdhc-action="clear" title="Clear input">Clear</button>
+      <button type="button" class="mdhc-action" data-mdhc-action="convert" title="Convert (Ctrl/&#8984;+Enter)">Convert</button>
+      <button type="button" class="mdhc-action" data-mdhc-action="copy" title="Copy output to clipboard">Copy</button>
+      <button type="button" class="mdhc-action" data-mdhc-action="download" title="Download output as file">Download</button>
+    </div>
+  </div>
+
+  <div class="mdhc-split" data-mdhc-split>
+    <div class="mdhc-pane mdhc-pane-input">
+      <div class="mdhc-pane-head">
+        <span class="mdhc-pane-label" data-mdhc-input-label>Markdown input</span>
+        <span class="mdhc-count" data-mdhc-count>0 chars</span>
+      </div>
+      <textarea
+        class="mdhc-input"
+        data-mdhc-input
+        spellcheck="false"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        wrap="soft"
+        placeholder="Paste or type Markdown here&hellip;"
+      ></textarea>
+    </div>
+    <div class="mdhc-divider" data-mdhc-divider role="separator" aria-orientation="vertical" tabindex="0" title="Drag to resize"></div>
+    <div class="mdhc-pane mdhc-pane-output">
+      <div class="mdhc-pane-head">
+        <span class="mdhc-pane-label" data-mdhc-output-label>HTML preview</span>
+      </div>
+      <div class="mdhc-preview mdhc-output" data-mdhc-output data-mdhc-output-html></div>
+      <pre class="mdhc-preview mdhc-output mdhc-output-md" data-mdhc-output data-mdhc-output-md hidden></pre>
+    </div>
+  </div>
+
+  <div class="mdhc-footer">
+    <span class="mdhc-status" data-mdhc-status>Ready</span>
+    <span class="mdhc-hint"><kbd>Ctrl</kbd>/<kbd>&#8984;</kbd>+<kbd>Enter</kbd> convert &middot; <kbd>Ctrl</kbd>/<kbd>&#8984;</kbd>+<kbd>L</kbd> sample</span>
+  </div>
+</div>
+
+<style>
+/* ====== Layout ====== */
+.mdhc {
+  --mdhc-bg: #1e1f24;
+  --mdhc-bg-alt: #16171c;
+  --mdhc-fg: #d8d9dd;
+  --mdhc-fg-muted: #9aa0a6;
+  --mdhc-border: #2c2e36;
+  --mdhc-accent: #6aa9ff;
+  --mdhc-accent-bg: rgba(106, 169, 255, 0.12);
+  --mdhc-code-bg: #0f1014;
+  --mdhc-radius: 8px;
+  --mdhc-pad: 12px;
+  --mdhc-font-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Fira Code", Menlo, Consolas, monospace;
+  --mdhc-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  font-family: var(--mdhc-font-ui);
+  color: var(--mdhc-fg);
+  background: var(--mdhc-bg);
+  border: 1px solid var(--mdhc-border);
+  border-radius: var(--mdhc-radius);
+  overflow: hidden;
+  margin: 1.25rem 0;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.02) inset;
+}
+.mdhc *,
+.mdhc *::before,
+.mdhc *::after { box-sizing: border-box; }
+
+/* ====== Toolbar ====== */
+.mdhc-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px var(--mdhc-pad);
+  background: var(--mdhc-bg-alt);
+  border-bottom: 1px solid var(--mdhc-border);
+  align-items: center;
+  justify-content: space-between;
+}
+.mdhc-modes {
+  display: inline-flex;
+  background: var(--mdhc-bg);
+  border: 1px solid var(--mdhc-border);
+  border-radius: 6px;
+  padding: 2px;
+  gap: 2px;
+}
+.mdhc-mode {
+  background: transparent;
+  color: var(--mdhc-fg-muted);
+  border: 0;
+  padding: 6px 12px;
+  font: 600 0.85rem/1 var(--mdhc-font-ui);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
+  user-select: none;
+}
+.mdhc-mode:hover { color: var(--mdhc-fg); }
+.mdhc-mode-active {
+  background: var(--mdhc-accent-bg);
+  color: var(--mdhc-accent);
+}
+.mdhc-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.mdhc-action {
+  background: transparent;
+  color: var(--mdhc-fg);
+  border: 1px solid var(--mdhc-border);
+  padding: 6px 12px;
+  font: 500 0.85rem/1 var(--mdhc-font-ui);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+  user-select: none;
+}
+.mdhc-action:hover {
+  background: var(--mdhc-bg);
+  border-color: var(--mdhc-accent);
+  color: var(--mdhc-accent);
+}
+.mdhc-action:active { transform: translateY(1px); }
+
+/* ====== Split Pane ====== */
+.mdhc-split {
+  display: grid;
+  grid-template-columns: 1fr 6px 1fr;
+  min-height: 420px;
+  height: 56vh;
+  max-height: 80vh;
+}
+.mdhc-pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--mdhc-bg);
+  position: relative;
+}
+.mdhc-pane-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px var(--mdhc-pad);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mdhc-fg-muted);
+  background: var(--mdhc-bg-alt);
+  border-bottom: 1px solid var(--mdhc-border);
+}
+.mdhc-count { font-variant-numeric: tabular-nums; }
+
+.mdhc-input {
+  flex: 1;
+  width: 100%;
+  resize: none;
+  border: 0;
+  outline: none;
+  background: var(--mdhc-bg);
+  color: var(--mdhc-fg);
+  padding: var(--mdhc-pad);
+  font: 0.9rem/1.55 var(--mdhc-font-mono);
+  tab-size: 4;
+}
+.mdhc-input::placeholder { color: var(--mdhc-fg-muted); opacity: 0.6; }
+
+/* ====== Divider ====== */
+.mdhc-divider {
+  background: var(--mdhc-border);
+  cursor: col-resize;
+  position: relative;
+  transition: background-color 120ms ease;
+}
+.mdhc-divider::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 2px;
+  height: 28px;
+  background: var(--mdhc-fg-muted);
+  opacity: 0.4;
+  border-radius: 1px;
+}
+.mdhc-divider:hover,
+.mdhc-divider:focus { background: var(--mdhc-accent); outline: none; }
+.mdhc-divider:hover::after,
+.mdhc-divider:focus::after { background: var(--mdhc-accent); opacity: 1; }
+.mdhc-divider:focus::after { box-shadow: 0 0 0 3px var(--mdhc-accent-bg); }
+
+/* ====== Preview ====== */
+.mdhc-preview {
+  flex: 1;
+  overflow: auto;
+  padding: var(--mdhc-pad);
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: var(--mdhc-fg);
+}
+.mdhc-preview > :first-child { margin-top: 0; }
+.mdhc-preview > :last-child { margin-bottom: 0; }
+.mdhc-preview h1, .mdhc-preview h2, .mdhc-preview h3,
+.mdhc-preview h4, .mdhc-preview h5, .mdhc-preview h6 {
+  margin: 1.2em 0 0.5em;
+  line-height: 1.25;
+  color: var(--mdhc-fg);
+}
+.mdhc-preview h1 { font-size: 1.6rem; border-bottom: 1px solid var(--mdhc-border); padding-bottom: 0.25em; }
+.mdhc-preview h2 { font-size: 1.3rem; }
+.mdhc-preview h3 { font-size: 1.1rem; }
+.mdhc-preview p { margin: 0.6em 0; }
+.mdhc-preview a { color: var(--mdhc-accent); text-decoration: none; }
+.mdhc-preview a:hover { text-decoration: underline; }
+.mdhc-preview ul, .mdhc-preview ol { padding-left: 1.6em; margin: 0.6em 0; }
+.mdhc-preview li { margin: 0.15em 0; }
+.mdhc-preview blockquote {
+  margin: 0.6em 0;
+  padding: 0.4em 0.9em;
+  border-left: 3px solid var(--mdhc-accent);
+  background: var(--mdhc-bg-alt);
+  color: var(--mdhc-fg-muted);
+  border-radius: 0 4px 4px 0;
+}
+.mdhc-preview code {
+  font-family: var(--mdhc-font-mono);
+  font-size: 0.88em;
+  background: var(--mdhc-code-bg);
+  padding: 0.15em 0.35em;
+  border-radius: 3px;
+}
+.mdhc-preview pre {
+  margin: 0.7em 0;
+  padding: 0.85em 1em;
+  background: var(--mdhc-code-bg);
+  border: 1px solid var(--mdhc-border);
+  border-radius: 6px;
+  overflow: auto;
+}
+.mdhc-preview pre code {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  font-size: 0.85rem;
+}
+.mdhc-preview table {
+  border-collapse: collapse;
+  margin: 0.7em 0;
+  width: 100%;
+  font-size: 0.9rem;
+}
+.mdhc-preview th, .mdhc-preview td {
+  border: 1px solid var(--mdhc-border);
+  padding: 0.45em 0.7em;
+  text-align: left;
+}
+.mdhc-preview th {
+  background: var(--mdhc-bg-alt);
+  font-weight: 600;
+}
+.mdhc-preview hr {
+  border: 0;
+  border-top: 1px solid var(--mdhc-border);
+  margin: 1em 0;
+}
+.mdhc-preview img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+.mdhc-preview input[type="checkbox"] {
+  margin-right: 0.35em;
+  vertical-align: middle;
+}
+
+/* ====== Markdown-text output (HTML->MD mode) ====== */
+.mdhc-output-md {
+  font-family: var(--mdhc-font-mono);
+  font-size: 0.88rem;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  background: var(--mdhc-code-bg);
+  margin: 0;
+  border-radius: 0;
+  border: 0;
+}
+
+/* ====== Footer ====== */
+.mdhc-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px var(--mdhc-pad);
+  font-size: 0.75rem;
+  color: var(--mdhc-fg-muted);
+  background: var(--mdhc-bg-alt);
+  border-top: 1px solid var(--mdhc-border);
+  flex-wrap: wrap;
+}
+.mdhc-status[data-mdhc-state="ok"] { color: #7ad08f; }
+.mdhc-status[data-mdhc-state="warn"] { color: #e8b94a; }
+.mdhc-status[data-mdhc-state="err"] { color: #e87b7b; }
+
+.mdhc-hint kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  font: 600 0.72rem/1.2 var(--mdhc-font-mono);
+  background: var(--mdhc-bg);
+  border: 1px solid var(--mdhc-border);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  color: var(--mdhc-fg);
+  margin: 0 1px;
+}
+
+/* ====== Responsive ====== */
+@media (max-width: 720px) {
+  .mdhc-split {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 6px 1fr;
+    height: auto;
+    min-height: 0;
+  }
+  .mdhc-pane-input { min-height: 200px; }
+  .mdhc-pane-output { min-height: 200px; }
+  .mdhc-divider {
+    cursor: row-resize;
+  }
+  .mdhc-divider::after {
+    width: 28px;
+    height: 2px;
+  }
+}
+
+/* ====== Light mode adjustments ====== */
+:root:not(.dark) .mdhc {
+  --mdhc-bg: #fafbfc;
+  --mdhc-bg-alt: #f1f3f5;
+  --mdhc-fg: #1f2328;
+  --mdhc-fg-muted: #57606a;
+  --mdhc-border: #d0d7de;
+  --mdhc-accent: #0969da;
+  --mdhc-accent-bg: rgba(9, 105, 218, 0.08);
+  --mdhc-code-bg: #f6f8fa;
+}
+
+/* ====== Print / no-JS fallback ====== */
+@media print {
+  .mdhc-toolbar, .mdhc-divider, .mdhc-footer { display: none; }
+  .mdhc { border: 0; }
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"
+        integrity="sha384-/TQbtLCAerC3jgaim+N78RZSDYV7ryeoBCVqTuzRrFec2akfBkHS7ACQ3PQhvMVi"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/turndown@7.2.0/dist/turndown.min.js"
+        integrity="sha384-dgwrd2aondKuTOMsbJFsOUWxeWZcPXXamjXLeBoOSF40LpZo0pAQDjy+j5mQSV+k"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/turndown-plugin-gfm@1.0.2/dist/turndown-plugin-gfm.min.js"
+        integrity="sha384-JExije6S7Pt0dD5u/ZHOIKLVAeKRD9QCK5p1eTz2FgVirCU7AyRGYmrza5tjP5W3"
+        crossorigin="anonymous"></script>
+
+<script>
+(function () {
+  'use strict';
+
+  var SAMPLE_MD = [
+    '# Markdown \u2194 HTML Converter',
+    '',
+    'A *bidirectional* converter that runs **entirely in your browser**.',
+    '',
+    '## Features',
+    '',
+    '- [x] Markdown \u2192 HTML (CommonMark + GFM)',
+    '- [x] HTML \u2192 Markdown',
+    '- [x] Live preview with code highlighting',
+    '- [x] Copy / download / keyboard shortcuts',
+    '',
+    '## Code',
+    '',
+    'Inline `code` and fenced blocks:',
+    '',
+    '```js',
+    '// GFM tables, task lists, autolinks',
+    'const greet = (name = "world") => console.log(`hello, ${name}!`);',
+    'greet();',
+    '```',
+    '',
+    '## Table',
+    '',
+    '| Shortcut       | Action     |',
+    '| -------------- | ---------- |',
+    '| Ctrl/&#8984;+Enter | Convert    |',
+    '| Ctrl/&#8984;+L     | Load sample|',
+    '',
+    '## Quote',
+    '',
+    '> Stays in your browser. No upload, no tracking.',
+    '',
+    'Links: <https://dlsome.top>'
+  ].join('\n');
+
+
+  function setStatus(root, msg, state) {
+    var el = root.querySelector('[data-mdhc-status]');
+    if (!el) return;
+    el.textContent = msg;
+    if (state) el.setAttribute('data-mdhc-state', state);
+    else el.removeAttribute('data-mdhc-state');
+  }
+
+  function updateCount(root) {
+    var input = root.querySelector('[data-mdhc-input]');
+    var count = root.querySelector('[data-mdhc-count]');
+    if (!input || !count) return;
+    var n = input.value.length;
+    count.textContent = n + ' char' + (n === 1 ? '' : 's');
+  }
+
+  function getMode(root) {
+    var active = root.querySelector('.mdhc-mode-active');
+    return active ? active.getAttribute('data-mdhc-mode') : 'md2html';
+  }
+
+  function setMode(root, mode) {
+    var modes = root.querySelectorAll('.mdhc-mode');
+    Array.prototype.forEach.call(modes, function (m) {
+      var isActive = m.getAttribute('data-mdhc-mode') === mode;
+      m.classList.toggle('mdhc-mode-active', isActive);
+      m.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+
+    var input = root.querySelector('[data-mdhc-input]');
+    var outHtml = root.querySelector('[data-mdhc-output-html]');
+    var outMd = root.querySelector('[data-mdhc-output-md]');
+    var inLabel = root.querySelector('[data-mdhc-input-label]');
+    var outLabel = root.querySelector('[data-mdhc-output-label]');
+
+    if (mode === 'md2html') {
+      input.setAttribute('placeholder', 'Paste or type Markdown here\u2026');
+      inLabel.textContent = 'Markdown input';
+      outLabel.textContent = 'HTML preview';
+      outMd.setAttribute('hidden', '');
+      outHtml.removeAttribute('hidden');
+    } else {
+      input.setAttribute('placeholder', 'Paste or type HTML here\u2026');
+      inLabel.textContent = 'HTML input';
+      outLabel.textContent = 'Markdown output';
+      outHtml.setAttribute('hidden', '');
+      outMd.removeAttribute('hidden');
+    }
+    convert(root);
+    input.focus();
+  }
+
+  function convert(root) {
+    var input = root.querySelector('[data-mdhc-input]');
+    var outHtml = root.querySelector('[data-mdhc-output-html]');
+    var outMd = root.querySelector('[data-mdhc-output-md]');
+    var src = input.value;
+    var mode = getMode(root);
+
+    if (!src) {
+      outHtml.innerHTML = '';
+      outMd.textContent = '';
+      setStatus(root, 'Ready', null);
+      return;
+    }
+
+    if (mode === 'md2html') {
+      if (typeof window.marked === 'undefined') {
+        setStatus(root, 'marked.js failed to load (check SRI or network)', 'err');
+        return;
+      }
+      try {
+        // Honor fenced-code language hints; hljs will style rendered blocks.
+        window.marked.setOptions({
+          gfm: true,
+          breaks: false,
+          headerIds: false,
+          mangle: false
+        });
+        var html = window.marked.parse(src);
+        outHtml.innerHTML = html;
+        outMd.textContent = '';
+        // Highlight any <pre><code> blocks; hljs is global on .page kind.
+        if (window.hljs && typeof window.hljs.highlightElement === 'function') {
+          var blocks = outHtml.querySelectorAll('pre code');
+          Array.prototype.forEach.call(blocks, function (b) {
+            try { window.hljs.highlightElement(b); } catch (e) { /* ignore */ }
+          });
+        }
+        setStatus(root, 'Converted \u2192 ' + outHtml.textContent.length + ' chars rendered', 'ok');
+      } catch (e) {
+        setStatus(root, 'Markdown error: ' + (e && e.message ? e.message : e), 'err');
+      }
+    } else {
+      if (typeof window.TurndownService !== 'function') {
+        setStatus(root, 'turndown.js failed to load (check SRI or network)', 'err');
+        return;
+      }
+      try {
+        var svc = new window.TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced', bulletListMarker: '-', emDelimiter: '*' });
+        if (window.turndownPluginGfm && typeof window.turndownPluginGfm.gfm === 'function') {
+          svc.use(window.turndownPluginGfm.gfm);
+        }
+        // Strip <script> blocks defensively when pasting untrusted HTML.
+        var stripped = src.replace(/<script[\s\S]*?<\/script>/gi, '');
+        var md = svc.turndown(stripped);
+        outMd.textContent = md;
+        outHtml.innerHTML = '';
+        setStatus(root, 'Converted \u2192 ' + md.length + ' chars of Markdown', 'ok');
+      } catch (e) {
+        setStatus(root, 'HTML error: ' + (e && e.message ? e.message : e), 'err');
+      }
+    }
+  }
+
+  function copyOutput(root) {
+    var mode = getMode(root);
+    var outHtml = root.querySelector('[data-mdhc-output-html]');
+    var outMd = root.querySelector('[data-mdhc-output-md]');
+    var text;
+    if (mode === 'md2html') {
+      // Plain HTML serialization for round-tripping.
+      text = outHtml.innerHTML;
+    } else {
+      text = outMd.textContent;
+    }
+    if (!text) { setStatus(root, 'Nothing to copy yet', 'warn'); return; }
+
+    function done(success) {
+      setStatus(root, success ? 'Copied to clipboard' : 'Copy failed \u2014 select & copy manually', success ? 'ok' : 'err');
+    }
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
+    } else {
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'absolute';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        var ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        done(ok);
+      } catch (e) {
+        done(false);
+      }
+    }
+  }
+
+  function downloadOutput(root) {
+    var mode = getMode(root);
+    var outHtml = root.querySelector('[data-mdhc-output-html]');
+    var outMd = root.querySelector('[data-mdhc-output-md]');
+    var input = root.querySelector('[data-mdhc-input]');
+    var filename, mime, payload;
+
+    if (mode === 'md2html') {
+      var body = outHtml.innerHTML.trim();
+      if (!body) { setStatus(root, 'Nothing to download yet', 'warn'); return; }
+      payload = '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<title>Converted Output</title>\n</head>\n<body>\n' + body + '\n</body>\n</html>\n';
+      filename = 'converted.html';
+      mime = 'text/html;charset=utf-8';
+    } else {
+      payload = outMd.textContent;
+      if (!payload) { setStatus(root, 'Nothing to download yet', 'warn'); return; }
+      filename = 'converted.md';
+      mime = 'text/markdown;charset=utf-8';
+    }
+
+    try {
+      var blob = new Blob([payload], { type: mime });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      setStatus(root, 'Downloaded ' + filename, 'ok');
+    } catch (e) {
+      setStatus(root, 'Download failed: ' + (e && e.message ? e.message : e), 'err');
+    }
+  }
+
+  function loadSample(root) {
+    var input = root.querySelector('[data-mdhc-input]');
+    input.value = SAMPLE_MD;
+    updateCount(root);
+    convert(root);
+    setStatus(root, 'Sample loaded', 'ok');
+  }
+
+  function clearInput(root) {
+    var input = root.querySelector('[data-mdhc-input]');
+    input.value = '';
+    updateCount(root);
+    convert(root);
+    setStatus(root, 'Cleared', null);
+    input.focus();
+  }
+
+  function bindResize(root) {
+    var split = root.querySelector('[data-mdhc-split]');
+    var divider = root.querySelector('[data-mdhc-divider]');
+    if (!split || !divider) return;
+
+    var dragging = false;
+    function onMove(e) {
+      if (!dragging) return;
+      var rect = split.getBoundingClientRect();
+      var clientX = (e.touches && e.touches[0]) ? e.touches[0].clientX : e.clientX;
+      var offset = clientX - rect.left;
+      var min = 120;
+      var max = rect.width - 120;
+      if (offset < min) offset = min;
+      if (offset > max) offset = max;
+      var left = offset;
+      var right = rect.width - offset - 6;
+      split.style.gridTemplateColumns = left + 'px 6px ' + right + 'px';
+    }
+    function start(e) {
+      dragging = true;
+      e.preventDefault();
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', stop);
+      document.addEventListener('touchmove', onMove, { passive: false });
+      document.addEventListener('touchend', stop);
+    }
+    function stop() {
+      dragging = false;
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', stop);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', stop);
+      try {
+        var grid = split.style.gridTemplateColumns;
+        if (grid) localStorage.setItem('mdhc-split', grid);
+      } catch (e) { /* ignore */ }
+    }
+    divider.addEventListener('mousedown', start);
+    divider.addEventListener('touchstart', start, { passive: false });
+    divider.addEventListener('keydown', function (e) {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      var rect = split.getBoundingClientRect();
+      var cur = parseFloat(getComputedStyle(split).gridTemplateColumns.split(' ')[0]) || rect.width / 2;
+      var next = cur + (e.key === 'ArrowLeft' ? 24 : -24);
+      var min = 120, max = rect.width - 120;
+      if (next < min) next = min;
+      if (next > max) next = max;
+      split.style.gridTemplateColumns = next + 'px 6px ' + (rect.width - next - 6) + 'px';
+      e.preventDefault();
+    });
+
+    try {
+      var saved = localStorage.getItem('mdhc-split');
+      if (saved) split.style.gridTemplateColumns = saved;
+    } catch (e) { /* ignore */ }
+  }
+
+  function init() {
+    var roots = document.querySelectorAll('[data-mdhc-root]');
+    Array.prototype.forEach.call(roots, function (root) {
+      var input = root.querySelector('[data-mdhc-input]');
+
+      // Mode tabs
+      root.addEventListener('click', function (e) {
+        var t = e.target.closest('[data-mdhc-mode]');
+        if (t) { setMode(root, t.getAttribute('data-mdhc-mode')); return; }
+        var a = e.target.closest('[data-mdhc-action]');
+        if (!a) return;
+        var action = a.getAttribute('data-mdhc-action');
+        if (action === 'sample') loadSample(root);
+        else if (action === 'clear') clearInput(root);
+        else if (action === 'copy') copyOutput(root);
+        else if (action === 'download') downloadOutput(root);
+        else if (action === 'convert') convert(root);
+      });
+
+      // Live input -> convert (debounced)
+      var timer = 0;
+      input.addEventListener('input', function () {
+        updateCount(root);
+        clearTimeout(timer);
+        timer = setTimeout(function () { convert(root); }, 120);
+      });
+
+      // Keyboard shortcuts on input focus
+      input.addEventListener('keydown', function (e) {
+        var mod = e.ctrlKey || e.metaKey;
+        if (mod && (e.key === 'Enter' || e.key === '\n')) {
+          e.preventDefault();
+          convert(root);
+        } else if (mod && (e.key === 'l' || e.key === 'L')) {
+          e.preventDefault();
+          loadSample(root);
+        } else if (mod && (e.key === 'k' || e.key === 'K')) {
+          e.preventDefault();
+          clearInput(root);
+        } else if (e.key === 'Tab' && !e.shiftKey) {
+          // Allow tab to insert tab character in textarea
+          e.preventDefault();
+          var start = input.selectionStart;
+          var end = input.selectionEnd;
+          input.value = input.value.slice(0, start) + '\t' + input.value.slice(end);
+          input.selectionStart = input.selectionEnd = start + 1;
+          updateCount(root);
+          convert(root);
+        }
+      });
+
+      bindResize(root);
+      updateCount(root);
+      setStatus(root, 'Ready', null);
+      // Don't auto-convert: the tool starts empty, ready for input.
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
