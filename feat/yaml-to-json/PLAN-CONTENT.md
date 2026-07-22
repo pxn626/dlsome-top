@@ -1147,11 +1147,11 @@ schema:
 | 字段 | 内容 | 字符数 | 上限 | 状态 |
 |---|---|---|---|---|
 | `title` | `YAML to JSON Converter — Free Online Validator & Formatter` | 57 | 60 | ✅ |
-| `description` | `Free YAML to JSON converter with validator & formatter. Convert K8s manifests, GitHub Actions, Docker Compose. 100% browser-based, no upload.` | 153 | 160 | ✅ |
+| `description` | `Free YAML to JSON converter with validator & formatter. Convert K8s manifests, GitHub Actions, Docker Compose. 100% browser-based, no upload.` | 141 | 160 | ✅ |
 | `og:title` | 同 `title` | 57 | 60 | ✅ |
-| `og:description` | 同 `description` | 153 | 160 | ✅ |
+| `og:description` | 同 `description` | 141 | 160 | ✅ |
 | `twitter:title` | 同 `title` | 57 | 70 | ✅ |
-| `twitter:description` | 同 `description` | 153 | 200 | ✅ |
+| `twitter:description` | 同 `description` | 141 | 200 | ✅ |
 | H1 | `YAML to JSON Converter` | 22 | — | ✅(短,但 H1 不限字符数) |
 
 ---
@@ -1249,7 +1249,7 @@ schema:
 - [ ] 文件创建:`content/tools/yaml-to-json.md`
 - [ ] frontmatter 完整 9 个 top-level keys(`title`, `slug`, `description`, `tools`, `categories`, `tags`, `keywords`, `og`, `twitter`, `canonical`, `schema`)
 - [ ] title 字符数 ≤ 60(实测 57)
-- [ ] description 字符数 ≤ 160(实测 153)
+- [ ] description 字符数 ≤ 160(实测 141)
 - [ ] H1 = "YAML to JSON Converter"
 - [ ] 首段在 130-180 词内
 - [ ] 主关键词 `yaml to json` 在前 200 词出现 ≥ 3 次

@@ -81,7 +81,7 @@ YAML to JSON Converter — Free Online Validator & Formatter
 Free YAML to JSON converter with validator & formatter. Convert K8s manifests, GitHub Actions, Docker Compose. 100% browser-based, no upload.
 ```
 
-**字符数:** 153 字符
+**字符数:** 141 字符
 **关键词覆盖:** `YAML to JSON converter` + `validator` + `formatter` + `K8s manifests` + `Docker Compose`
 **CTA:** `100% browser-based, no upload`(隐私 + 性能双卖点)
 
