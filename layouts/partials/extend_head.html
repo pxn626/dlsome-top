@@ -1,0 +1,171 @@
+{{- /*
+  Partial: extend-head.html (project-level override)
+
+  Site-wide <head> injections. PaperMod's head.html calls
+  {{ partial "extend_head.html" . }} at the end; this project-level
+  partial takes precedence over the empty theme placeholder.
+
+  Scoped per-tool via independent `if` blocks (Slug match):
+    - markdown-html-converter → FAQPage (8 questions)
+    - json-to-typescript     → SoftwareApplication + FAQPage (7 questions)
+
+  Each tool has its own `if` block so future edits don't cross-contaminate.
+*/ -}}
+
+{{- if and (eq .Kind "page") (eq .Section "tools") (eq .Slug "markdown-html-converter") -}}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Is this tool free? Do I need to sign up?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes, it's completely free. There's no account, no signup, and no usage limit. Open the page and start converting."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is my data sent to your servers?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. The converter runs entirely in your browser using JavaScript. Your Markdown and HTML never leave your device. You can verify this by checking the network tab \u2014 there are no upload requests when you convert."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What Markdown syntax is supported?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "We support CommonMark plus GitHub Flavored Markdown (GFM) extensions: tables, task lists, strikethrough, autolinks, and fenced code blocks with language hints. Standard inline formatting (bold, italic, links, images) works as expected."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I convert HTML back to Markdown?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. The converter is bidirectional \u2014 paste HTML into the input panel and you'll get clean Markdown output. This is useful for migrating content from CMS platforms back into static site generators or version-controlled Markdown files."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does it work on mobile?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. The interface is responsive and adapts to phone and tablet screens. You can paste, convert, and copy on any modern mobile browser."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I download the output?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. After conversion, use the download button to save the output as a .html or .md file. The file extension matches the output format."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is there a keyboard shortcut?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Press Ctrl+Enter (Windows/Linux) or Cmd+Enter (macOS) to run the conversion without clicking the button."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is GFM?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "GFM stands for GitHub Flavored Markdown. It's a popular superset of CommonMark that adds features GitHub uses in READMEs, issues, and comments \u2014 most notably tables, task lists, and strikethrough. This tool supports GFM because most developers write Markdown for GitHub, docs sites, or static blogs that follow the same conventions."
+      }
+    }
+  ]
+}
+</script>
+{{- end -}}
+
+{{- if and (eq .Kind "page") (eq .Section "tools") (eq .Slug "json-to-typescript") -}}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "JSON to TypeScript Interface Generator",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Web",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "description": "Free online tool to convert JSON to TypeScript interfaces. Supports nested objects, optional fields, readonly, nullable fields, union types, and custom root name. 100% client-side, no signup, no tracking."
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Is this JSON to TypeScript converter free? Do I need to sign up?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes, completely free. No account, no signup, no usage limit. Open the page and paste JSON."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is my JSON sent to your servers?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. The conversion runs entirely in your browser using JavaScript. Your JSON never leaves your device. Verify by checking the network tab \u2014 there are no upload requests."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How are nested objects and arrays handled in JSON to TypeScript conversion?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Nested objects are auto-inferred as separate TypeScript interfaces with PascalCase names (e.g. Root, RootFoo, RootFooBar). Arrays of objects generate an interface for the element type. Homogeneous arrays become T[]; mixed arrays become (A | B)[]. Empty arrays are typed as unknown[]."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I make fields optional or readonly in the generated TypeScript?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Toggle 'Make fields optional' adds a question mark suffix (a?: number). Toggle 'Make fields readonly' prefixes 'readonly' (readonly a: number). Both can be combined with the nullable toggle for full PATCH-style updates: a?: number | null."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What about arrays with mixed types in JSON?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Arrays with elements of different types are inferred as union types. For example [1, 'x'] becomes (number | string)[]. Empty arrays are typed as unknown[]. Object arrays with different shapes generate an interface with optional fields for missing keys."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I use this for REST API responses and Swagger schemas?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Paste a sample response from fetch().then(r => r.json()) or a curl output and get the exact interface for your typed client. For OpenAPI / Swagger workflows, paste any endpoint's response body to bootstrap a type-safe SDK client."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does it support recursive or self-referencing TypeScript types?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Basic recursion is supported when a JSON key references a named sub-interface (e.g. tree structures with children: ChildNode[]). True self-referencing JSON Schema patterns ($ref: '#') are a known limitation slated for v2. For tree structures, paste a small example and verify the output."
+      }
+    }
+  ]
+}
+</script>
+{{- end -}}

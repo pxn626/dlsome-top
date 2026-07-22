@@ -1,0 +1,725 @@
+{{- /*
+  Shortcode: json-to-typescript
+
+  Browser-based JSON → TypeScript interface / type-alias generator.
+  Supports 6 toggles (type-vs-interface, optional, readonly, nullable, camelcase, root name).
+  Vanilla JS, no CDN, no external dependencies.
+
+  Usage:
+    {{< json-to-typescript >}}
+
+  CSS variables: --jtsc-* (separate from --mdhc-* namespace to avoid conflicts).
+  Dark-first palette, PaperMod `.dark` class integration.
+
+  Self-contained HTML + inline CSS + inline JS.
+*/ -}}
+
+<div class="jtsc" data-jtsc-root>
+  <!-- Toolbar 1: Action buttons -->
+  <div class="jtsc-toolbar">
+    <div class="jtsc-actions">
+      <button type="button" class="jtsc-action" data-jtsc-action="sample" title="Load sample JSON (Ctrl/&#8984;+L)">Sample</button>
+      <button type="button" class="jtsc-action" data-jtsc-action="clear" title="Clear input (Ctrl/&#8984;+K)">Clear</button>
+      <button type="button" class="jtsc-action" data-jtsc-action="format" title="Format input JSON (pretty-print)">Format JSON</button>
+      <button type="button" class="jtsc-action" data-jtsc-action="convert" title="Convert (Ctrl/&#8984;+Enter)">Convert</button>
+      <button type="button" class="jtsc-action" data-jtsc-action="copy" title="Copy output to clipboard">Copy</button>
+      <button type="button" class="jtsc-action" data-jtsc-action="download" title="Download as .ts file">Download</button>
+    </div>
+  </div>
+
+  <!-- Toolbar 2: Toggles -->
+  <div class="jtsc-toggles" role="group" aria-label="Type generation options">
+    <label class="jtsc-toggle"><input type="checkbox" data-jtsc-opt="useTypeAlias" /><span>Use <code>type</code> instead of <code>interface</code></span></label>
+    <label class="jtsc-toggle"><input type="checkbox" data-jtsc-opt="optional" /><span>Make fields optional (<code>?</code>)</span></label>
+    <label class="jtsc-toggle"><input type="checkbox" data-jtsc-opt="readonly" /><span>Make fields readonly</span></label>
+    <label class="jtsc-toggle"><input type="checkbox" data-jtsc-opt="nullable" /><span>Include <code>| null</code> on every field</span></label>
+    <label class="jtsc-toggle"><input type="checkbox" data-jtsc-opt="camelcase" /><span>Camelcase keys (<code>snake_case</code> &rarr; <code>camelCase</code>)</span></label>
+    <label class="jtsc-toggle jtsc-toggle-text"><span>Root type name:</span><input type="text" data-jtsc-opt="rootName" value="Root" maxlength="60" /></label>
+  </div>
+
+  <!-- Mobile view toggle (only visible on small screens) -->
+  <div class="jtsc-viewtabs" role="tablist" aria-label="Mobile view">
+    <button type="button" class="jtsc-viewtab jtsc-viewtab-active" data-jtsc-view="input" role="tab" aria-selected="true">Input</button>
+    <button type="button" class="jtsc-viewtab" data-jtsc-view="output" role="tab" aria-selected="false">Output</button>
+  </div>
+
+  <!-- Split pane (resizable) -->
+  <div class="jtsc-split" data-jtsc-split>
+    <div class="jtsc-pane jtsc-pane-input">
+      <div class="jtsc-pane-head">
+        <span class="jtsc-pane-label">JSON input</span>
+        <span class="jtsc-count" data-jtsc-count>0 chars</span>
+      </div>
+      <textarea
+        class="jtsc-input"
+        data-jtsc-input
+        spellcheck="false"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        wrap="soft"
+        placeholder="Paste or type JSON here&hellip;"
+      ></textarea>
+    </div>
+    <div class="jtsc-divider" data-jtsc-divider role="separator" aria-orientation="vertical" tabindex="0" title="Drag to resize"></div>
+    <div class="jtsc-pane jtsc-pane-output">
+      <div class="jtsc-pane-head">
+        <span class="jtsc-pane-label">TypeScript output</span>
+        <span class="jtsc-count" data-jtsc-output-info>0 lines</span>
+      </div>
+      <pre class="jtsc-output" data-jtsc-output><code></code></pre>
+    </div>
+  </div>
+
+  <!-- Footer status -->
+  <div class="jtsc-footer">
+    <span class="jtsc-status" data-jtsc-status>Ready</span>
+    <span class="jtsc-hint"><kbd>Ctrl</kbd>/<kbd>&#8984;</kbd>+<kbd>Enter</kbd> convert &middot; <kbd>Ctrl</kbd>/<kbd>&#8984;</kbd>+<kbd>L</kbd> sample</span>
+  </div>
+</div>
+
+<style>
+/* ===== Variables (dark-first, aligned with markdown-html-converter) ===== */
+.jtsc {
+  --jtsc-bg: #1e1f24;
+  --jtsc-bg-alt: #16171c;
+  --jtsc-fg: #d8d9dd;
+  --jtsc-fg-muted: #9aa0a6;
+  --jtsc-border: #2c2e36;
+  --jtsc-accent: #6aa9ff;
+  --jtsc-accent-bg: rgba(106, 169, 255, 0.12);
+  --jtsc-code-bg: #0f1014;
+  --jtsc-radius: 8px;
+  --jtsc-pad: 12px;
+  --jtsc-font-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Fira Code", Menlo, Consolas, monospace;
+  --jtsc-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  font-family: var(--jtsc-font-ui);
+  color: var(--jtsc-fg);
+  background: var(--jtsc-bg);
+  border: 1px solid var(--jtsc-border);
+  border-radius: var(--jtsc-radius);
+  overflow: hidden;
+  margin: 1.25rem 0;
+  box-sizing: border-box;
+}
+body:not(.dark) .jtsc {
+  --jtsc-bg: #fafbfc;
+  --jtsc-bg-alt: #ffffff;
+  --jtsc-fg: #1f2328;
+  --jtsc-fg-muted: #59636e;
+  --jtsc-border: #d0d7de;
+  --jtsc-accent: #0969da;
+  --jtsc-accent-bg: rgba(9, 105, 218, 0.08);
+  --jtsc-code-bg: #f6f8fa;
+}
+.jtsc *, .jtsc *::before, .jtsc *::after { box-sizing: border-box; }
+
+/* ===== Toolbar 1 ===== */
+.jtsc-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px var(--jtsc-pad);
+  background: var(--jtsc-bg-alt);
+  border-bottom: 1px solid var(--jtsc-border);
+  align-items: center;
+  justify-content: space-between;
+}
+.jtsc-actions { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.jtsc-action {
+  background: var(--jtsc-bg);
+  color: var(--jtsc-fg);
+  border: 1px solid var(--jtsc-border);
+  padding: 6px 12px;
+  font: 600 0.85rem/1 var(--jtsc-font-ui);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+.jtsc-action:hover { background: var(--jtsc-accent-bg); border-color: var(--jtsc-accent); }
+.jtsc-action:active { transform: translateY(1px); }
+
+/* ===== Toolbar 2 (Toggles) ===== */
+.jtsc-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  padding: 10px var(--jtsc-pad);
+  background: var(--jtsc-bg-alt);
+  border-bottom: 1px solid var(--jtsc-border);
+  font-size: 0.85rem;
+}
+.jtsc-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+  color: var(--jtsc-fg-muted);
+}
+.jtsc-toggle:hover { color: var(--jtsc-fg); }
+.jtsc-toggle input[type="checkbox"] { margin: 0; cursor: pointer; }
+.jtsc-toggle input[type="text"] {
+  background: var(--jtsc-bg);
+  color: var(--jtsc-fg);
+  border: 1px solid var(--jtsc-border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font: 600 0.85rem/1.2 var(--jtsc-font-mono);
+  width: 140px;
+}
+.jtsc-toggle code {
+  font-family: var(--jtsc-font-mono);
+  font-size: 0.85em;
+  background: var(--jtsc-code-bg);
+  padding: 1px 4px;
+  border-radius: 3px;
+  color: var(--jtsc-accent);
+}
+
+/* ===== Mobile view tabs (hidden on desktop) ===== */
+.jtsc-viewtabs { display: none; }
+
+/* ===== Split pane ===== */
+.jtsc-split {
+  display: grid;
+  grid-template-columns: 1fr 6px 1fr;
+  min-height: 360px;
+}
+.jtsc-pane { display: flex; flex-direction: column; min-width: 0; }
+.jtsc-pane-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px var(--jtsc-pad);
+  background: var(--jtsc-bg-alt);
+  border-bottom: 1px solid var(--jtsc-border);
+  font-size: 0.8rem;
+  color: var(--jtsc-fg-muted);
+}
+.jtsc-pane-label { font-weight: 600; }
+.jtsc-count { font-family: var(--jtsc-font-mono); font-size: 0.75rem; }
+.jtsc-input, .jtsc-output {
+  flex: 1;
+  margin: 0;
+  border: 0;
+  padding: var(--jtsc-pad);
+  font-family: var(--jtsc-font-mono);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  background: var(--jtsc-bg);
+  color: var(--jtsc-fg);
+  resize: none;
+  outline: none;
+  min-height: 280px;
+  overflow: auto;
+}
+.jtsc-input { white-space: pre; }
+.jtsc-output {
+  white-space: pre;
+  background: var(--jtsc-code-bg);
+  margin: 0;
+}
+.jtsc-output code {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  background: transparent;
+  padding: 0;
+}
+.jtsc-divider {
+  background: var(--jtsc-border);
+  cursor: col-resize;
+  transition: background-color 120ms ease;
+}
+.jtsc-divider:hover, .jtsc-divider:focus { background: var(--jtsc-accent); outline: none; }
+
+/* ===== Footer ===== */
+.jtsc-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px var(--jtsc-pad);
+  background: var(--jtsc-bg-alt);
+  border-top: 1px solid var(--jtsc-border);
+  font-size: 0.75rem;
+  color: var(--jtsc-fg-muted);
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.jtsc-status[data-status="ok"] { color: #2da44e; }
+.jtsc-status[data-status="err"] { color: #cf222e; }
+.jtsc-status[data-status="warn"] { color: #bf8700; }
+body:not(.dark) .jtsc-status[data-status="ok"] { color: #1a7f37; }
+body:not(.dark) .jtsc-status[data-status="err"] { color: #d1242f; }
+body:not(.dark) .jtsc-status[data-status="warn"] { color: #9a6700; }
+.jtsc-hint kbd {
+  background: var(--jtsc-bg);
+  border: 1px solid var(--jtsc-border);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font: 600 0.7rem/1 var(--jtsc-font-mono);
+  color: var(--jtsc-fg);
+}
+
+/* ===== Mobile ===== */
+@media (max-width: 768px) {
+  .jtsc-toggles { flex-direction: column; align-items: stretch; }
+  .jtsc-toggle-text input[type="text"] { width: 100%; }
+  .jtsc-viewtabs {
+    display: flex;
+    gap: 0;
+    padding: 6px var(--jtsc-pad);
+    background: var(--jtsc-bg-alt);
+    border-bottom: 1px solid var(--jtsc-border);
+  }
+  .jtsc-viewtab {
+    flex: 1;
+    background: var(--jtsc-bg);
+    color: var(--jtsc-fg-muted);
+    border: 1px solid var(--jtsc-border);
+    padding: 6px 10px;
+    font: 600 0.85rem/1 var(--jtsc-font-ui);
+    cursor: pointer;
+  }
+  .jtsc-viewtab-active { background: var(--jtsc-accent-bg); color: var(--jtsc-fg); border-color: var(--jtsc-accent); }
+  .jtsc-viewtab:first-child { border-radius: 6px 0 0 6px; }
+  .jtsc-viewtab:last-child { border-radius: 0 6px 6px 0; border-left-width: 0; }
+  .jtsc-split { grid-template-columns: 1fr !important; min-height: 480px; }
+  .jtsc-divider { display: none; }
+  .jtsc-pane-output { display: none; }
+  .jtsc[data-jtsc-view="output"] .jtsc-pane-input { display: none; }
+  .jtsc[data-jtsc-view="output"] .jtsc-pane-output { display: block; }
+  .jtsc-input, .jtsc-output { font-size: 16px; /* prevent iOS zoom */ }
+}
+</style>
+
+<script>
+(function () {
+  'use strict';
+
+  // ===== Constants =====
+  var ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2}(\.\d{1,9})?)?(Z|[+-]\d{2}:?\d{2})?)?$/;
+  var RESERVED_TS_KEYWORDS = new Set(['true','false','null','undefined','void','never','any','unknown','string','number','boolean','object','symbol','bigint']);
+  var MAX_INPUT_SIZE = 5 * 1024 * 1024; // 5 MB
+
+  // ===== Sample JSON (GitHub user API — https://api.github.com/users/octocat) =====
+  var SAMPLE_JSON = JSON.stringify({
+    login: 'octocat',
+    id: 1,
+    node_id: 'MDQ6VXNlcjE=',
+    avatar_url: 'https://github.com/images/error/octocat_happy.gif',
+    html_url: 'https://github.com/octocat',
+    type: 'User',
+    site_admin: false,
+    name: 'monalisa octocat',
+    company: '@github',
+    blog: 'https://github.blog',
+    location: 'San Francisco',
+    public_repos: 8,
+    followers: 9999,
+    following: 9,
+    created_at: '2011-01-25T18:44:36Z'
+  }, null, 2);
+
+  // ===== String utilities =====
+  function toPascalCase(s) {
+    if (!s) return 'Nested';
+    return String(s)
+      .replace(/[-_\s]+(.)?/g, function (_, c) { return c ? c.toUpperCase() : ''; })
+      .replace(/^(.)/, function (_, c) { return c.toUpperCase(); })
+      .replace(/[^A-Za-z0-9]/g, '');
+  }
+  function toCamelCase(s) {
+    if (!s) return s;
+    var pascal = toPascalCase(s);
+    return pascal.charAt(0).toLowerCase() + pascal.slice(1);
+  }
+  function isValidTSIdentifier(s) {
+    return /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(s) && !RESERVED_TS_KEYWORDS.has(s);
+  }
+  function safeKey(key) {
+    if (isValidTSIdentifier(key)) return key;
+    return JSON.stringify(String(key));
+  }
+  function isISODate(s) {
+    return typeof s === 'string' && ISO_DATE_RE.test(s) && !isNaN(Date.parse(s));
+  }
+
+  // ===== Type inference engine =====
+  function inferType(value, key, options, out) {
+    if (value === null) return 'null';
+    if (Array.isArray(value)) return inferArrayType(value, options, out);
+    if (typeof value === 'object') {
+      var childName = toPascalCase(key || 'Nested');
+      var sub = inferObjectType(value, childName, options, out);
+      out.push(sub);
+      return childName;
+    }
+    if (typeof value === 'string') return 'string';
+    if (typeof value === 'number') return 'number';
+    if (typeof value === 'boolean') return 'boolean';
+    if (typeof value === 'bigint') return 'bigint';
+    return 'unknown';
+  }
+
+  function inferArrayType(arr, options, out) {
+    if (arr.length === 0) return 'unknown[]';
+    var elementTypes = arr.map(function (v) { return inferType(v, '', options, out); });
+    var uniqueTypes = Array.from(new Set(elementTypes));
+    if (uniqueTypes.length === 1) return uniqueTypes[0] + '[]';
+    return '(' + uniqueTypes.join(' | ') + ')[]';
+  }
+
+  function inferObjectType(obj, name, options, out) {
+    var interfaceName = toPascalCase(name || 'Root');
+    var lines = [];
+    Object.keys(obj).forEach(function (rawKey) {
+      var camelKey = options.camelcase ? toCamelCase(rawKey) : rawKey;
+      var safeFieldName = safeKey(camelKey);
+      var t = inferType(obj[rawKey], rawKey, options, out);
+      var prefix = options.readonly ? 'readonly ' : '';
+      var optionalMark = options.optional ? '?' : '';
+      var nullableSuffix = (options.nullable && t !== 'null') ? ' | null' : '';
+      lines.push('  ' + prefix + safeFieldName + optionalMark + ': ' + t + nullableSuffix + ';');
+    });
+    var keyword = options.useTypeAlias ? 'type' : 'interface';
+    var body;
+    if (options.useTypeAlias) {
+      body = 'export ' + keyword + ' ' + interfaceName + ' = {\n' + lines.join('\n') + '\n}';
+    } else {
+      body = 'export ' + keyword + ' ' + interfaceName + ' {\n' + lines.join('\n') + '\n}';
+    }
+    return body;
+  }
+
+  function buildInterface(rootValue, options) {
+    var out = [];
+    var body;
+    if (Array.isArray(rootValue)) {
+      var t = inferArrayType(rootValue, options, out);
+      body = 'export type ' + options.rootName + ' = ' + t + ';';
+    } else if (rootValue !== null && typeof rootValue === 'object') {
+      body = inferObjectType(rootValue, options.rootName, options, out);
+    } else {
+      var lit = rootValue === null ? 'null'
+              : typeof rootValue === 'string' ? JSON.stringify(rootValue)
+              : typeof rootValue;
+      body = 'export type ' + options.rootName + ' = ' + lit + ';';
+    }
+    return [body].concat(out).join('\n\n') + '\n';
+  }
+
+  // ===== UI helpers =====
+  function setStatus(root, msg, kind) {
+    var statusEl = root.querySelector('[data-jtsc-status]');
+    if (!statusEl) return;
+    statusEl.textContent = msg;
+    statusEl.setAttribute('data-status', kind || '');
+  }
+
+  function updateCount(root) {
+    var input = root.querySelector('[data-jtsc-input]');
+    var countEl = root.querySelector('[data-jtsc-count]');
+    var infoEl = root.querySelector('[data-jtsc-output-info]');
+    var len = (input.value || '').length;
+    countEl.textContent = len + ' chars';
+    if (infoEl) {
+      var output = root.querySelector('[data-jtsc-output]');
+      var lines = output ? (output.textContent || '').split('\n').length : 0;
+      infoEl.textContent = lines + ' lines';
+    }
+  }
+
+  // ===== Action handlers =====
+  function loadSample(root) {
+    var input = root.querySelector('[data-jtsc-input]');
+    input.value = SAMPLE_JSON;
+    updateCount(root);
+    convert(root);
+    setStatus(root, 'Sample loaded', 'ok');
+  }
+
+  function clearInput(root) {
+    var input = root.querySelector('[data-jtsc-input]');
+    var output = root.querySelector('[data-jtsc-output]');
+    input.value = '';
+    output.textContent = '';
+    updateCount(root);
+    setStatus(root, 'Cleared', null);
+    input.focus();
+  }
+
+  function formatJson(root) {
+    var input = root.querySelector('[data-jtsc-input]');
+    var raw = input.value;
+    if (!raw.trim()) { setStatus(root, 'Input is empty', 'warn'); return; }
+    try {
+      var parsed = JSON.parse(raw);
+      input.value = JSON.stringify(parsed, null, 2);
+      updateCount(root);
+      convert(root);
+      setStatus(root, 'Formatted', 'ok');
+    } catch (e) {
+      setStatus(root, 'Invalid JSON: ' + e.message, 'err');
+    }
+  }
+
+  function convert(root) {
+    var input = root.querySelector('[data-jtsc-input]');
+    var output = root.querySelector('[data-jtsc-output]');
+    var raw = input.value;
+    if (!raw.trim()) { output.textContent = ''; setStatus(root, 'Ready', null); updateCount(root); return; }
+    if (raw.length > MAX_INPUT_SIZE) {
+      setStatus(root, 'Input too large (max 5MB)', 'err');
+      return;
+    }
+    var parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch (e) {
+      output.textContent = '';
+      setStatus(root, 'Invalid JSON: ' + e.message, 'err');
+      updateCount(root);
+      return;
+    }
+    var options = readOptions(root);
+    var t0 = (window.performance && performance.now) ? performance.now() : Date.now();
+    var tsCode;
+    try {
+      tsCode = buildInterface(parsed, options);
+    } catch (e) {
+      output.textContent = '';
+      setStatus(root, 'Inference failed: ' + e.message, 'err');
+      updateCount(root);
+      return;
+    }
+    var now = (window.performance && performance.now) ? performance.now() : Date.now();
+    var dt = now - t0;
+    output.textContent = tsCode;
+    updateCount(root);
+    setStatus(root, 'Converted in ' + Math.round(dt) + 'ms', 'ok');
+  }
+
+  function copyOutput(root) {
+    var output = root.querySelector('[data-jtsc-output]');
+    var text = output.textContent || '';
+    if (!text) { setStatus(root, 'Nothing to copy', 'warn'); return; }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () {
+        setStatus(root, 'Copied to clipboard', 'ok');
+      }).catch(function () {
+        fallbackCopy(text);
+        setStatus(root, 'Copied (fallback)', 'ok');
+      });
+    } else {
+      fallbackCopy(text);
+      setStatus(root, 'Copied (fallback)', 'ok');
+    }
+  }
+
+  function fallbackCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) { /* ignore */ }
+    document.body.removeChild(ta);
+  }
+
+  function downloadOutput(root) {
+    var output = root.querySelector('[data-jtsc-output]');
+    var text = output.textContent || '';
+    if (!text) { setStatus(root, 'Nothing to download', 'warn'); return; }
+    var options = readOptions(root);
+    var filename = options.rootName + '.ts';
+    try {
+      var blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      setStatus(root, 'Downloaded ' + filename, 'ok');
+    } catch (e) {
+      setStatus(root, 'Download failed: ' + e.message, 'err');
+    }
+  }
+
+  function readOptions(root) {
+    var rootNameEl = root.querySelector('[data-jtsc-opt="rootName"]');
+    var rootName = (rootNameEl.value || 'Root').trim();
+    if (!/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(rootName)) {
+      setStatus(root, 'Invalid root name "' + rootName + '", using "Root"', 'warn');
+      rootName = 'Root';
+      rootNameEl.value = 'Root';
+    }
+    return {
+      useTypeAlias: root.querySelector('[data-jtsc-opt="useTypeAlias"]').checked,
+      optional: root.querySelector('[data-jtsc-opt="optional"]').checked,
+      readonly: root.querySelector('[data-jtsc-opt="readonly"]').checked,
+      nullable: root.querySelector('[data-jtsc-opt="nullable"]').checked,
+      camelcase: root.querySelector('[data-jtsc-opt="camelcase"]').checked,
+      rootName: rootName
+    };
+  }
+
+  // ===== Resizable split =====
+  function bindResize(root) {
+    var split = root.querySelector('[data-jtsc-split]');
+    var divider = root.querySelector('[data-jtsc-divider]');
+    if (!split || !divider) return;
+    var dragging = false;
+    function onMove(e) {
+      if (!dragging) return;
+      var rect = split.getBoundingClientRect();
+      var clientX = (e.touches && e.touches[0]) ? e.touches[0].clientX : e.clientX;
+      var offset = clientX - rect.left;
+      var min = 120;
+      var max = rect.width - 120;
+      if (offset < min) offset = min;
+      if (offset > max) offset = max;
+      var left = offset;
+      var right = rect.width - offset - 6;
+      split.style.gridTemplateColumns = left + 'px 6px ' + right + 'px';
+    }
+    function start(e) {
+      dragging = true;
+      e.preventDefault();
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', stop);
+      document.addEventListener('touchmove', onMove, { passive: false });
+      document.addEventListener('touchend', stop);
+    }
+    function stop() {
+      dragging = false;
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', stop);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', stop);
+      try {
+        var grid = split.style.gridTemplateColumns;
+        if (grid) localStorage.setItem('jtsc-split', grid);
+      } catch (e) { /* ignore */ }
+    }
+    divider.addEventListener('mousedown', start);
+    divider.addEventListener('touchstart', start, { passive: false });
+    divider.addEventListener('keydown', function (e) {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      var rect = split.getBoundingClientRect();
+      var cur = parseFloat(getComputedStyle(split).gridTemplateColumns.split(' ')[0]) || rect.width / 2;
+      var next = cur + (e.key === 'ArrowLeft' ? 24 : -24);
+      var min = 120, max = rect.width - 120;
+      if (next < min) next = min;
+      if (next > max) next = max;
+      split.style.gridTemplateColumns = next + 'px 6px ' + (rect.width - next - 6) + 'px';
+      e.preventDefault();
+    });
+    try {
+      var saved = localStorage.getItem('jtsc-split');
+      if (saved) split.style.gridTemplateColumns = saved;
+    } catch (e) { /* ignore */ }
+  }
+
+  // ===== Debounce =====
+  function debounce(fn, ms) {
+    var t;
+    return function () {
+      var args = arguments, ctx = this;
+      clearTimeout(t);
+      t = setTimeout(function () { fn.apply(ctx, args); }, ms);
+    };
+  }
+
+  // ===== Init =====
+  function init() {
+    var roots = document.querySelectorAll('[data-jtsc-root]');
+    Array.prototype.forEach.call(roots, function (root) {
+      var input = root.querySelector('[data-jtsc-input]');
+
+      // Click delegation for action buttons
+      root.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-jtsc-action]');
+        if (btn) {
+          var action = btn.getAttribute('data-jtsc-action');
+          if (action === 'sample') loadSample(root);
+          else if (action === 'clear') clearInput(root);
+          else if (action === 'format') formatJson(root);
+          else if (action === 'convert') convert(root);
+          else if (action === 'copy') copyOutput(root);
+          else if (action === 'download') downloadOutput(root);
+          return;
+        }
+        // Mobile view tab toggle
+        var tab = e.target.closest('[data-jtsc-view]');
+        if (tab) {
+          var view = tab.getAttribute('data-jtsc-view');
+          root.setAttribute('data-jtsc-view', view);
+          var tabs = root.querySelectorAll('[data-jtsc-view]');
+          Array.prototype.forEach.call(tabs, function (t) {
+            var active = t.getAttribute('data-jtsc-view') === view;
+            t.classList.toggle('jtsc-viewtab-active', active);
+            t.setAttribute('aria-selected', active ? 'true' : 'false');
+          });
+        }
+      });
+
+      // Input typing → debounced convert
+      var debouncedConvert = debounce(function () { convert(root); }, 150);
+      input.addEventListener('input', function () { updateCount(root); debouncedConvert(); });
+
+      // Toggle change → immediate convert
+      root.addEventListener('change', function (e) {
+        if (e.target.matches('input[type="checkbox"][data-jtsc-opt]')) {
+          convert(root);
+        }
+      });
+
+      // Root name input → debounced convert
+      var rootNameInput = root.querySelector('[data-jtsc-opt="rootName"]');
+      if (rootNameInput) {
+        var debouncedRootNameConvert = debounce(function () { convert(root); }, 250);
+        rootNameInput.addEventListener('input', debouncedRootNameConvert);
+      }
+
+      // Keyboard shortcuts
+      input.addEventListener('keydown', function (e) {
+        var mod = e.ctrlKey || e.metaKey;
+        if (mod && (e.key === 'Enter' || e.key === '\n')) {
+          e.preventDefault();
+          convert(root);
+        } else if (mod && (e.key === 'l' || e.key === 'L')) {
+          e.preventDefault();
+          loadSample(root);
+        } else if (mod && (e.key === 'k' || e.key === 'K')) {
+          e.preventDefault();
+          clearInput(root);
+        } else if (e.key === 'Tab' && !e.shiftKey) {
+          e.preventDefault();
+          var start = input.selectionStart;
+          var end = input.selectionEnd;
+          input.value = input.value.slice(0, start) + '\t' + input.value.slice(end);
+          input.selectionStart = input.selectionEnd = start + 1;
+          updateCount(root);
+          debouncedConvert();
+        }
+      });
+
+      bindResize(root);
+      updateCount(root);
+      setStatus(root, 'Ready', null);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
