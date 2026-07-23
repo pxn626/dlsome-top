@@ -1,0 +1,191 @@
+{{- /*
+  Partial: extend_head.html (project-level override)
+
+  Site-wide <head> injections. PaperMod's head.html calls
+  {{ partial "extend_head.html" . }} at the end of the <head> section;
+  this project-level partial takes precedence over the empty theme
+  placeholder (themes/PaperMod/layouts/partials/extend_head.html).
+
+  Scoped per-tool via independent `if` blocks (Slug match):
+    - ai-prompt-helper    → WebApplication + FAQPage + HowTo
+
+  Each tool gets its own `if` block so future edits don't cross-contaminate.
+  When yaml-to-json / json-to-typescript / markdown-html-converter feat
+  branches are merged, the corresponding if-blocks will be added in their
+  own PRs. This file intentionally contains only ai-prompt-helper's blocks
+  to keep this PR self-contained (see eng-plan §4.4 option b).
+
+  NOTE on WebApplication.applicationCategory:
+    strategy used "DeveloperApplication"; eng-plan §4.3 uses
+    "UtilitiesApplication". Engineering owns this decision.
+    Chosen value: "UtilitiesApplication" because the tool is a
+    text-utility, not a development environment. Schema.org spec
+    reference: https://schema.org/UtilitiesApplication
+*/ -}}
+
+{{- if and (eq .Kind "page") (eq .Section "tools") (eq .Slug "ai-prompt-helper") -}}
+
+<meta property="og:title" content="AI Prompt Helper — Free Generator for ChatGPT, Claude, Gemini" />
+<meta property="og:description" content="Free AI prompt generator with 10 templates for code review, blog outlines, emails, SQL, regex, translation. Tone slider, role/task/format controls. 100% client-side, no signup." />
+<meta property="og:image" content="https://dlsome.top/og-images/ai-prompt-helper.png" />
+<meta property="og:image:alt" content="AI Prompt Helper showing template dropdown on left and live prompt preview on right with tone slider" />
+<meta property="og:url" content="https://dlsome.top/tools/ai-prompt-helper/" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="dlsome.top" />
+<meta property="og:locale" content="en_US" />
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="AI Prompt Helper — Free Generator for ChatGPT, Claude, Gemini" />
+<meta name="twitter:description" content="Free AI prompt generator with 10 templates for code review, blog outlines, emails, SQL, regex, translation. Tone slider, 100% client-side." />
+<meta name="twitter:image" content="https://dlsome.top/og-images/ai-prompt-helper.png" />
+<meta name="twitter:image:alt" content="AI Prompt Helper with template selector and live preview" />
+
+<link rel="canonical" href="https://dlsome.top/tools/ai-prompt-helper/" />
+{{- /* zh-Hans reserved for future v1.1 — keep commented out per strategy §5.1 */ -}}
+{{- /* <link rel="alternate" hreflang="zh-Hans" href="https://dlsome.top/zh/tools/ai-prompt-helper/" /> */ -}}
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "AI Prompt Helper",
+  "url": "https://dlsome.top/tools/ai-prompt-helper/",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any (browser-based)",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "featureList": [
+    "10 use-case templates (code review, blog outline, email draft, SQL query, regex, data extraction, translation, summarization, few-shot classifier, custom)",
+    "Tone slider (formal / casual / technical / creative)",
+    "Model target selector (ChatGPT / Claude / Gemini / Llama / model-agnostic)",
+    "Live preview with 200ms debounced updates",
+    "One-click clipboard copy with iOS Safari fallback",
+    "Export to Markdown (with YAML frontmatter) and TXT",
+    "Share URL with hash fragment encoding (#p=base64state)",
+    "LocalStorage history (opt-in, off by default)",
+    "Multi-language output target (EN, ES, FR, DE, ZH, JA, Auto)",
+    "Keyboard shortcuts (Ctrl/Cmd + Enter/L/K/S/D)",
+    "100% client-side execution (zero network requests)",
+    "Dark / light mode (PaperMod .dark class integration)"
+  ],
+  "isBasedOn": [
+    "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview",
+    "https://platform.openai.com/docs/guides/prompt-engineering/strategy",
+    "https://www.nist.gov/itl/ai-risk-management-framework"
+  ],
+  "browserRequirements": "Requires modern browser with crypto-grade CSPRNG. Last 2 versions of Chrome, Firefox, Safari, Edge. ES2017+ required.",
+  "softwareVersion": "1.0",
+  "datePublished": "2026-07-23",
+  "creator": {
+    "@type": "Organization",
+    "name": "dlsome.top",
+    "url": "https://dlsome.top/"
+  }
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is an AI prompt generator?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "An AI prompt generator is a tool that helps you write structured, high-quality prompts for AI assistants like ChatGPT, Claude, Gemini, or Llama. Instead of staring at a blank box typing freeform text, you pick a use-case template (code review, blog outline, SQL query, etc.), fill in fields like role / task / context / format / constraints, and the tool assembles a complete, well-structured prompt ready to copy. The output is plain text — you paste it into whatever AI assistant you use. A good prompt generator also lets you tune tone, length, and few-shot examples, then preview the final prompt in real time."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is this AI prompt generator free to use?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes — 100% free, no signup, no account, no usage limit, no email collection. The tool runs entirely in your browser via vanilla JavaScript, which is also why it can be free: there are no server costs per generated prompt. There is no premium tier, no \"X prompts per day\" cap, and no paywall hiding the template library. You will see no ads interrupting the workflow either, just a clean dark-mode editor. You can use the generator for open-source projects, client work, learning prompt engineering, or any commercial purpose without restriction."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Are AI prompt generators safe to use? Do they send my prompts anywhere?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Most AI prompt generators upload your prompt to a remote server to process it — and most AI assistants then upload it again to the LLM provider. That means your proprietary prompts (which often contain product strategy, code snippets, or customer data) pass through third-party infrastructure you can't audit. The dlsome.top AI Prompt Helper is different: every byte stays in your browser tab. There is no API call, no telemetry, no analytics on input content. You can verify this yourself by opening DevTools → Network, using the tool, and watching the request count stay at zero for the entire session. The page also works offline once loaded."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I use the generated prompts with ChatGPT, Claude, Gemini, and other models?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes — the generated prompts are plain text and work with any modern AI assistant: ChatGPT (GPT-4o, GPT-4.1, o3), Anthropic Claude (Sonnet, Opus, Haiku), Google Gemini (Flash, Pro), Meta Llama (via hosted inference), Mistral, DeepSeek, and any open-source model you run locally via Ollama or LM Studio. The generator has a \"Model target\" dropdown that adds model-specific hints (e.g., Claude benefits from XML-style delimiters; GPT benefits from JSON-mode instruction; Gemini benefits from explicit length caps), but the core prompt works across all of them. By default the generator emits model-agnostic prompts so you can reuse them."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What makes a good AI prompt? (Built-in best practices)",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A good prompt combines four canonical ingredients, sometimes called the RTF framework: 1) Role — who the assistant should be (e.g., \"You are a senior backend engineer with 10 years of Rust experience.\"). 2) Task — the concrete instruction (e.g., \"Review the following code for bugs and suggest fixes.\"). 3) Format — how the output should be structured (e.g., \"Return a JSON object with fields bug, severity, fix.\"). 4) Constraints — boundaries (e.g., \"Max 200 words, no jargon, mention X but not Y.\"). Adding 2–3 few-shot examples (\"input → output\" pairs) further improves output quality for classification, extraction, and style-transfer tasks. The dlsome.top AI Prompt Helper exposes all four ingredients as fields and lets you inject examples with a separate text area — so every prompt you build starts with the RTF skeleton."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I share a prompt I built with a teammate?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Each prompt is encoded into a shareable URL with a hash fragment (the part after #p= in the address bar). The hash fragment is never sent to any server — it lives entirely in the browser, which is why this is safe for prompts containing proprietary context. Click the Share button, copy the URL, and send it to a teammate. When they open the URL, the form auto-fills with your values (Template selected, Role, Task, Context, Format, etc.). No server roundtrip is involved — the entire state is in the URL itself. URL length is capped at ~3,000 chars to stay browser-compatible."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is a system prompt vs a user prompt?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A system prompt sets the assistant's persona and constraints up front (role, tone, length cap, audience). It is sent once at the beginning of a conversation and influences every turn. A user prompt is the actual instruction for the current turn (the task, the context, the question). Strong prompt engineering separates these deliberately: system prompt = who you want the assistant to be; user prompt = what you want it to do right now. The AI Prompt Helper exposes both: the Role, Tone, and Length fields map to the system prompt; the Task and Context fields map to the user prompt. Each template ships with a hand-tested default split you can fork and customize."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I export my prompts as Markdown or .txt?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Click Copy for clipboard, Download .md for a Markdown file (with title, use-case, role, task, context, format, and constraints as YAML frontmatter — useful for committing prompts to a repo), or Download .txt for plain-text. The Markdown export includes the template name and the model target as frontmatter, so your prompt library can be grepped, version-controlled, and shared via pull-request. The filename format is ai-prompt-helper_<usecase>_<YYYY-MM-DD>.md. Optional history (last 10 prompts) lives in browser localStorage and can be cleared at any time from the Settings gear."
+      }
+    }
+  ]
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "How to build an AI prompt in 3 steps",
+  "step": [
+    {
+      "@type": "HowToStep",
+      "position": 1,
+      "name": "Pick a template",
+      "text": "Choose from 10 use-case presets (Code review, Blog outline, Email draft, SQL query, Regex, Data extraction, Translation, Summarization, Few-shot classifier, or Custom)."
+    },
+    {
+      "@type": "HowToStep",
+      "position": 2,
+      "name": "Fill in the fields",
+      "text": "Set the Role (who the assistant should be), Task (the concrete instruction), Context (the input to operate on), Format (output structure), Constraints (length / tone / exclusions), and Examples (few-shot input → output pairs)."
+    },
+    {
+      "@type": "HowToStep",
+      "position": 3,
+      "name": "Tune format, tone, and examples",
+      "text": "Use the Tone slider (formal / casual / technical / creative), pick a Model target (ChatGPT / Claude / Gemini / Llama / agnostic), and copy or export your finished prompt."
+    }
+  ]
+}
+</script>
+
+{{- end -}}

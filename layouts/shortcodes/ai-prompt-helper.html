@@ -1,0 +1,1833 @@
+{{- /*
+  Shortcode: ai-prompt-helper
+
+  Browser-based AI prompt builder with 10 use-case templates, 4-stop tone
+  slider, model-agnostic framing, share-URL hash encoding, Markdown/TXT
+  export, and keyboard shortcuts.
+
+  Self-contained HTML + inline CSS + inline JS IIFE. Zero CDN, zero fetch,
+  zero tracking. PaperMod `.dark` class compatible. Hugo 0.123.7 verified.
+
+  Usage:
+    {{< ai-prompt-helper >}}
+
+  CSS namespace: --aiph-* (AI Prompt Helper)
+  JS data-attr:  data-aiph-*
+  i18n:          en (full) + zh-Hans (placeholder strings, EN fallback)
+  Slug:          ai-prompt-helper
+*/ -}}
+
+{{- $lang := .Page.Language.Lang | default "en" -}}
+<div class="aiph" data-aiph-root data-aiph-tone="1" data-aiph-view="build" data-aiph-lang="{{ $lang }}">
+
+  <!-- ===== Toolbar 1: Template picker + actions ===== -->
+  <div class="aiph-toolbar">
+    <div class="aiph-templates">
+      <label class="aiph-templates-label" for="aiph-template-select">Template</label>
+      <select class="aiph-template-select" data-aiph-template id="aiph-template-select" aria-label="Use case template">
+        <option value="code-review">🔍 Code review</option>
+        <option value="blog-outline">📝 Blog outline</option>
+        <option value="email-draft">✉️ Email draft</option>
+        <option value="sql-generator">🗄️ SQL query</option>
+        <option value="regex-generator">🔤 Regex generator</option>
+        <option value="data-extraction">📊 Data extraction</option>
+        <option value="translation">🌐 Translation</option>
+        <option value="summarization">📰 Summarization</option>
+        <option value="few-shot-classifier">🏷️ Few-shot classifier</option>
+        <option value="custom">⚙️ Custom</option>
+      </select>
+    </div>
+    <div class="aiph-actions">
+      <button type="button" class="aiph-action" data-aiph-action="sample" title="Load sample (Ctrl/⌘+L)">Sample</button>
+      <button type="button" class="aiph-action" data-aiph-action="clear" title="Clear (Ctrl/⌘+K)">Clear</button>
+      <button type="button" class="aiph-action" data-aiph-action="reset" title="Reset to template defaults">Reset</button>
+      <button type="button" class="aiph-action aiph-action-primary" data-aiph-action="copy" title="Copy (Ctrl/⌘+Enter)">Copy</button>
+      <button type="button" class="aiph-action" data-aiph-action="share" title="Share URL (Ctrl/⌘+S)">Share</button>
+      <button type="button" class="aiph-action" data-aiph-action="download-md" title="Download .md (Ctrl/⌘+D)">.md</button>
+      <button type="button" class="aiph-action" data-aiph-action="download-txt" title="Download .txt">.txt</button>
+      <button type="button" class="aiph-action aiph-action-icon" data-aiph-action="settings" title="Settings" aria-label="Settings">⚙️</button>
+    </div>
+  </div>
+
+  <!-- ===== Settings panel (collapsed by default) ===== -->
+  <div class="aiph-settings" data-aiph-settings hidden>
+    <label class="aiph-toggle"><input type="checkbox" data-aiph-opt="history" /><span>Save history to localStorage <em>(off by default — privacy first)</em></span></label>
+    <label class="aiph-toggle aiph-toggle-select"><span>Model target:</span>
+      <select data-aiph-model>
+        <option value="agnostic" selected>Model-agnostic</option>
+        <option value="chatgpt">ChatGPT (GPT-4o / o3)</option>
+        <option value="claude">Claude (Sonnet / Opus)</option>
+        <option value="gemini">Gemini (Flash / Pro)</option>
+        <option value="llama">Llama (hosted / Ollama)</option>
+      </select>
+    </label>
+    <label class="aiph-toggle aiph-toggle-select"><span>Output language:</span>
+      <select data-aiph-outlang>
+        <option value="auto" selected>Auto (follow input)</option>
+        <option value="en">English</option>
+        <option value="es">Spanish</option>
+        <option value="fr">French</option>
+        <option value="de">German</option>
+        <option value="zh-Hans">Chinese (Simplified)</option>
+        <option value="ja">Japanese</option>
+      </select>
+    </label>
+    <div class="aiph-settings-hint">
+      <span>⌨ Shortcuts: <kbd>Ctrl/⌘+Enter</kbd> copy · <kbd>L</kbd> sample · <kbd>K</kbd> clear · <kbd>S</kbd> share · <kbd>D</kbd> download .md</span>
+    </div>
+  </div>
+
+  <!-- ===== Tone slider ===== -->
+  <div class="aiph-tone-bar">
+    <label class="aiph-tone-label">
+      <span class="aiph-tone-text">Tone:</span>
+      <input type="range" min="0" max="3" step="1" value="1" data-aiph-tone-range aria-label="Tone" class="aiph-tone-range" />
+      <span class="aiph-tone-name" data-aiph-tone-name>Casual</span>
+    </label>
+  </div>
+
+  <!-- ===== Mobile view tabs (visible ≤768px) ===== -->
+  <div class="aiph-viewtabs" role="tablist" aria-label="Mobile view">
+    <button type="button" class="aiph-viewtab aiph-viewtab-active" data-aiph-view-tab="build" role="tab" aria-selected="true">Build</button>
+    <button type="button" class="aiph-viewtab" data-aiph-view-tab="preview" role="tab" aria-selected="false">Preview</button>
+  </div>
+
+  <!-- ===== Split layout: form (left) + preview (right) ===== -->
+  <div class="aiph-split" data-aiph-split>
+    <!-- Left: form -->
+    <div class="aiph-pane aiph-pane-form">
+
+      <div class="aiph-field">
+        <label class="aiph-field-label" for="aiph-role">Role <span class="aiph-hint">Who the assistant should be</span></label>
+        <input type="text" class="aiph-input aiph-input-single" id="aiph-role" data-aiph-field="role" maxlength="500" placeholder="You are a helpful assistant." />
+      </div>
+
+      <div class="aiph-field">
+        <label class="aiph-field-label" for="aiph-task">Task <span class="aiph-hint">The concrete instruction</span></label>
+        <textarea class="aiph-input" id="aiph-task" data-aiph-field="task" rows="4" maxlength="5000" placeholder="Review the following code for bugs and suggest fixes."></textarea>
+        <span class="aiph-count" data-aiph-count="task">0 chars</span>
+      </div>
+
+      <div class="aiph-field">
+        <label class="aiph-field-label" for="aiph-context">Context <span class="aiph-hint">The input the assistant will operate on</span></label>
+        <textarea class="aiph-input" id="aiph-context" data-aiph-field="context" rows="6" maxlength="50000" placeholder="Paste code, text, JSON, etc. here..."></textarea>
+        <span class="aiph-count" data-aiph-count="context">0 chars</span>
+      </div>
+
+      <div class="aiph-field">
+        <label class="aiph-field-label" for="aiph-format">Format</label>
+        <select class="aiph-input aiph-input-select" id="aiph-format" data-aiph-field="format">
+          <option value="auto">Auto (no override)</option>
+          <option value="bullet-list">Bullet list</option>
+          <option value="numbered-steps">Numbered steps</option>
+          <option value="json">JSON object</option>
+          <option value="markdown-table">Markdown table</option>
+          <option value="code-only">Code only</option>
+          <option value="plain-prose">Plain prose</option>
+        </select>
+      </div>
+
+      <div class="aiph-field">
+        <label class="aiph-field-label" for="aiph-constraints">Constraints <span class="aiph-hint">Length / tone / audience / exclusions</span></label>
+        <textarea class="aiph-input" id="aiph-constraints" data-aiph-field="constraints" rows="2" maxlength="1000" placeholder="Max 200 words. No jargon. Mention X but not Y."></textarea>
+      </div>
+
+      <div class="aiph-field">
+        <label class="aiph-field-label" for="aiph-examples">Examples <span class="aiph-hint">Few-shot (input → output)</span></label>
+        <textarea class="aiph-input" id="aiph-examples" data-aiph-field="examples" rows="3" maxlength="3000" placeholder="Bad: foo bar&#10;Good: foo bar baz"></textarea>
+      </div>
+
+      <!-- Variable interpolation panel (populated dynamically per template) -->
+      <div class="aiph-vars" data-aiph-vars></div>
+
+      <div class="aiph-field">
+        <label class="aiph-field-label" for="aiph-length">Length hint</label>
+        <select class="aiph-input aiph-input-select" id="aiph-length" data-aiph-field="length">
+          <option value="auto">Auto</option>
+          <option value="short">Short (&lt; 100 words)</option>
+          <option value="medium">Medium (100–400 words)</option>
+          <option value="long">Long (&gt; 400 words)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Resizable divider -->
+    <div class="aiph-divider" data-aiph-divider role="separator" aria-orientation="vertical" tabindex="0" title="Drag to resize"></div>
+
+    <!-- Right: preview -->
+    <div class="aiph-pane aiph-pane-preview">
+      <div class="aiph-pane-head">
+        <span class="aiph-pane-label">Live preview</span>
+        <span class="aiph-meta" data-aiph-meta>0 chars / 0 lines</span>
+      </div>
+      <pre class="aiph-output" data-aiph-preview>Fill in the fields to see your prompt.</pre>
+    </div>
+  </div>
+
+  <!-- ===== Share modal (hidden by default) ===== -->
+  <div class="aiph-modal" data-aiph-share-modal hidden role="dialog" aria-modal="true" aria-labelledby="aiph-share-title">
+    <div class="aiph-modal-box">
+      <h3 id="aiph-share-title">Share this prompt</h3>
+      <p class="aiph-modal-hint">The entire form state is encoded into the URL hash (<code>#p=…</code>). The hash never reaches a server — anyone with this URL can see your prompt, so only share with trusted teammates.</p>
+      <textarea class="aiph-share-url" data-aiph-share-url readonly rows="4"></textarea>
+      <div class="aiph-modal-actions">
+        <button type="button" class="aiph-action aiph-action-primary" data-aiph-action="copy-share-url">Copy URL</button>
+        <button type="button" class="aiph-action" data-aiph-action="close-share">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Status footer ===== -->
+  <div class="aiph-footer">
+    <span class="aiph-status" data-aiph-status>Ready</span>
+    <span class="aiph-hint"><kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>Enter</kbd> copy · <kbd>L</kbd> sample · <kbd>K</kbd> clear · <kbd>S</kbd> share · <kbd>D</kbd> .md</span>
+    <span class="aiph-privacy-badge" title="No data leaves your browser. Verified via DevTools → Network = 0 outbound requests during use.">100% client-side</span>
+  </div>
+</div>
+
+<style>
+/* ===== AI Prompt Helper — CSS ===== */
+.aiph {
+  --aiph-bg: #1e1f24;
+  --aiph-bg-alt: #16171c;
+  --aiph-fg: #d8d9dd;
+  --aiph-fg-muted: #9aa0a6;
+  --aiph-border: #2c2e36;
+  --aiph-border-strong: #3c3e48;
+  --aiph-accent: #6aa9ff;
+  --aiph-accent-bg: rgba(106, 169, 255, 0.12);
+  --aiph-accent-strong: #4a8de0;
+  --aiph-code-bg: #0f1014;
+  --aiph-success: #2da44e;
+  --aiph-warning: #bf8700;
+  --aiph-error: #cf222e;
+  --aiph-radius: 8px;
+  --aiph-radius-sm: 4px;
+  --aiph-pad: 12px;
+  --aiph-pad-sm: 8px;
+  --aiph-gap: 10px;
+  --aiph-font-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Fira Code", Menlo, Consolas, monospace;
+  --aiph-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, "Helvetica Neue", Arial, sans-serif;
+
+  font-family: var(--aiph-font-ui);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--aiph-fg);
+  background: var(--aiph-bg);
+  border: 1px solid var(--aiph-border);
+  border-radius: var(--aiph-radius);
+  margin: 1.5rem 0;
+  overflow: hidden;
+}
+
+.aiph *,
+.aiph *::before,
+.aiph *::after { box-sizing: border-box; }
+
+/* ===== Light mode override (PaperMod toggles .dark on <html>) ===== */
+body:not(.dark) .aiph {
+  --aiph-bg: #ffffff;
+  --aiph-bg-alt: #f6f8fa;
+  --aiph-fg: #1f2328;
+  --aiph-fg-muted: #59636e;
+  --aiph-border: #d0d7de;
+  --aiph-border-strong: #afb8c1;
+  --aiph-accent: #0969da;
+  --aiph-accent-bg: rgba(9, 105, 218, 0.08);
+  --aiph-accent-strong: #0550ae;
+  --aiph-code-bg: #f6f8fa;
+  --aiph-success: #1a7f37;
+  --aiph-warning: #9a6700;
+  --aiph-error: #cf222e;
+}
+
+/* ===== Toolbar 1 ===== */
+.aiph-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--aiph-gap);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--aiph-pad);
+  background: var(--aiph-bg-alt);
+  border-bottom: 1px solid var(--aiph-border);
+}
+.aiph-templates {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-width: 200px;
+}
+.aiph-templates-label {
+  font-weight: 600;
+  color: var(--aiph-fg-muted);
+  font-size: 13px;
+}
+.aiph-template-select {
+  flex: 1 1 auto;
+  max-width: 240px;
+  min-height: 36px;
+  padding: 6px 10px;
+  background: var(--aiph-bg);
+  color: var(--aiph-fg);
+  border: 1px solid var(--aiph-border);
+  border-radius: var(--aiph-radius-sm);
+  font-family: var(--aiph-font-ui);
+  font-size: 14px;
+  cursor: pointer;
+}
+.aiph-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.aiph-action {
+  min-height: 36px;
+  min-width: 36px;
+  padding: 6px 12px;
+  background: var(--aiph-bg);
+  color: var(--aiph-fg);
+  border: 1px solid var(--aiph-border);
+  border-radius: var(--aiph-radius-sm);
+  font-family: var(--aiph-font-ui);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 120ms, border-color 120ms;
+  user-select: none;
+}
+.aiph-action:hover { background: var(--aiph-accent-bg); border-color: var(--aiph-accent); }
+.aiph-action:focus-visible { outline: 2px solid var(--aiph-accent); outline-offset: 1px; }
+.aiph-action:active { transform: translateY(1px); }
+.aiph-action-primary {
+  background: var(--aiph-accent);
+  color: #fff;
+  border-color: var(--aiph-accent-strong);
+  font-weight: 600;
+}
+.aiph-action-primary:hover { background: var(--aiph-accent-strong); }
+body:not(.dark) .aiph-action-primary { color: #fff; }
+.aiph-action-icon { font-size: 16px; line-height: 1; min-width: 36px; }
+
+/* ===== Settings panel ===== */
+.aiph-settings {
+  padding: var(--aiph-pad);
+  background: var(--aiph-bg-alt);
+  border-bottom: 1px solid var(--aiph-border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.aiph-settings[hidden] { display: none; }
+.aiph-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--aiph-fg);
+  cursor: pointer;
+}
+.aiph-toggle em { color: var(--aiph-fg-muted); font-style: italic; }
+.aiph-toggle-select span { color: var(--aiph-fg-muted); }
+.aiph-toggle-select select {
+  margin-left: 6px;
+  min-height: 32px;
+  padding: 4px 8px;
+  background: var(--aiph-bg);
+  color: var(--aiph-fg);
+  border: 1px solid var(--aiph-border);
+  border-radius: var(--aiph-radius-sm);
+  font-family: var(--aiph-font-ui);
+  font-size: 13px;
+  cursor: pointer;
+}
+.aiph-settings-hint {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--aiph-fg-muted);
+}
+.aiph-settings-hint kbd,
+.aiph-hint kbd,
+.aiph-footer kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  background: var(--aiph-bg);
+  border: 1px solid var(--aiph-border-strong);
+  border-radius: 3px;
+  font-family: var(--aiph-font-mono);
+  font-size: 11px;
+  color: var(--aiph-fg);
+}
+
+/* ===== Tone bar ===== */
+.aiph-tone-bar {
+  padding: 10px var(--aiph-pad);
+  background: var(--aiph-bg-alt);
+  border-bottom: 1px solid var(--aiph-border);
+}
+.aiph-tone-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  cursor: pointer;
+}
+.aiph-tone-text {
+  font-weight: 600;
+  color: var(--aiph-fg-muted);
+  font-size: 13px;
+  min-width: 50px;
+}
+.aiph-tone-range {
+  flex: 1 1 auto;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: var(--aiph-border-strong);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+  margin: 0;
+}
+.aiph-tone-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--aiph-accent);
+  border: 2px solid var(--aiph-bg);
+  cursor: grab;
+}
+.aiph-tone-range::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--aiph-accent);
+  border: 2px solid var(--aiph-bg);
+  cursor: grab;
+}
+.aiph-tone-range::-webkit-slider-thumb:active { cursor: grabbing; }
+.aiph-tone-name {
+  min-width: 90px;
+  text-align: right;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--aiph-accent);
+  font-variant: small-caps;
+}
+
+/* ===== Mobile view tabs (hidden on desktop) ===== */
+.aiph-viewtabs {
+  display: none;
+  border-bottom: 1px solid var(--aiph-border);
+  background: var(--aiph-bg-alt);
+}
+.aiph-viewtab {
+  flex: 1;
+  padding: 10px;
+  background: transparent;
+  color: var(--aiph-fg-muted);
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-family: var(--aiph-font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 44px;
+}
+.aiph-viewtab-active {
+  color: var(--aiph-accent);
+  border-bottom-color: var(--aiph-accent);
+}
+
+/* ===== Split layout ===== */
+.aiph-split {
+  display: grid;
+  grid-template-columns: 1fr 6px 1fr;
+  min-height: 400px;
+  background: var(--aiph-bg);
+}
+.aiph-pane {
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  min-width: 0;
+}
+.aiph-pane-form {
+  padding: var(--aiph-pad);
+  gap: 12px;
+  border-right: 1px solid var(--aiph-border);
+}
+.aiph-pane-preview {
+  background: var(--aiph-code-bg);
+  display: flex;
+  flex-direction: column;
+}
+.aiph-pane-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px var(--aiph-pad);
+  background: var(--aiph-bg-alt);
+  border-bottom: 1px solid var(--aiph-border);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--aiph-fg-muted);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.aiph-pane-label { text-transform: uppercase; letter-spacing: 0.5px; }
+.aiph-meta, .aiph-count { font-family: var(--aiph-font-mono); font-size: 11px; }
+
+/* ===== Form fields ===== */
+.aiph-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+.aiph-field-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--aiph-fg);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.aiph-field-label .aiph-hint {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--aiph-fg-muted);
+  text-transform: none;
+  letter-spacing: 0;
+  margin-top: 2px;
+}
+.aiph-input {
+  width: 100%;
+  min-height: 36px;
+  padding: 8px 10px;
+  background: var(--aiph-bg-alt);
+  color: var(--aiph-fg);
+  border: 1px solid var(--aiph-border);
+  border-radius: var(--aiph-radius-sm);
+  font-family: var(--aiph-font-ui);
+  font-size: 13px;
+  line-height: 1.45;
+  resize: vertical;
+  transition: border-color 120ms, background 120ms;
+}
+.aiph-input-single { min-height: 36px; resize: none; }
+.aiph-input-select { cursor: pointer; }
+textarea.aiph-input { min-height: 80px; }
+.aiph-input:focus {
+  outline: none;
+  border-color: var(--aiph-accent);
+  background: var(--aiph-bg);
+}
+.aiph-count {
+  align-self: flex-end;
+  color: var(--aiph-fg-muted);
+  font-size: 11px;
+}
+
+/* ===== Variable panel ===== */
+.aiph-vars {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 0;
+  padding: var(--aiph-pad-sm);
+  background: var(--aiph-bg-alt);
+  border: 1px dashed var(--aiph-border-strong);
+  border-radius: var(--aiph-radius-sm);
+}
+.aiph-vars:empty { display: none; }
+.aiph-var-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.aiph-var-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--aiph-fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.aiph-var-label::after { content: ' {' attr(data-var-key) '}'; color: var(--aiph-accent); margin-left: 4px; }
+.aiph-var-input {
+  padding: 6px 8px;
+  background: var(--aiph-bg);
+  color: var(--aiph-fg);
+  border: 1px solid var(--aiph-border);
+  border-radius: var(--aiph-radius-sm);
+  font-family: var(--aiph-font-ui);
+  font-size: 13px;
+  min-height: 32px;
+}
+.aiph-var-input:focus { outline: none; border-color: var(--aiph-accent); }
+
+/* ===== Preview pane ===== */
+.aiph-output {
+  flex: 1;
+  margin: 0;
+  padding: var(--aiph-pad);
+  background: var(--aiph-code-bg);
+  color: var(--aiph-fg);
+  font-family: var(--aiph-font-mono);
+  font-size: 13px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow: auto;
+}
+
+/* ===== Resizable divider ===== */
+.aiph-divider {
+  background: var(--aiph-border);
+  cursor: col-resize;
+  transition: background 120ms;
+  position: relative;
+}
+.aiph-divider:hover,
+.aiph-divider:focus-visible {
+  background: var(--aiph-accent);
+  outline: none;
+}
+.aiph-divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 2px;
+  height: 24px;
+  background: var(--aiph-border-strong);
+  border-radius: 1px;
+}
+.aiph-divider:hover::before { background: var(--aiph-bg); }
+
+/* ===== Footer ===== */
+.aiph-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  padding: 8px var(--aiph-pad);
+  background: var(--aiph-bg-alt);
+  border-top: 1px solid var(--aiph-border);
+  font-size: 12px;
+  color: var(--aiph-fg-muted);
+}
+.aiph-status {
+  font-family: var(--aiph-font-mono);
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: var(--aiph-radius-sm);
+  background: var(--aiph-bg);
+  border: 1px solid var(--aiph-border);
+}
+.aiph-status[data-kind="ok"] { color: var(--aiph-success); border-color: var(--aiph-success); }
+.aiph-status[data-kind="warn"] { color: var(--aiph-warning); border-color: var(--aiph-warning); }
+.aiph-status[data-kind="err"] { color: var(--aiph-error); border-color: var(--aiph-error); }
+.aiph-privacy-badge {
+  margin-left: auto;
+  padding: 2px 8px;
+  background: var(--aiph-accent-bg);
+  color: var(--aiph-accent);
+  border: 1px solid var(--aiph-accent);
+  border-radius: var(--aiph-radius-sm);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  cursor: help;
+}
+
+/* ===== Share modal ===== */
+.aiph-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1rem;
+}
+.aiph-modal[hidden] { display: none; }
+.aiph-modal-box {
+  max-width: 560px;
+  width: 100%;
+  background: var(--aiph-bg);
+  color: var(--aiph-fg);
+  border: 1px solid var(--aiph-border);
+  border-radius: var(--aiph-radius);
+  padding: 1.5rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  max-height: 90vh;
+  overflow: auto;
+}
+.aiph-modal-box h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+  color: var(--aiph-fg);
+}
+.aiph-modal-hint {
+  font-size: 12px;
+  color: var(--aiph-fg-muted);
+  margin: 0 0 12px;
+  line-height: 1.5;
+}
+.aiph-modal-hint code {
+  font-family: var(--aiph-font-mono);
+  background: var(--aiph-bg-alt);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+.aiph-share-url {
+  width: 100%;
+  min-height: 80px;
+  padding: 8px 10px;
+  background: var(--aiph-bg-alt);
+  color: var(--aiph-fg);
+  border: 1px solid var(--aiph-border);
+  border-radius: var(--aiph-radius-sm);
+  font-family: var(--aiph-font-mono);
+  font-size: 12px;
+  line-height: 1.45;
+  resize: vertical;
+}
+.aiph-modal-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  justify-content: flex-end;
+}
+
+/* ===== Mobile (≤ 768 px) ===== */
+@media (max-width: 768px) {
+  .aiph-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .aiph-template-select { max-width: 100%; }
+  .aiph-actions { justify-content: flex-start; }
+  .aiph-viewtabs { display: flex; }
+  .aiph-split {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+  .aiph-pane-form { border-right: none; }
+  .aiph-divider { display: none; }
+  .aiph-pane-form[data-aiph-visible="false"],
+  .aiph-pane-preview[data-aiph-visible="false"] { display: none; }
+  .aiph-pane-form[data-aiph-visible="true"],
+  .aiph-pane-preview[data-aiph-visible="true"] { display: flex; }
+  .aiph-pane-preview { min-height: 320px; }
+  .aiph-tone-bar { padding: 8px; }
+  .aiph-tone-label { font-size: 13px; }
+  .aiph-tone-name { min-width: 70px; }
+  .aiph-footer { font-size: 11px; }
+  .aiph-footer .aiph-hint { display: none; }
+}
+</style>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ============================================================
+   * AI Prompt Helper — pure client-side IIFE
+   * ============================================================ */
+
+  /* ---------- Tone adjectives (4 stops) ---------- */
+  var TONE_NAMES = ['Formal', 'Casual', 'Technical', 'Creative'];
+  var TONE_ADJECTIVES = {
+    0: 'Maintain a polished, professional tone. Avoid contractions. Use precise language.',
+    1: 'Use a conversational, approachable tone. Contractions are fine. Keep it friendly.',
+    2: 'Use precise technical language. Prioritize accuracy and rigor over readability. Include domain-specific terms.',
+    3: 'Use vivid, evocative language. Feel free to use metaphors, analogies, and wordplay.'
+  };
+
+  /* ---------- Model hints (5 targets) ---------- */
+  var MODEL_HINTS = {
+    agnostic: '',
+    chatgpt: 'Optimize for OpenAI ChatGPT models. Use clear Markdown structure; explicitly request JSON-mode when output format is JSON.',
+    claude: 'Use <instructions> XML delimiters to separate role, task, and constraints. Anthropic Claude responds well to explicit structure and explicit thinking blocks.',
+    gemini: 'Include explicit length caps and JSON-mode requests when relevant. Google Gemini benefits from precise token budgeting and structured output directives.',
+    llama: 'Keep instructions concise and directive. Llama models may need shorter, more direct prompts than larger frontier models. Avoid multi-step nested instructions.'
+  };
+
+  /* ---------- Format hints ---------- */
+  var FORMAT_HINTS = {
+    'bullet-list': 'Return as a bullet list (use - or *).',
+    'numbered-steps': 'Return as numbered steps.',
+    'json': 'Return as a JSON object. Do not wrap in markdown fences.',
+    'markdown-table': 'Return as a markdown table with a clear header row.',
+    'code-only': 'Return only code. No prose explanation, no markdown fences unless requested.',
+    'plain-prose': 'Return as plain prose paragraphs (no bullets, no tables).'
+  };
+
+  /* ---------- Length hints ---------- */
+  var LENGTH_HINTS = {
+    short: 'Keep response under 100 words.',
+    medium: 'Keep response between 100 and 400 words.',
+    long: 'Provide a thorough response — 400+ words if needed.'
+  };
+
+  /* ---------- Output language names ---------- */
+  var OUTLANG_HINTS = {
+    auto: '',
+    en: 'English',
+    es: 'Spanish',
+    fr: 'French',
+    de: 'German',
+    'zh-Hans': 'Simplified Chinese',
+    ja: 'Japanese'
+  };
+
+  /* ---------- 10 use-case templates ---------- */
+  var TEMPLATES = {
+    'code-review': {
+      name: 'Code Review',
+      icon: '🔍',
+      category: 'developer',
+      defaults: {
+        role: 'You are a senior software engineer with deep expertise in code review, security, and best practices across multiple languages.',
+        task: 'Review the following code for bugs, security issues, performance problems, and style violations. Suggest concrete fixes with line numbers.',
+        format: 'markdown-table',
+        constraints: 'Identify at least 3 issues (or state "no issues found" if none). For each issue specify: line number, severity (low/medium/high), description, suggested fix.',
+        examples: '',
+        length: 'medium',
+        variables: [
+          { key: 'language', label: 'Language', placeholder: 'e.g., Python, JavaScript, Rust', required: false }
+        ]
+      },
+      sample: {
+        role: 'You are a senior Python backend engineer.',
+        task: 'Review the following Python code for bugs, security issues, and PEP-8 violations.',
+        context: 'def get_user(user_id):\n    query = f"SELECT * FROM users WHERE id = {user_id}"\n    return db.execute(query)',
+        format: 'markdown-table',
+        constraints: 'Identify SQL injection, missing error handling, and PEP-8 issues.',
+        examples: '',
+        length: 'medium',
+        variables: { language: 'Python' }
+      }
+    },
+    'blog-outline': {
+      name: 'Blog Outline',
+      icon: '📝',
+      category: 'content',
+      defaults: {
+        role: 'You are an experienced content strategist and SEO editor who writes clear, engaging blog outlines.',
+        task: 'Generate a detailed blog post outline with H2 / H3 sections, a compelling introduction hook, and a clear conclusion. Include target keyword placement suggestions.',
+        format: 'markdown-table',
+        constraints: 'Target length 1500–2500 words. Include at least 5 H2 sections and 2 H3 subsections per H2. Suggest 3 internal-link anchor opportunities.',
+        examples: '',
+        length: 'medium',
+        variables: [
+          { key: 'topic', label: 'Topic', placeholder: 'e.g., zero-downtime Postgres migrations', required: true },
+          { key: 'audience', label: 'Audience', placeholder: 'e.g., backend engineers', required: false },
+          { key: 'tone', label: 'Tone', placeholder: 'e.g., technical but conversational', required: false }
+        ]
+      },
+      sample: {
+        role: 'You are an experienced technical content writer.',
+        task: 'Generate a blog outline about progressive enhancement for CSS.',
+        context: '',
+        format: 'markdown-table',
+        constraints: 'Target length 1800 words. 5 H2 sections. Include code snippets.',
+        examples: '',
+        length: 'medium',
+        variables: { topic: 'Progressive enhancement for modern CSS', audience: 'frontend developers', tone: 'practical, slightly opinionated' }
+      }
+    },
+    'email-draft': {
+      name: 'Email Draft',
+      icon: '✉️',
+      category: 'communication',
+      defaults: {
+        role: 'You are an experienced professional communicator who writes clear, concise emails with the right tone for the audience.',
+        task: 'Draft a polished email that achieves the stated objective while preserving professionalism and clarity.',
+        format: 'plain-prose',
+        constraints: 'Keep under 200 words. One ask, one CTA, no fluff. Match the requested tone.',
+        examples: '',
+        length: 'short',
+        variables: [
+          { key: 'objective', label: 'Email objective', placeholder: 'e.g., request a meeting', required: true },
+          { key: 'recipient', label: 'Recipient', placeholder: 'e.g., engineering manager', required: false },
+          { key: 'tone', label: 'Tone', placeholder: 'e.g., formal but warm', required: false }
+        ]
+      },
+      sample: {
+        role: 'You are a senior engineer writing to a vendor account manager.',
+        task: 'Draft an email requesting a pricing review and trial extension.',
+        context: '',
+        format: 'plain-prose',
+        constraints: 'Under 150 words. Polite but specific. Include bullet list of asks.',
+        examples: '',
+        length: 'short',
+        variables: { objective: 'request pricing review and 14-day trial extension', recipient: 'SaaS vendor account manager', tone: 'professional, courteous' }
+      }
+    },
+    'sql-generator': {
+      name: 'SQL Query Generator',
+      icon: '🗄️',
+      category: 'developer',
+      defaults: {
+        role: 'You are a database engineer who writes performant, secure SQL queries and explains execution plans.',
+        task: 'Generate a SQL query that solves the stated requirement. Explain the query, including any indexes it relies on and any potential performance traps.',
+        format: 'code-only',
+        constraints: 'Use explicit JOIN syntax (avoid old-style comma joins). Add comments for non-obvious logic. Mention if the dialect is non-standard.',
+        examples: '',
+        length: 'medium',
+        variables: [
+          { key: 'dialect', label: 'SQL dialect', placeholder: 'e.g., PostgreSQL 15, MySQL 8, SQLite', required: true },
+          { key: 'requirement', label: 'Requirement', placeholder: 'e.g., find users who logged in more than 3 times last week', required: true }
+        ]
+      },
+      sample: {
+        role: 'You are a senior PostgreSQL engineer.',
+        task: 'Write a query to find users who placed more than 5 orders in the last 30 days, including their total spend.',
+        context: 'Tables: users(id, email, created_at), orders(id, user_id, total_cents, created_at, status).',
+        format: 'code-only',
+        constraints: 'Use ANSI SQL. Avoid subqueries if a JOIN works. Suggest a supporting index.',
+        examples: '',
+        length: 'medium',
+        variables: { dialect: 'PostgreSQL 15', requirement: 'top customers by 30-day order count and spend' }
+      }
+    },
+    'regex-generator': {
+      name: 'Regex Generator',
+      icon: '🔤',
+      category: 'developer',
+      defaults: {
+        role: 'You are a regex expert who writes clear, well-tested regular expressions with explicit engine flags and edge-case handling.',
+        task: 'Generate a regular expression that matches the stated pattern. Explain each component, list test cases that should pass and fail, and specify the recommended flags.',
+        format: 'plain-prose',
+        constraints: 'Prefer non-capturing groups (?:…) unless capture is needed. Avoid catastrophic backtracking. Provide 3+ test cases including edge cases.',
+        examples: '',
+        length: 'short',
+        variables: [
+          { key: 'pattern', label: 'Pattern to match', placeholder: 'e.g., semver version strings', required: true },
+          { key: 'engine', label: 'Regex engine', placeholder: 'e.g., PCRE, JavaScript, Python re', required: false }
+        ]
+      },
+      sample: {
+        role: 'You are a regex expert familiar with JavaScript and PCRE.',
+        task: 'Generate a regex that matches semver version strings (X.Y.Z with optional pre-release and build metadata).',
+        context: '',
+        format: 'plain-prose',
+        constraints: 'No catastrophic backtracking. Anchor with ^ and $ when appropriate.',
+        examples: '',
+        length: 'short',
+        variables: { pattern: 'semver 2.0.0 version strings', engine: 'PCRE / JavaScript' }
+      }
+    },
+    'data-extraction': {
+      name: 'Data Extraction',
+      icon: '📊',
+      category: 'developer',
+      defaults: {
+        role: 'You are a data engineer who extracts structured information from unstructured text with high precision.',
+        task: 'Extract the requested fields from the provided text and return them as a JSON object. Use null for missing fields rather than guessing.',
+        format: 'json',
+        constraints: 'Return strict JSON only (no markdown fences). Use snake_case keys. Quote all string values.',
+        examples: '',
+        length: 'short',
+        variables: [
+          { key: 'fields', label: 'Fields to extract', placeholder: 'e.g., name, email, company, role', required: true },
+          { key: 'schema', label: 'Schema (optional)', placeholder: 'e.g., name (string), date (ISO 8601)', required: false }
+        ]
+      },
+      sample: {
+        role: 'You are a precise data-extraction specialist.',
+        task: 'Extract company name, role, email, and signup date from the resume text.',
+        context: 'Alice Smith joined Acme Corp as VP Engineering on March 14, 2024. Email: alice@acme.example.',
+        format: 'json',
+        constraints: 'Strict JSON. snake_case keys. null for missing fields.',
+        examples: '',
+        length: 'short',
+        variables: { fields: 'company, role, email, signup_date', schema: 'company (string), role (string), email (string), signup_date (YYYY-MM-DD)' }
+      }
+    },
+    'translation': {
+      name: 'Translation',
+      icon: '🌐',
+      category: 'language',
+      defaults: {
+        role: 'You are a professional translator fluent in multiple languages, preserving tone, formality, idioms, and technical terminology.',
+        task: 'Translate the provided text accurately while preserving tone, formality, idioms, and technical terms.',
+        format: 'plain-prose',
+        constraints: 'Preserve formatting (line breaks, bullet lists, code blocks). Keep untranslatable proper nouns and brand names as-is. Add a brief note when an idiom was adapted.',
+        examples: '',
+        length: 'auto',
+        variables: [
+          { key: 'source_lang', label: 'Source language', placeholder: 'e.g., English', required: true },
+          { key: 'target_lang', label: 'Target language', placeholder: 'e.g., Spanish', required: true },
+          { key: 'preserve_tone', label: 'Preserve tone?', placeholder: 'yes / no', required: false }
+        ]
+      },
+      sample: {
+        role: 'You are a professional English→Spanish translator.',
+        task: 'Translate the email from English to Spanish, preserving the professional tone.',
+        context: 'Hi team,\n\nQuick reminder that the Q3 planning meeting is on Thursday at 2pm. Please bring your OKRs.\n\nThanks,\nAlice',
+        format: 'plain-prose',
+        constraints: 'Use formal "usted" form. Keep technical terms (OKR, Q3) untranslated.',
+        examples: '',
+        length: 'auto',
+        variables: { source_lang: 'English', target_lang: 'Spanish', preserve_tone: 'yes' }
+      }
+    },
+    'summarization': {
+      name: 'Summarization',
+      icon: '📰',
+      category: 'content',
+      defaults: {
+        role: 'You are an expert summarizer who extracts the signal from long-form text while preserving accuracy and nuance.',
+        task: 'Summarize the provided text according to the requested length and focus. Preserve critical facts, dates, and named entities.',
+        format: 'bullet-list',
+        constraints: 'No new facts. No editorial commentary. Quote key phrases verbatim when they carry weight.',
+        examples: '',
+        length: 'medium',
+        variables: [
+          { key: 'focus', label: 'Focus', placeholder: 'e.g., key decisions, action items, technical details', required: false },
+          { key: 'audience', label: 'Audience', placeholder: 'e.g., executives', required: false }
+        ]
+      },
+      sample: {
+        role: 'You are an executive-summary specialist.',
+        task: 'Summarize the meeting transcript for a VP who missed it.',
+        context: '[long meeting transcript with 7 attendees, 45 minutes]',
+        format: 'bullet-list',
+        constraints: '3 main decisions, 5 action items with owners, 1 paragraph summary.',
+        examples: '',
+        length: 'short',
+        variables: { focus: 'decisions and action items', audience: 'VP Engineering' }
+      }
+    },
+    'few-shot-classifier': {
+      name: 'Few-shot Classifier',
+      icon: '🏷️',
+      category: 'developer',
+      defaults: {
+        role: 'You are a precise text classifier that follows the provided examples exactly. When in doubt, return "unknown".',
+        task: 'Classify the input text into one of the provided categories. Match the style and confidence of the examples.',
+        format: 'plain-prose',
+        constraints: 'Return ONLY the category label, nothing else. If the input does not match any category, return "unknown". Do not explain unless asked.',
+        examples: 'Input: "My package never arrived" → category: shipping_issue\nInput: "Charged twice for the same order" → category: billing_issue\nInput: "How do I reset my password?" → category: account_help',
+        length: 'auto',
+        variables: [
+          { key: 'categories', label: 'Categories (comma-separated)', placeholder: 'e.g., billing, shipping, account, other', required: true }
+        ]
+      },
+      sample: {
+        role: 'You are a precise customer-support ticket classifier.',
+        task: 'Classify the support ticket into one of the provided categories.',
+        context: '"I was charged $29.99 but my plan is supposed to be $19.99. Please refund the difference."',
+        format: 'plain-prose',
+        constraints: 'Return only the category label.',
+        examples: '"Where is my order?" → shipping\n"I can\'t log in" → account\n"Refund please" → billing',
+        length: 'auto',
+        variables: { categories: 'billing, shipping, account, feature_request, other' }
+      }
+    },
+    'custom': {
+      name: 'Custom (define your own)',
+      icon: '⚙️',
+      category: 'custom',
+      defaults: {
+        role: 'You are a helpful assistant.',
+        task: '',
+        format: 'auto',
+        constraints: '',
+        examples: '',
+        length: 'auto',
+        variables: []
+      },
+      sample: null
+    }
+  };
+
+  /* ---------- i18n (EN full; zh-Hans reserved for v1.1) ---------- */
+  var I18N = {
+    en: {
+      previewEmpty: 'Fill in the fields to see your prompt.',
+      copied: 'Copied to clipboard',
+      copiedFallback: 'Copied (fallback)',
+      copyFailed: 'Copy failed — please select manually',
+      nothingToCopy: 'Nothing to copy — fill in the fields',
+      nothingToDownload: 'Nothing to download',
+      downloadedMd: 'Downloaded {filename}',
+      downloadedTxt: 'Downloaded {filename}',
+      invalidShare: 'Invalid share URL: {err}',
+      loadedShare: 'Loaded from share URL',
+      shareTruncated: 'Share URL truncated (context > 500 chars); receiver sees preview only',
+      historySaved: 'Saved to history',
+      historyCleared: 'History cleared',
+      ready: 'Ready'
+    },
+    'zh-Hans': {
+      previewEmpty: 'Fill in the fields to see your prompt.',
+      copied: 'Copied to clipboard',
+      copiedFallback: 'Copied (fallback)',
+      copyFailed: 'Copy failed — please select manually',
+      nothingToCopy: 'Nothing to copy — fill in the fields',
+      nothingToDownload: 'Nothing to download',
+      downloadedMd: 'Downloaded {filename}',
+      downloadedTxt: 'Downloaded {filename}',
+      invalidShare: 'Invalid share URL: {err}',
+      loadedShare: 'Loaded from share URL',
+      shareTruncated: 'Share URL truncated (context > 500 chars); receiver sees preview only',
+      historySaved: 'Saved to history',
+      historyCleared: 'History cleared',
+      ready: 'Ready'
+    }
+  };
+
+  /* ---------- localStorage keys ---------- */
+  var STORAGE_KEYS = {
+    history: 'aiph-history',
+    historyEnabled: 'aiph-history-enabled',
+    splitWidth: 'aiph-split-width',
+    settings: 'aiph-settings',
+    shareLast: 'aiph-share-last'
+  };
+
+  /* ---------- runtime state ---------- */
+  var state = {
+    currentTemplate: 'code-review',
+    formState: {
+      role: '',
+      task: '',
+      context: '',
+      format: 'auto',
+      constraints: '',
+      examples: '',
+      length: 'auto',
+      variables: {}
+    },
+    tone: 1,
+    modelTarget: 'agnostic',
+    outlang: 'auto',
+    historyEnabled: false,
+    viewMode: 'build',
+    lang: 'en'
+  };
+
+  /* ---------- DOM helpers ---------- */
+  function $(root, sel) { return root.querySelector(sel); }
+  function $$(root, sel) { return Array.prototype.slice.call(root.querySelectorAll(sel)); }
+
+  function escAttr(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  /* ---------- i18n ---------- */
+  function t(key) {
+    var lang = state.lang || 'en';
+    var dict = I18N[lang] || I18N.en;
+    return (dict && dict[key]) || key;
+  }
+
+  /* ---------- interpolate {key} placeholders ---------- */
+  function interpolate(text, vars) {
+    if (!text) return '';
+    if (!vars) return text;
+    return text.replace(/\{([a-zA-Z_][a-zA-Z0-9_]*)\}/g, function (match, key) {
+      var v = vars[key];
+      return (v !== undefined && v !== null && String(v) !== '') ? String(v) : match;
+    });
+  }
+
+  /* ---------- loadTemplate: applies defaults + rebuilds var panel ---------- */
+  function loadTemplate(root, id) {
+    var tpl = TEMPLATES[id];
+    if (!tpl) return;
+    state.currentTemplate = id;
+    state.formState.role = tpl.defaults.role || '';
+    state.formState.task = tpl.defaults.task || '';
+    state.formState.context = tpl.defaults.context || '';
+    state.formState.format = tpl.defaults.format || 'auto';
+    state.formState.constraints = tpl.defaults.constraints || '';
+    state.formState.examples = tpl.defaults.examples || '';
+    state.formState.length = tpl.defaults.length || 'auto';
+    state.formState.variables = {};
+    (tpl.defaults.variables || []).forEach(function (v) {
+      state.formState.variables[v.key] = '';
+    });
+
+    // Sync DOM
+    setVal(root, '[data-aiph-field="role"]', state.formState.role);
+    setVal(root, '[data-aiph-field="task"]', state.formState.task);
+    setVal(root, '[data-aiph-field="context"]', state.formState.context);
+    setVal(root, '[data-aiph-field="format"]', state.formState.format);
+    setVal(root, '[data-aiph-field="constraints"]', state.formState.constraints);
+    setVal(root, '[data-aiph-field="examples"]', state.formState.examples);
+    setVal(root, '[data-aiph-field="length"]', state.formState.length);
+
+    rebuildVarPanel(root);
+    updateAllCounts(root);
+    updatePreview(root);
+  }
+
+  function setVal(root, sel, val) {
+    var el = $(root, sel);
+    if (el) el.value = val == null ? '' : String(val);
+  }
+
+  /* ---------- rebuild dynamic variable panel ---------- */
+  function rebuildVarPanel(root) {
+    var tpl = TEMPLATES[state.currentTemplate];
+    var panel = $(root, '[data-aiph-vars]');
+    if (!panel) return;
+    panel.innerHTML = '';
+    var vars = (tpl && tpl.defaults && tpl.defaults.variables) || [];
+    vars.forEach(function (v) {
+      var field = document.createElement('div');
+      field.className = 'aiph-var-field';
+      var lbl = document.createElement('label');
+      lbl.className = 'aiph-var-label';
+      lbl.setAttribute('data-var-key', v.key);
+      var requiredMark = v.required ? ' *' : '';
+      lbl.textContent = v.label + requiredMark;
+      var inp = document.createElement('input');
+      inp.type = 'text';
+      inp.className = 'aiph-var-input';
+      inp.setAttribute('data-aiph-var', v.key);
+      inp.placeholder = v.placeholder || '';
+      inp.value = (state.formState.variables[v.key] || '');
+      field.appendChild(lbl);
+      field.appendChild(inp);
+      panel.appendChild(field);
+    });
+  }
+
+  /* ---------- read form state from DOM ---------- */
+  function readFormStateFromDom(root) {
+    state.formState.role = readVal(root, '[data-aiph-field="role"]');
+    state.formState.task = readVal(root, '[data-aiph-field="task"]');
+    state.formState.context = readVal(root, '[data-aiph-field="context"]');
+    state.formState.format = readVal(root, '[data-aiph-field="format"]');
+    state.formState.constraints = readVal(root, '[data-aiph-field="constraints"]');
+    state.formState.examples = readVal(root, '[data-aiph-field="examples"]');
+    state.formState.length = readVal(root, '[data-aiph-field="length"]');
+    var vars = {};
+    $$ (root, '[data-aiph-var]').forEach(function (inp) {
+      vars[inp.getAttribute('data-aiph-var')] = inp.value;
+    });
+    state.formState.variables = vars;
+  }
+
+  function readVal(root, sel) {
+    var el = $(root, sel);
+    return el ? el.value : '';
+  }
+
+  /* ---------- build the final prompt string ---------- */
+  function buildPrompt() {
+    var f = state.formState;
+    var parts = [];
+
+    // 1. Role + tone adjective
+    var toneAdjs = TONE_ADJECTIVES[state.tone] || '';
+    var role = (f.role || '').trim();
+    if (role && toneAdjs && role.indexOf(toneAdjs) === -1) {
+      role = role + '. ' + toneAdjs;
+    }
+    if (role) parts.push(interpolate(role, f.variables));
+
+    // 2. Model hint
+    var modelHint = MODEL_HINTS[state.modelTarget];
+    if (modelHint) parts.push(modelHint);
+
+    // 3. Task
+    var task = (f.task || '').trim();
+    if (task) parts.push(interpolate(task, f.variables));
+
+    // 4. Context
+    var context = (f.context || '').trim();
+    if (context) {
+      parts.push('---\nContext:\n' + context);
+    }
+
+    // 5. Format
+    var format = f.format;
+    if (format && format !== 'auto' && FORMAT_HINTS[format]) {
+      parts.push('Format: ' + FORMAT_HINTS[format]);
+    }
+
+    // 6. Constraints
+    var constraints = (f.constraints || '').trim();
+    if (constraints) parts.push('Constraints: ' + constraints);
+
+    // 7. Examples
+    var examples = (f.examples || '').trim();
+    if (examples) parts.push('Examples:\n' + examples);
+
+    // 8. Length
+    if (f.length && f.length !== 'auto' && LENGTH_HINTS[f.length]) {
+      parts.push('Length: ' + LENGTH_HINTS[f.length]);
+    }
+
+    // 9. Output language
+    if (state.outlang && state.outlang !== 'auto' && OUTLANG_HINTS[state.outlang]) {
+      parts.push('Respond in ' + OUTLANG_HINTS[state.outlang] + '.');
+    }
+
+    return parts.join('\n\n');
+  }
+
+  /* ---------- updatePreview + meta ---------- */
+  var updatePreviewTimer = null;
+  function updatePreview(root) {
+    if (updatePreviewTimer) return; // rAF + single 200ms debounce
+    updatePreviewTimer = setTimeout(function () {
+      updatePreviewTimer = null;
+      var prompt = buildPrompt();
+      var preview = $(root, '[data-aiph-preview]');
+      if (preview) preview.textContent = prompt || t('previewEmpty');
+      updateMeta(root);
+    }, 200);
+  }
+
+  function updateMeta(root) {
+    var preview = $(root, '[data-aiph-preview]');
+    var meta = $(root, '[data-aiph-meta]');
+    if (!preview || !meta) return;
+    var txt = preview.textContent || '';
+    var lines = txt === '' ? 0 : txt.split('\n').length;
+    meta.textContent = txt.length + ' chars / ' + lines + ' lines';
+  }
+
+  function updateAllCounts(root) {
+    ['task', 'context'].forEach(function (field) {
+      var el = $(root, '[data-aiph-field="' + field + '"]');
+      var counter = $(root, '[data-aiph-count="' + field + '"]');
+      if (el && counter) counter.textContent = el.value.length + ' chars';
+    });
+  }
+
+  /* ---------- status bar ---------- */
+  function setStatus(root, msg, kind) {
+    var el = $(root, '[data-aiph-status]');
+    if (!el) return;
+    el.textContent = msg;
+    if (kind) el.setAttribute('data-kind', kind);
+    else el.removeAttribute('data-kind');
+  }
+
+  /* ---------- copy / fallback ---------- */
+  function copyPrompt(root) {
+    var text = buildPrompt();
+    if (!text.trim()) {
+      setStatus(root, t('nothingToCopy'), 'warn');
+      return;
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () {
+        setStatus(root, t('copied'), 'ok');
+        trySaveHistory(root, text);
+      }).catch(function () {
+        fallbackCopy(root, text);
+      });
+    } else {
+      fallbackCopy(root, text);
+    }
+  }
+
+  function fallbackCopy(root, text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    ta.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(ta);
+    ta.select();
+    var ok = false;
+    try {
+      ok = document.execCommand('copy');
+      setStatus(root, ok ? t('copiedFallback') : t('copyFailed'), ok ? 'ok' : 'err');
+    } catch (e) {
+      setStatus(root, t('copyFailed') + ': ' + e.message, 'err');
+    }
+    document.body.removeChild(ta);
+  }
+
+  /* ---------- download .md / .txt ---------- */
+  function downloadMd(root) {
+    var prompt = buildPrompt();
+    if (!prompt.trim()) { setStatus(root, t('nothingToDownload'), 'warn'); return; }
+    var tpl = state.currentTemplate;
+    var date = new Date().toISOString().slice(0, 10);
+    var toneName = TONE_NAMES[state.tone] || 'casual';
+    var fm = [
+      '---',
+      'template: ' + tpl,
+      'date: ' + date,
+      'tone: ' + toneName.toLowerCase(),
+      'model_target: ' + state.modelTarget,
+      'length: ' + state.formState.length,
+      'source: dlsome.top/tools/ai-prompt-helper/',
+      '---',
+      ''
+    ].join('\n');
+    var tplName = TEMPLATES[tpl] ? TEMPLATES[tpl].name : 'Prompt';
+    var content = fm + '# ' + tplName + '\n\n' + prompt;
+    var filename = 'ai-prompt-helper_' + tpl + '_' + date + '.md';
+    downloadBlob(root, content, filename, 'text/markdown;charset=utf-8');
+  }
+
+  function downloadTxt(root) {
+    var prompt = buildPrompt();
+    if (!prompt.trim()) { setStatus(root, t('nothingToDownload'), 'warn'); return; }
+    var tpl = state.currentTemplate;
+    var date = new Date().toISOString().slice(0, 10);
+    var filename = 'ai-prompt-helper_' + tpl + '_' + date + '.txt';
+    downloadBlob(root, prompt, filename, 'text/plain;charset=utf-8');
+  }
+
+  function downloadBlob(root, text, filename, mime) {
+    try {
+      var blob = new Blob([text], { type: mime });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
+      var key = filename.indexOf('.md') > 0 ? 'downloadedMd' : 'downloadedTxt';
+      setStatus(root, t(key).replace('{filename}', filename), 'ok');
+      if (filename.indexOf('.md') > 0) trySaveHistory(root, text);
+    } catch (e) {
+      setStatus(root, 'Download failed: ' + e.message, 'err');
+    }
+  }
+
+  /* ---------- share URL ---------- */
+  function buildShareUrl(root) {
+    var snapshot = {
+      t: state.currentTemplate,
+      f: state.formState,
+      n: state.tone,
+      m: state.modelTarget,
+      o: state.outlang
+    };
+    var encoded = '#p=' + encodeURIComponent(b64encode(JSON.stringify(snapshot)));
+    var url = location.origin + location.pathname + encoded;
+
+    if (url.length > 3000) {
+      var truncated = {
+        t: snapshot.t,
+        f: Object.assign({}, snapshot.f, {
+          context: snapshot.f.context && snapshot.f.context.length > 500
+            ? snapshot.f.context.slice(0, 500) + '\n[... preview only, full text not included in share URL ...]'
+            : snapshot.f.context
+        }),
+        n: snapshot.n,
+        m: snapshot.m,
+        o: snapshot.o
+      };
+      encoded = '#p=' + encodeURIComponent(b64encode(JSON.stringify(truncated)));
+      url = location.origin + location.pathname + encoded;
+      setStatus(root, t('shareTruncated'), 'warn');
+    }
+    return url;
+  }
+
+  function b64encode(s) {
+    try { return btoa(unescape(encodeURIComponent(s))); }
+    catch (e) { return btoa(s); }
+  }
+  function b64decode(s) {
+    try { return decodeURIComponent(escape(atob(s))); }
+    catch (e) { return atob(s); }
+  }
+
+  function openShareModal(root) {
+    var modal = $(root, '[data-aiph-share-modal]');
+    var ta = $(root, '[data-aiph-share-url]');
+    if (!modal || !ta) return;
+    var url = buildShareUrl(root);
+    ta.value = url;
+    modal.hidden = false;
+    setTimeout(function () { ta.focus(); ta.select(); }, 50);
+  }
+
+  function closeShareModal(root) {
+    var modal = $(root, '[data-aiph-share-modal]');
+    if (modal) modal.hidden = true;
+  }
+
+  function applyShareState(root) {
+    var hash = location.hash || '';
+    if (hash.indexOf('#p=') !== 0) return false;
+    try {
+      var raw = b64decode(decodeURIComponent(hash.slice(3)));
+      var decoded = JSON.parse(raw);
+      if (decoded.t && TEMPLATES[decoded.t]) {
+        loadTemplate(root, decoded.t);
+        $(root, '[data-aiph-template]').value = decoded.t;
+      }
+      if (decoded.f) {
+        var f = decoded.f;
+        setVal(root, '[data-aiph-field="role"]', f.role || '');
+        setVal(root, '[data-aiph-field="task"]', f.task || '');
+        setVal(root, '[data-aiph-field="context"]', f.context || '');
+        setVal(root, '[data-aiph-field="format"]', f.format || 'auto');
+        setVal(root, '[data-aiph-field="constraints"]', f.constraints || '');
+        setVal(root, '[data-aiph-field="examples"]', f.examples || '');
+        setVal(root, '[data-aiph-field="length"]', f.length || 'auto');
+        state.formState.variables = f.variables || {};
+        rebuildVarPanel(root);
+      }
+      if (typeof decoded.n === 'number') setTone(root, decoded.n);
+      if (decoded.m) {
+        state.modelTarget = decoded.m;
+        var msel = $(root, '[data-aiph-model]');
+        if (msel) msel.value = decoded.m;
+      }
+      if (decoded.o) {
+        state.outlang = decoded.o;
+        var osel = $(root, '[data-aiph-outlang]');
+        if (osel) osel.value = decoded.o;
+      }
+      readFormStateFromDom(root);
+      updateAllCounts(root);
+      updatePreview(root);
+      setStatus(root, t('loadedShare'), 'ok');
+      return true;
+    } catch (e) {
+      setStatus(root, t('invalidShare').replace('{err}', e.message), 'err');
+      return false;
+    }
+  }
+
+  /* ---------- tone ---------- */
+  function setTone(root, n) {
+    state.tone = n;
+    var range = $(root, '[data-aiph-tone-range]');
+    if (range) range.value = String(n);
+    var name = $(root, '[data-aiph-tone-name]');
+    if (name) name.textContent = TONE_NAMES[n] || 'Casual';
+    root.setAttribute('data-aiph-tone', String(n));
+  }
+
+  /* ---------- history (opt-in) ---------- */
+  function trySaveHistory(root, prompt) {
+    if (!state.historyEnabled) return;
+    try {
+      var raw = localStorage.getItem(STORAGE_KEYS.history);
+      var list = raw ? JSON.parse(raw) : [];
+      list.unshift({
+        ts: Date.now(),
+        template: state.currentTemplate,
+        tone: state.tone,
+        prompt: prompt
+      });
+      if (list.length > 10) list = list.slice(0, 10);
+      localStorage.setItem(STORAGE_KEYS.history, JSON.stringify(list));
+      setStatus(root, t('historySaved'), 'ok');
+    } catch (e) { /* localStorage disabled */ }
+  }
+
+  function loadHistory() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEYS.history);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+  }
+
+  function clearHistory(root) {
+    try {
+      localStorage.removeItem(STORAGE_KEYS.history);
+      setStatus(root, t('historyCleared'), 'ok');
+    } catch (e) { /* localStorage disabled */ }
+  }
+
+  /* ---------- sample / clear / reset ---------- */
+  function loadSample(root) {
+    var tpl = TEMPLATES[state.currentTemplate];
+    if (!tpl || !tpl.sample) {
+      setStatus(root, 'No sample for this template', 'warn');
+      return;
+    }
+    var s = tpl.sample;
+    setVal(root, '[data-aiph-field="role"]', s.role || '');
+    setVal(root, '[data-aiph-field="task"]', s.task || '');
+    setVal(root, '[data-aiph-field="context"]', s.context || '');
+    setVal(root, '[data-aiph-field="format"]', s.format || 'auto');
+    setVal(root, '[data-aiph-field="constraints"]', s.constraints || '');
+    setVal(root, '[data-aiph-field="examples"]', s.examples || '');
+    setVal(root, '[data-aiph-field="length"]', s.length || 'auto');
+    state.formState.variables = Object.assign({}, s.variables || {});
+    rebuildVarPanel(root);
+    readFormStateFromDom(root);
+    updateAllCounts(root);
+    updatePreview(root);
+    setStatus(root, 'Sample loaded', 'ok');
+  }
+
+  function clearAll(root) {
+    setVal(root, '[data-aiph-field="role"]', '');
+    setVal(root, '[data-aiph-field="task"]', '');
+    setVal(root, '[data-aiph-field="context"]', '');
+    setVal(root, '[data-aiph-field="format"]', 'auto');
+    setVal(root, '[data-aiph-field="constraints"]', '');
+    setVal(root, '[data-aiph-field="examples"]', '');
+    setVal(root, '[data-aiph-field="length"]', 'auto');
+    state.formState.variables = {};
+    rebuildVarPanel(root);
+    readFormStateFromDom(root);
+    updateAllCounts(root);
+    updatePreview(root);
+    setStatus(root, 'Cleared', 'ok');
+  }
+
+  /* ---------- keyboard shortcuts ---------- */
+  function bindKeyboard(root) {
+    root.addEventListener('keydown', function (e) {
+      var mod = e.ctrlKey || e.metaKey;
+      if (!mod) return;
+      var k = e.key;
+      switch (k) {
+        case 'Enter':
+          e.preventDefault();
+          copyPrompt(root);
+          break;
+        case 'l': case 'L':
+          e.preventDefault();
+          loadSample(root);
+          break;
+        case 'k': case 'K':
+          e.preventDefault();
+          clearAll(root);
+          break;
+        case 's': case 'S':
+          e.preventDefault();
+          openShareModal(root);
+          break;
+        case 'd': case 'D':
+          e.preventDefault();
+          downloadMd(root);
+          break;
+      }
+    });
+  }
+
+  /* ---------- resizable split pane (desktop) ---------- */
+  function bindResize(root) {
+    var divider = $(root, '[data-aiph-divider]');
+    var split = $(root, '[data-aiph-split]');
+    if (!divider || !split) return;
+    var dragging = false;
+
+    function applyWidth(leftPct) {
+      if (leftPct < 15) leftPct = 15;
+      if (leftPct > 85) leftPct = 85;
+      split.style.gridTemplateColumns = leftPct + 'fr 6px ' + (100 - leftPct) + 'fr';
+      try { localStorage.setItem(STORAGE_KEYS.splitWidth, String(leftPct)); } catch (_) {}
+    }
+
+    var stored = null;
+    try { stored = localStorage.getItem(STORAGE_KEYS.splitWidth); } catch (_) {}
+    if (stored) applyWidth(parseFloat(stored));
+
+    divider.addEventListener('mousedown', function (e) {
+      e.preventDefault();
+      dragging = true;
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    });
+    document.addEventListener('mousemove', function (e) {
+      if (!dragging) return;
+      var rect = split.getBoundingClientRect();
+      var pct = ((e.clientX - rect.left) / rect.width) * 100;
+      applyWidth(pct);
+    });
+    document.addEventListener('mouseup', function () {
+      if (!dragging) return;
+      dragging = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    });
+
+    divider.addEventListener('keydown', function (e) {
+      var stored = parseFloat(localStorage.getItem(STORAGE_KEYS.splitWidth) || '50');
+      if (e.key === 'ArrowLeft') applyWidth(stored - 2);
+      if (e.key === 'ArrowRight') applyWidth(stored + 2);
+    });
+  }
+
+  /* ---------- mobile view tabs ---------- */
+  function bindViewTabs(root) {
+    $$ (root, '[data-aiph-view-tab]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var mode = btn.getAttribute('data-aiph-view-tab');
+        state.viewMode = mode;
+        root.setAttribute('data-aiph-view', mode);
+        $$ (root, '[data-aiph-view-tab]').forEach(function (b) {
+          b.classList.toggle('aiph-viewtab-active', b === btn);
+          b.setAttribute('aria-selected', String(b === btn));
+        });
+        applyViewMode(root);
+      });
+    });
+    applyViewMode(root);
+  }
+
+  function applyViewMode(root) {
+    var mode = state.viewMode;
+    var form = $(root, '.aiph-pane-form');
+    var preview = $(root, '.aiph-pane-preview');
+    if (!form || !preview) return;
+    if (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) {
+      form.setAttribute('data-aiph-visible', String(mode === 'build'));
+      preview.setAttribute('data-aiph-visible', String(mode === 'preview'));
+    } else {
+      form.setAttribute('data-aiph-visible', 'true');
+      preview.setAttribute('data-aiph-visible', 'true');
+    }
+  }
+
+  /* ---------- main init ---------- */
+  function init(root) {
+    if (!root) return;
+    state.lang = root.getAttribute('data-aiph-lang') || 'en';
+    if (I18N[state.lang] === undefined) state.lang = 'en';
+
+    // Try to restore history-enabled flag
+    try {
+      var h = localStorage.getItem(STORAGE_KEYS.historyEnabled);
+      if (h === '1') {
+        state.historyEnabled = true;
+        var cb = $(root, '[data-aiph-opt="history"]');
+        if (cb) cb.checked = true;
+      }
+    } catch (_) {}
+
+    // Apply initial template (defaults only)
+    loadTemplate(root, 'code-review');
+
+    // Template select
+    var sel = $(root, '[data-aiph-template]');
+    if (sel) {
+      sel.addEventListener('change', function () {
+        loadTemplate(root, sel.value);
+      });
+    }
+
+    // Field bindings (rAF + 200ms debounce inside updatePreview)
+    root.addEventListener('input', function (e) {
+      var t = e.target;
+      if (!t) return;
+      if (t.matches && t.matches('[data-aiph-field]')) {
+        var field = t.getAttribute('data-aiph-field');
+        state.formState[field] = t.value;
+        if (field === 'task' || field === 'context') {
+          var counter = $(root, '[data-aiph-count="' + field + '"]');
+          if (counter) counter.textContent = t.value.length + ' chars';
+        }
+        requestAnimationFrame(function () { updatePreview(root); });
+      } else if (t.matches && t.matches('[data-aiph-var]')) {
+        var vkey = t.getAttribute('data-aiph-var');
+        state.formState.variables[vkey] = t.value;
+        requestAnimationFrame(function () { updatePreview(root); });
+      }
+    });
+
+    root.addEventListener('change', function (e) {
+      var t = e.target;
+      if (!t) return;
+      if (t.matches && t.matches('[data-aiph-field="format"]')) {
+        state.formState.format = t.value;
+        updatePreview(root);
+      } else if (t.matches && t.matches('[data-aiph-field="length"]')) {
+        state.formState.length = t.value;
+        updatePreview(root);
+      } else if (t.matches && t.matches('[data-aiph-model]')) {
+        state.modelTarget = t.value;
+        updatePreview(root);
+      } else if (t.matches && t.matches('[data-aiph-outlang]')) {
+        state.outlang = t.value;
+        updatePreview(root);
+      } else if (t.matches && t.matches('[data-aiph-tone-range]')) {
+        setTone(root, parseInt(t.value, 10));
+        updatePreview(root);
+      } else if (t.matches && t.matches('[data-aiph-opt="history"]')) {
+        state.historyEnabled = !!t.checked;
+        try {
+          localStorage.setItem(STORAGE_KEYS.historyEnabled, state.historyEnabled ? '1' : '0');
+        } catch (_) {}
+      }
+    });
+
+    // Toolbar actions
+    root.addEventListener('click', function (e) {
+      var target = e.target.closest('[data-aiph-action]');
+      if (!target) return;
+      var act = target.getAttribute('data-aiph-action');
+      switch (act) {
+        case 'sample': loadSample(root); break;
+        case 'clear': clearAll(root); break;
+        case 'reset': loadTemplate(root, state.currentTemplate); break;
+        case 'copy': copyPrompt(root); break;
+        case 'share': openShareModal(root); break;
+        case 'download-md': downloadMd(root); break;
+        case 'download-txt': downloadTxt(root); break;
+        case 'settings': toggleSettings(root); break;
+        case 'copy-share-url': copyShareUrl(root); break;
+        case 'close-share': closeShareModal(root); break;
+      }
+    });
+
+    bindKeyboard(root);
+    bindResize(root);
+    bindViewTabs(root);
+
+    // Share URL auto-apply (after init so it overrides defaults)
+    applyShareState(root);
+
+    // Reactive preview on window resize for view mode
+    window.addEventListener('resize', function () { applyViewMode(root); });
+  }
+
+  function toggleSettings(root) {
+    var panel = $(root, '[data-aiph-settings]');
+    if (panel) panel.hidden = !panel.hidden;
+  }
+
+  function copyShareUrl(root) {
+    var ta = $(root, '[data-aiph-share-url]');
+    if (!ta) return;
+    var url = ta.value;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(function () {
+        setStatus(root, 'Share URL copied', 'ok');
+      });
+    } else {
+      ta.select();
+      try { document.execCommand('copy'); setStatus(root, 'Share URL copied (fallback)', 'ok'); }
+      catch (e) { setStatus(root, 'Copy failed', 'err'); }
+    }
+  }
+
+  /* ---------- Bootstrap ---------- */
+  function bootstrap() {
+    var roots = document.querySelectorAll('[data-aiph-root]');
+    roots.forEach(function (r) { init(r); });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootstrap);
+  } else {
+    bootstrap();
+  }
+})();
+</script>
