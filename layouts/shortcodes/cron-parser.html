@@ -1,0 +1,1694 @@
+{{- /*
+  Shortcode: cron-parser
+
+  Cron expression parser + generator with 5-field POSIX and 6-field Quartz
+  syntax support, 50+ IANA timezones, DST boundary detection, and 4
+  platform export presets (Kubernetes CronJob YAML, GitHub Actions
+  workflow YAML, AWS EventBridge rule JSON, systemd timer + service).
+
+  Self-contained HTML + inline CSS + inline JS IIFE. Zero CDN, zero fetch,
+  zero tracking. PaperMod `.dark` class compatible. Hugo 0.123.7 verified.
+
+  Usage:
+    {{< cron-parser >}}
+
+  CSS namespace: --crp-* / .crp-* (Cron Parser)
+  JS data-attr:  data-crp-*
+  i18n:          en (full) + zh-Hans (placeholder strings, EN fallback)
+  Slug:          cron-parser
+*/ -}}
+
+{{- $lang := .Page.Language.Lang | default "en" -}}
+<div class="crp" data-crp-root data-crp-lang="{{ $lang }}" data-crp-mode="auto">
+
+  <!-- ===== Input bar: expression + tz + detect ===== -->
+  <div class="crp-toolbar">
+    <div class="crp-input-wrap">
+      <label class="crp-input-label" for="crp-expr">Cron expression</label>
+      <input type="text" id="crp-expr" class="crp-input" data-crp-expr
+             autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+             placeholder="e.g. 0 9 * * 1-5  or  0 0 12 * * ?"
+             aria-label="Cron expression" />
+      <span class="crp-syntax-badge" data-crp-syntax-badge title="Detected syntax">POSIX</span>
+    </div>
+    <div class="crp-tz-wrap">
+      <label class="crp-input-label" for="crp-tz">Timezone (preview)</label>
+      <select id="crp-tz" class="crp-select" data-crp-tz aria-label="Timezone for preview"></select>
+    </div>
+    <div class="crp-actions">
+      <button type="button" class="crp-btn" data-crp-action="sample" title="Load sample (demo)">Sample</button>
+      <button type="button" class="crp-btn" data-crp-action="clear" title="Clear">Clear</button>
+    </div>
+  </div>
+
+  <!-- ===== Description + field breakdown ===== -->
+  <div class="crp-section crp-section-result">
+    <div class="crp-result-head">
+      <span class="crp-result-title" data-crp-status>Enter a cron expression to begin.</span>
+      <span class="crp-result-meta" data-crp-meta></span>
+    </div>
+    <div class="crp-desc" data-crp-desc></div>
+    <div class="crp-fields" data-crp-fields></div>
+  </div>
+
+  <!-- ===== Timeline (next 10 fire times) ===== -->
+  <div class="crp-section">
+    <div class="crp-section-head">
+      <h3 class="crp-section-title">Next 10 fire times</h3>
+      <span class="crp-section-hint">Hover for DST warnings · times shown in selected timezone</span>
+    </div>
+    <div class="crp-timeline" data-crp-timeline></div>
+  </div>
+
+  <!-- ===== Platform export tabs ===== -->
+  <div class="crp-section">
+    <div class="crp-section-head">
+      <h3 class="crp-section-title">Platform export</h3>
+      <span class="crp-section-hint">Click <strong>Copy</strong> on any tab to paste-ready config</span>
+    </div>
+    <div class="crp-tabs" role="tablist" aria-label="Platform export">
+      <button type="button" class="crp-tab crp-tab-active" data-crp-tab="kubernetes" role="tab" aria-selected="true">Kubernetes</button>
+      <button type="button" class="crp-tab" data-crp-tab="github-actions" role="tab" aria-selected="false">GitHub Actions</button>
+      <button type="button" class="crp-tab" data-crp-tab="aws-eventbridge" role="tab" aria-selected="false">AWS EventBridge</button>
+      <button type="button" class="crp-tab" data-crp-tab="systemd" role="tab" aria-selected="false">systemd</button>
+    </div>
+    <div class="crp-tab-panes">
+      <div class="crp-tab-pane crp-tab-pane-active" data-crp-pane="kubernetes" role="tabpanel">
+        <button type="button" class="crp-copy-btn" data-crp-copy="kubernetes">Copy YAML</button>
+        <pre class="crp-code" data-crp-code="kubernetes"></pre>
+      </div>
+      <div class="crp-tab-pane" data-crp-pane="github-actions" role="tabpanel" hidden>
+        <button type="button" class="crp-copy-btn" data-crp-copy="github-actions">Copy YAML</button>
+        <pre class="crp-code" data-crp-code="github-actions"></pre>
+      </div>
+      <div class="crp-tab-pane" data-crp-pane="aws-eventbridge" role="tabpanel" hidden>
+        <button type="button" class="crp-copy-btn" data-crp-copy="aws-eventbridge">Copy JSON</button>
+        <pre class="crp-code" data-crp-code="aws-eventbridge"></pre>
+      </div>
+      <div class="crp-tab-pane" data-crp-pane="systemd" role="tabpanel" hidden>
+        <button type="button" class="crp-copy-btn" data-crp-copy="systemd">Copy units</button>
+        <pre class="crp-code" data-crp-code="systemd"></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Preset library (30+) ===== -->
+  <div class="crp-section">
+    <div class="crp-section-head">
+      <h3 class="crp-section-title">Common patterns (30+)</h3>
+      <span class="crp-section-hint">Click any preset to load it</span>
+    </div>
+    <div class="crp-presets" data-crp-presets></div>
+  </div>
+
+  <!-- ===== Footer (status + privacy) ===== -->
+  <div class="crp-footer">
+    <span class="crp-status-pill" data-crp-status-pill>Ready</span>
+    <span class="crp-footer-hint">All parsing happens in your browser. Zero network requests.</span>
+    <span class="crp-privacy-badge" title="No data leaves your browser. Verified via DevTools → Network = 0 outbound requests.">100% client-side</span>
+  </div>
+</div>
+
+<style>
+/* ===== Cron Parser — CSS ===== */
+.crp {
+  --crp-bg: #1e1f24;
+  --crp-bg-alt: #16171c;
+  --crp-fg: #d8d9dd;
+  --crp-fg-muted: #9aa0a6;
+  --crp-border: #2c2e36;
+  --crp-border-strong: #3c3e48;
+  --crp-accent: #6aa9ff;
+  --crp-accent-bg: rgba(106, 169, 255, 0.12);
+  --crp-accent-strong: #4a8de0;
+  --crp-code-bg: #0f1014;
+  --crp-success: #2da44e;
+  --crp-warning: #bf8700;
+  --crp-error: #cf222e;
+  --crp-radius: 8px;
+  --crp-radius-sm: 4px;
+  --crp-pad: 12px;
+  --crp-pad-sm: 8px;
+  --crp-gap: 10px;
+  --crp-font-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Fira Code", Menlo, Consolas, monospace;
+  --crp-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, "Helvetica Neue", Arial, sans-serif;
+
+  font-family: var(--crp-font-ui);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--crp-fg);
+  background: var(--crp-bg);
+  border: 1px solid var(--crp-border);
+  border-radius: var(--crp-radius);
+  margin: 1.5rem 0;
+  overflow: hidden;
+}
+
+.crp *,
+.crp *::before,
+.crp *::after { box-sizing: border-box; }
+
+/* ===== Light mode (PaperMod toggles .dark on <html>) ===== */
+body:not(.dark) .crp {
+  --crp-bg: #ffffff;
+  --crp-bg-alt: #f6f8fa;
+  --crp-fg: #1f2328;
+  --crp-fg-muted: #59636e;
+  --crp-border: #d0d7de;
+  --crp-border-strong: #afb8c1;
+  --crp-accent: #0969da;
+  --crp-accent-bg: rgba(9, 105, 218, 0.08);
+  --crp-accent-strong: #0550ae;
+  --crp-code-bg: #f6f8fa;
+  --crp-success: #1a7f37;
+  --crp-warning: #9a6700;
+  --crp-error: #cf222e;
+}
+
+/* ===== Toolbar ===== */
+.crp-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--crp-gap);
+  align-items: flex-end;
+  padding: var(--crp-pad);
+  background: var(--crp-bg-alt);
+  border-bottom: 1px solid var(--crp-border);
+}
+.crp-input-wrap,
+.crp-tz-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 280px;
+  min-width: 0;
+  position: relative;
+}
+.crp-input-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--crp-fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.crp-input {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 64px 8px 10px;
+  background: var(--crp-bg);
+  color: var(--crp-fg);
+  border: 1px solid var(--crp-border);
+  border-radius: var(--crp-radius-sm);
+  font-family: var(--crp-font-mono);
+  font-size: 14px;
+  line-height: 1.45;
+  transition: border-color 120ms, background 120ms;
+}
+.crp-input:focus {
+  outline: none;
+  border-color: var(--crp-accent);
+}
+.crp-input.is-error { border-color: var(--crp-error); }
+.crp-input.is-warn  { border-color: var(--crp-warning); }
+.crp-input.is-ok    { border-color: var(--crp-success); }
+
+.crp-syntax-badge {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(calc(-50% + 7px)); /* offset for label height */
+  padding: 2px 8px;
+  background: var(--crp-accent-bg);
+  color: var(--crp-accent);
+  border: 1px solid var(--crp-accent);
+  border-radius: var(--crp-radius-sm);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  pointer-events: none;
+  user-select: none;
+}
+.crp-syntax-badge[data-mode="posix"]    { background: var(--crp-accent-bg); color: var(--crp-accent); border-color: var(--crp-accent); }
+.crp-syntax-badge[data-mode="quartz"]   { background: rgba(45, 164, 78, 0.12); color: var(--crp-success); border-color: var(--crp-success); }
+.crp-syntax-badge[data-mode="invalid"]  { background: rgba(207, 34, 46, 0.12); color: var(--crp-error); border-color: var(--crp-error); }
+.crp-syntax-badge[data-mode="empty"]    { display: none; }
+
+.crp-select {
+  width: 100%;
+  min-height: 40px;
+  padding: 6px 10px;
+  background: var(--crp-bg);
+  color: var(--crp-fg);
+  border: 1px solid var(--crp-border);
+  border-radius: var(--crp-radius-sm);
+  font-family: var(--crp-font-ui);
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color 120ms;
+}
+.crp-select:focus { outline: none; border-color: var(--crp-accent); }
+
+.crp-actions { display: flex; gap: 6px; align-items: center; }
+.crp-btn {
+  min-height: 40px;
+  padding: 6px 14px;
+  background: var(--crp-bg);
+  color: var(--crp-fg);
+  border: 1px solid var(--crp-border);
+  border-radius: var(--crp-radius-sm);
+  font-family: var(--crp-font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 120ms, border-color 120ms;
+  user-select: none;
+}
+.crp-btn:hover { background: var(--crp-accent-bg); border-color: var(--crp-accent); }
+.crp-btn:focus-visible { outline: 2px solid var(--crp-accent); outline-offset: 1px; }
+.crp-btn:active { transform: translateY(1px); }
+
+/* ===== Section base ===== */
+.crp-section {
+  padding: var(--crp-pad);
+  border-bottom: 1px solid var(--crp-border);
+  background: var(--crp-bg);
+}
+.crp-section:last-of-type { border-bottom: none; }
+.crp-section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.crp-section-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--crp-fg);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.crp-section-hint {
+  font-size: 11px;
+  color: var(--crp-fg-muted);
+}
+.crp-section-hint strong { color: var(--crp-accent); font-weight: 600; }
+
+/* ===== Result section ===== */
+.crp-section-result { background: var(--crp-bg-alt); }
+.crp-result-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.crp-result-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--crp-fg);
+}
+.crp-result-title[data-kind="ok"]   { color: var(--crp-success); }
+.crp-result-title[data-kind="warn"] { color: var(--crp-warning); }
+.crp-result-title[data-kind="err"]  { color: var(--crp-error); }
+.crp-result-meta {
+  font-family: var(--crp-font-mono);
+  font-size: 11px;
+  color: var(--crp-fg-muted);
+}
+.crp-desc {
+  font-size: 14px;
+  color: var(--crp-fg);
+  margin-bottom: 8px;
+  min-height: 1.5em;
+  word-wrap: break-word;
+}
+.crp-desc:empty { display: none; }
+.crp-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 6px;
+}
+.crp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  background: var(--crp-bg);
+  border: 1px solid var(--crp-border);
+  border-radius: var(--crp-radius-sm);
+}
+.crp-field-name {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--crp-fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.crp-field-value {
+  font-family: var(--crp-font-mono);
+  font-size: 13px;
+  color: var(--crp-fg);
+  word-break: break-word;
+}
+.crp-field-range {
+  font-size: 10px;
+  color: var(--crp-fg-muted);
+  font-family: var(--crp-font-mono);
+}
+
+/* ===== Timeline ===== */
+.crp-timeline {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 6px;
+}
+.crp-fire-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  background: var(--crp-bg-alt);
+  border: 1px solid var(--crp-border);
+  border-radius: var(--crp-radius-sm);
+  position: relative;
+  transition: border-color 120ms;
+}
+.crp-fire-card:hover { border-color: var(--crp-accent); }
+.crp-fire-card[data-dst="spring"] { border-color: var(--crp-warning); }
+.crp-fire-card[data-dst="fall"]   { border-color: var(--crp-warning); }
+.crp-fire-local {
+  font-family: var(--crp-font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--crp-fg);
+}
+.crp-fire-utc {
+  font-family: var(--crp-font-mono);
+  font-size: 11px;
+  color: var(--crp-fg-muted);
+}
+.crp-fire-rel {
+  font-size: 10px;
+  color: var(--crp-accent);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.crp-fire-dst {
+  display: inline-block;
+  padding: 1px 5px;
+  background: rgba(191, 135, 0, 0.18);
+  color: var(--crp-warning);
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  margin-top: 4px;
+  align-self: flex-start;
+}
+.crp-timeline-empty,
+.crp-fields-empty {
+  font-size: 12px;
+  color: var(--crp-fg-muted);
+  font-style: italic;
+  padding: 4px 0;
+}
+
+/* ===== Tabs ===== */
+.crp-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  border-bottom: 1px solid var(--crp-border);
+  margin-bottom: 10px;
+}
+.crp-tab {
+  padding: 8px 14px;
+  background: transparent;
+  color: var(--crp-fg-muted);
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-family: var(--crp-font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 40px;
+  transition: color 120ms, border-color 120ms;
+}
+.crp-tab:hover { color: var(--crp-fg); }
+.crp-tab-active {
+  color: var(--crp-accent);
+  border-bottom-color: var(--crp-accent);
+}
+.crp-tab-panes { position: relative; }
+.crp-tab-pane { display: none; }
+.crp-tab-pane-active { display: block; }
+.crp-tab-pane[hidden] { display: none; }
+
+.crp-copy-btn {
+  position: relative;
+  float: right;
+  margin-bottom: 6px;
+  padding: 4px 12px;
+  background: var(--crp-accent);
+  color: #fff;
+  border: 1px solid var(--crp-accent-strong);
+  border-radius: var(--crp-radius-sm);
+  font-family: var(--crp-font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 120ms;
+  user-select: none;
+}
+.crp-copy-btn:hover { background: var(--crp-accent-strong); }
+.crp-copy-btn:focus-visible { outline: 2px solid var(--crp-accent); outline-offset: 1px; }
+.crp-copy-btn[data-copied="true"] { background: var(--crp-success); border-color: var(--crp-success); }
+body:not(.dark) .crp-copy-btn { color: #fff; }
+
+.crp-code {
+  clear: both;
+  margin: 0;
+  padding: 12px;
+  background: var(--crp-code-bg);
+  color: var(--crp-fg);
+  border: 1px solid var(--crp-border);
+  border-radius: var(--crp-radius-sm);
+  font-family: var(--crp-font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre;
+  overflow-x: auto;
+  max-height: 360px;
+  overflow-y: auto;
+  tab-size: 2;
+}
+
+/* ===== Presets ===== */
+.crp-presets {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 6px;
+}
+.crp-preset {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  background: var(--crp-bg-alt);
+  border: 1px solid var(--crp-border);
+  border-radius: var(--crp-radius-sm);
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--crp-font-ui);
+  transition: background 120ms, border-color 120ms;
+  user-select: none;
+}
+.crp-preset:hover { background: var(--crp-accent-bg); border-color: var(--crp-accent); }
+.crp-preset:focus-visible { outline: 2px solid var(--crp-accent); outline-offset: 1px; }
+.crp-preset[data-active="true"] { border-color: var(--crp-accent); background: var(--crp-accent-bg); }
+.crp-preset-expr {
+  font-family: var(--crp-font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--crp-fg);
+}
+.crp-preset-desc {
+  font-size: 11px;
+  color: var(--crp-fg-muted);
+}
+
+/* ===== Footer ===== */
+.crp-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  padding: 8px var(--crp-pad);
+  background: var(--crp-bg-alt);
+  border-top: 1px solid var(--crp-border);
+  font-size: 12px;
+  color: var(--crp-fg-muted);
+}
+.crp-status-pill {
+  font-family: var(--crp-font-mono);
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: var(--crp-radius-sm);
+  background: var(--crp-bg);
+  border: 1px solid var(--crp-border);
+  color: var(--crp-fg);
+}
+.crp-status-pill[data-kind="ok"]   { color: var(--crp-success); border-color: var(--crp-success); }
+.crp-status-pill[data-kind="warn"] { color: var(--crp-warning); border-color: var(--crp-warning); }
+.crp-status-pill[data-kind="err"]  { color: var(--crp-error); border-color: var(--crp-error); }
+.crp-footer-hint { flex: 1 1 auto; min-width: 200px; }
+.crp-privacy-badge {
+  padding: 2px 8px;
+  background: var(--crp-accent-bg);
+  color: var(--crp-accent);
+  border: 1px solid var(--crp-accent);
+  border-radius: var(--crp-radius-sm);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  cursor: help;
+}
+
+/* ===== Mobile (≤ 768 px) ===== */
+@media (max-width: 768px) {
+  .crp-toolbar { flex-direction: column; align-items: stretch; }
+  .crp-input-wrap,
+  .crp-tz-wrap { flex: 1 1 100%; }
+  .crp-actions { justify-content: flex-end; }
+  .crp-field { padding: 4px 6px; }
+  .crp-fire-card { padding: 6px 8px; }
+  .crp-fire-local { font-size: 12px; }
+  .crp-fire-utc { font-size: 10px; }
+  .crp-code { font-size: 11px; max-height: 280px; }
+  .crp-preset-expr { font-size: 11px; }
+  .crp-preset-desc { font-size: 10px; }
+  .crp-footer { font-size: 11px; }
+  .crp-footer-hint { display: none; }
+}
+</style>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ============================================================
+   * Cron Parser — pure client-side IIFE
+   *
+   * No fetch, no XHR, no CDN. All timezone math via native
+   * Intl.DateTimeFormat. All parsing in-browser.
+   * ============================================================ */
+
+  /* ---------- Constants ---------- */
+  var POSIX_FIELDS = ['minute', 'hour', 'day-of-month', 'month', 'day-of-week'];
+  var QUARTZ_FIELDS = ['second', 'minute', 'hour', 'day-of-month', 'month', 'day-of-week', 'year'];
+  var POSIX_RANGES = [
+    [0, 59],   // minute
+    [0, 23],   // hour
+    [1, 31],   // day-of-month
+    [1, 12],   // month
+    [0, 6]     // day-of-week (Sunday=0)
+  ];
+  var QUARTZ_RANGES = [
+    [0, 59],   // second
+    [0, 59],   // minute
+    [0, 23],   // hour
+    [1, 31],   // day-of-month
+    [1, 12],   // month
+    [1, 7],    // day-of-week (Sunday=1) — but we'll also accept 0
+    [1970, 2099]  // year
+  ];
+
+  /* ---------- 50+ IANA timezones ---------- */
+  var TIMEZONES = [
+    'UTC',
+    'Africa/Algiers', 'Africa/Cairo', 'Africa/Casablanca', 'Africa/Johannesburg', 'Africa/Lagos', 'Africa/Nairobi',
+    'America/Anchorage', 'America/Argentina/Buenos_Aires', 'America/Bogota', 'America/Chicago', 'America/Denver',
+    'America/Halifax', 'America/Los_Angeles', 'America/Mexico_City', 'America/New_York', 'America/Phoenix',
+    'America/Santiago', 'America/Sao_Paulo', 'America/Toronto', 'America/Vancouver',
+    'Asia/Bangkok', 'Asia/Dubai', 'Asia/Hong_Kong', 'Asia/Jakarta', 'Asia/Jerusalem', 'Asia/Kolkata',
+    'Asia/Kuala_Lumpur', 'Asia/Manila', 'Asia/Riyadh', 'Asia/Seoul', 'Asia/Shanghai', 'Asia/Singapore',
+    'Asia/Taipei', 'Asia/Tehran', 'Asia/Tokyo',
+    'Atlantic/Azores', 'Atlantic/Reykjavik',
+    'Australia/Adelaide', 'Australia/Brisbane', 'Australia/Melbourne', 'Australia/Perth', 'Australia/Sydney',
+    'Europe/Amsterdam', 'Europe/Athens', 'Europe/Berlin', 'Europe/Brussels', 'Europe/Dublin', 'Europe/Helsinki',
+    'Europe/Istanbul', 'Europe/Kyiv', 'Europe/Lisbon', 'Europe/London', 'Europe/Madrid', 'Europe/Moscow',
+    'Europe/Oslo', 'Europe/Paris', 'Europe/Prague', 'Europe/Rome', 'Europe/Stockholm', 'Europe/Vienna',
+    'Europe/Warsaw', 'Europe/Zurich',
+    'Pacific/Auckland', 'Pacific/Fiji', 'Pacific/Honolulu', 'Pacific/Tahiti'
+  ];
+
+  /* ---------- 30+ presets (POSIX 5-field) ---------- */
+  var PRESETS = [
+    { expr: '* * * * *',     desc: 'Every minute (debug only)' },
+    { expr: '*/5 * * * *',   desc: 'Every 5 minutes' },
+    { expr: '*/10 * * * *',  desc: 'Every 10 minutes' },
+    { expr: '*/15 * * * *',  desc: 'Every 15 minutes' },
+    { expr: '*/30 * * * *',  desc: 'Every 30 minutes' },
+    { expr: '0 * * * *',     desc: 'Top of every hour' },
+    { expr: '0 */2 * * *',   desc: 'Every 2 hours' },
+    { expr: '0 */6 * * *',   desc: 'Every 6 hours' },
+    { expr: '0 0 * * *',     desc: 'Daily at 00:00 (midnight)' },
+    { expr: '0 1 * * *',     desc: 'Daily at 01:00' },
+    { expr: '0 2 * * *',     desc: 'Daily at 02:00 (typical backup)' },
+    { expr: '0 3 * * *',     desc: 'Daily at 03:00' },
+    { expr: '0 9 * * *',     desc: 'Daily at 09:00' },
+    { expr: '0 12 * * *',    desc: 'Daily at noon (12:00)' },
+    { expr: '30 2 * * *',    desc: 'Daily at 02:30' },
+    { expr: '0 0 * * 0',     desc: 'Weekly Sunday at midnight' },
+    { expr: '0 9 * * 1',     desc: 'Weekly Monday at 09:00' },
+    { expr: '0 0 * * 1-5',   desc: 'Weekdays at midnight' },
+    { expr: '0 9 * * 1-5',   desc: 'Weekdays at 09:00' },
+    { expr: '0 9-17 * * 1-5', desc: 'Hourly 9-17, weekdays only' },
+    { expr: '0 18 * * 5',    desc: 'Weekly Friday at 18:00' },
+    { expr: '0 0 1 * *',     desc: '1st of month at midnight' },
+    { expr: '0 0 1 1 *',     desc: 'Jan 1 (annual)' },
+    { expr: '0 0 1 */3 *',   desc: '1st of every 3 months (quarterly)' },
+    { expr: '0 0 1 */6 *',   desc: '1st of every 6 months (semi-annual)' },
+    { expr: '30 2 L * *',    desc: 'Last day of month at 02:30 (Quartz extended)' },
+    { expr: '0 9 * * 1L',    desc: 'Last Monday of month at 09:00 (Quartz)' },
+    { expr: '0 0 15W * *',   desc: 'Nearest weekday to 15th (Quartz)' },
+    { expr: '0 0 12 * * 5#2', desc: '2nd Friday of month at noon (Quartz)' },
+    { expr: '0 0 0 ? * MON', desc: 'Mondays at midnight (AWS EventBridge style)' },
+    { expr: '0 8 ? * MON-FRI *', desc: 'Weekdays at 08:00 (AWS EventBridge)' },
+    { expr: '0/30 * * * * ?', desc: 'Every 30 seconds (Quartz)' }
+  ];
+
+  /* ---------- i18n ---------- */
+  var I18N = {
+    en: {
+      statusReady: 'Ready',
+      statusEmpty: 'Enter a cron expression to begin.',
+      statusInvalid: 'Invalid expression',
+      statusOk: 'Valid',
+      copied: 'Copied',
+      copiedFallback: 'Copied (fallback)',
+      copyFailed: 'Copy failed — please select manually',
+      copiedYaml: 'YAML copied',
+      copiedJson: 'JSON copied',
+      copiedUnits: 'Units copied',
+      days: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+      months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+      relative: { soon: 'soon', minutes: 'min', hours: 'h', days: 'd' },
+      dstSpring: 'DST spring-forward',
+      dstFall: 'DST fall-back',
+      noTimeline: 'Enter a valid expression to see fire times.',
+      syntaxBadges: { posix: 'POSIX', quartz: 'Quartz', invalid: 'Invalid', empty: 'POSIX' },
+      fieldsTitle: 'Field breakdown',
+      fieldsHint: '5 fields (POSIX) or 6 fields (Quartz)',
+      utc: 'UTC',
+      every: 'Every',
+      at: 'at',
+      onDay: 'on day',
+      inMonth: 'in',
+      range: 'range',
+      step: 'step',
+      errFields: 'Expected 5 fields (POSIX) or 6–7 fields (Quartz)',
+      errValue: 'Invalid value in field',
+      errSyntax: 'Invalid cron syntax'
+    },
+    'zh-Hans': {
+      statusReady: '就绪',
+      statusEmpty: '请输入 cron 表达式',
+      statusInvalid: '表达式无效',
+      statusOk: '有效',
+      copied: '已复制',
+      copiedFallback: '已复制(回退)',
+      copyFailed: '复制失败 — 请手动选择',
+      copiedYaml: 'YAML 已复制',
+      copiedJson: 'JSON 已复制',
+      copiedUnits: 'unit 已复制',
+      days: ['周日', '周一', '周二', '周三', '周四', '周五', '周六'],
+      months: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+      relative: { soon: '即将', minutes: '分钟', hours: '小时', days: '天' },
+      dstSpring: 'DST 春季前进',
+      dstFall: 'DST 秋季回退',
+      noTimeline: '输入有效表达式以查看触发时间。',
+      syntaxBadges: { posix: 'POSIX', quartz: 'Quartz', invalid: '无效', empty: 'POSIX' },
+      fieldsTitle: '字段分解',
+      fieldsHint: '5 字段(POSIX)或 6 字段(Quartz)',
+      utc: 'UTC',
+      every: '每',
+      at: '在',
+      onDay: '日',
+      inMonth: '月',
+      range: '范围',
+      step: '步长',
+      errFields: '需要 5 字段(POSIX)或 6-7 字段(Quartz)',
+      errValue: '字段值无效',
+      errSyntax: 'cron 语法无效'
+    }
+  };
+
+  /* ---------- Runtime state ---------- */
+  var state = {
+    lang: 'en',
+    expression: '0 9 * * 1-5',
+    timezone: 'UTC',
+    parsed: null,        // { ok, mode, fields, ranges, expanded, error }
+    fireTimes: [],       // [{ date, isDst, dstKind }]
+    activeTab: 'kubernetes',
+    activePreset: ''
+  };
+
+  /* ---------- DOM helpers ---------- */
+  function $(root, sel) { return root.querySelector(sel); }
+  function $$(root, sel) { return Array.prototype.slice.call(root.querySelectorAll(sel)); }
+
+  function escHtml(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function t(key) {
+    var dict = (I18N[state.lang] || I18N.en);
+    return (dict && dict[key]) || key;
+  }
+
+  /* ---------- Field parser (handles *, a-b, a,b,c, */n, a/n) ---------- */
+  function parseField(field, min, max) {
+    if (field === undefined || field === null) return { ok: false, error: 'empty field' };
+    var trimmed = String(field).trim();
+    if (trimmed === '') return { ok: false, error: 'empty field' };
+    var result = new Set();
+    var parts = trimmed.split(',');
+    for (var i = 0; i < parts.length; i++) {
+      var part = parts[i].trim();
+      if (part === '') return { ok: false, error: 'empty list item' };
+      var step = 1;
+      var range = part;
+      if (part.indexOf('/') !== -1) {
+        var slashParts = part.split('/');
+        if (slashParts.length !== 2) return { ok: false, error: 'invalid step' };
+        range = slashParts[0];
+        var stepStr = slashParts[1];
+        if (stepStr === '' || isNaN(parseInt(stepStr, 10))) return { ok: false, error: 'invalid step' };
+        step = parseInt(stepStr, 10);
+        if (step <= 0) return { ok: false, error: 'step must be > 0' };
+      }
+      var start = min, end = max;
+      if (range === '*') {
+        // full range
+      } else if (range.indexOf('-') !== -1) {
+        var dashParts = range.split('-');
+        if (dashParts.length !== 2) return { ok: false, error: 'invalid range' };
+        var s = parseInt(dashParts[0], 10);
+        var e = parseInt(dashParts[1], 10);
+        if (isNaN(s) || isNaN(e)) return { ok: false, error: 'range bounds must be integers' };
+        start = s; end = e;
+      } else {
+        var v = parseInt(range, 10);
+        if (isNaN(v)) return { ok: false, error: 'value must be integer' };
+        start = v; end = v;
+      }
+      if (start < min || end > max || start > end) return { ok: false, error: 'value out of range [' + min + '..' + max + ']' };
+      for (var x = start; x <= end; x += step) result.add(x);
+    }
+    return { ok: true, values: Array.from(result).sort(function (a, b) { return a - b; }) };
+  }
+
+  /* ---------- Special-char handlers for Quartz fields ---------- */
+  /*  day-of-month: L (last day), LW (last weekday), nW (nearest weekday), ? (any)
+   *  day-of-week:  nL (last X), n#m (Nth X), ? (any)
+   *  Returns: { ok, predicate: fn(year, monthIdx, day) -> bool, mode: 'predicate'|'static' }
+   */
+  function parseQuartzDayOfMonth(field, year, month) {
+    if (field === '?') return { ok: true, predicate: function () { return true; }, mode: 'predicate' };
+    if (field === 'L' || field === 'LW') return {
+      ok: true,
+      predicate: function (y, m) {
+        var lastDay = new Date(y, m + 1, 0).getDate();
+        if (field === 'LW') {
+          var d = new Date(y, m, lastDay);
+          var dow = d.getDay();
+          if (dow === 0) return lastDay - 2 >= 1; // Sun -> Fri
+          if (dow === 6) return lastDay - 1 >= 1; // Sat -> Fri
+          return true;
+        }
+        return true;
+      },
+      mode: 'predicate',
+      lastDayOnly: true
+    };
+    // nW pattern
+    var wMatch = /^(\d+)W$/.exec(field);
+    if (wMatch) {
+      var target = parseInt(wMatch[1], 10);
+      if (target < 1 || target > 31) return { ok: false, error: 'W target out of range' };
+      return {
+        ok: true,
+        predicate: function (y, m) {
+          var monthLen = new Date(y, m + 1, 0).getDate();
+          var targetDay = Math.min(target, monthLen);
+          var d = new Date(y, m, targetDay);
+          var dow = d.getDay(); // 0=Sun..6=Sat
+          if (dow === 0) { // Sunday -> next Monday (skip weekend)
+            var candidate = targetDay + 1;
+            return candidate <= monthLen;
+          }
+          if (dow === 6) { // Saturday -> previous Friday
+            var candidate2 = targetDay - 1;
+            return candidate2 >= 1;
+          }
+          return true;
+        },
+        mode: 'predicate',
+        targetDay: target
+      };
+    }
+    // Fallback to numeric range
+    return parseField(field, 1, 31);
+  }
+
+  function parseQuartzDayOfWeek(field, year, month) {
+    if (field === '?') return { ok: true, predicate: function () { return true; }, mode: 'predicate' };
+    // nL pattern (last X of month)
+    var lMatch = /^(\d+)L$/.exec(field);
+    if (lMatch) {
+      var targetDow = parseInt(lMatch[1], 10); // 1-7 (Sun=1)
+      return {
+        ok: true,
+        predicate: function (y, m) {
+          var monthLen = new Date(y, m + 1, 0).getDate();
+          // Find the last occurrence of targetDow in the month
+          var lastDate = new Date(y, m, monthLen);
+          var lastDow = lastDate.getDay() === 0 ? 7 : lastDate.getDay(); // Convert to 1-7
+          var diff = (lastDow - targetDow + 7) % 7;
+          var resultDay = monthLen - diff;
+          return resultDay;
+        },
+        mode: 'day-predicate',
+        targetDow: targetDow
+      };
+    }
+    // n#m pattern (Nth X of month)
+    var hashMatch = /^(\d+)#(\d+)$/.exec(field);
+    if (hashMatch) {
+      var dow = parseInt(hashMatch[1], 10);
+      var nth = parseInt(hashMatch[2], 10);
+      if (dow < 1 || dow > 7 || nth < 1 || nth > 5) return { ok: false, error: 'invalid # pattern' };
+      return {
+        ok: true,
+        predicate: function (y, m) {
+          var firstDate = new Date(y, m, 1);
+          var firstDow = firstDate.getDay() === 0 ? 7 : firstDate.getDay();
+          var offset = (dow - firstDow + 7) % 7;
+          var dayNum = 1 + offset + (nth - 1) * 7;
+          var monthLen = new Date(y, m + 1, 0).getDate();
+          return dayNum <= monthLen ? dayNum : -1;
+        },
+        mode: 'day-predicate',
+        targetDow: dow,
+        nth: nth
+      };
+    }
+    // Named days (MON, TUE, etc.)
+    var namedMap = { SUN: 1, MON: 2, TUE: 3, WED: 4, THU: 5, FRI: 6, SAT: 7 };
+    var ranges = field.split(',');
+    var set = new Set();
+    for (var i = 0; i < ranges.length; i++) {
+      var r = ranges[i].trim();
+      if (r === '?') return { ok: true, predicate: function () { return true; }, mode: 'predicate' };
+      if (r.indexOf('-') !== -1) {
+        var dp = r.split('-');
+        var s = namedMap[dp[0].toUpperCase()] || parseInt(dp[0], 10);
+        var e = namedMap[dp[1].toUpperCase()] || parseInt(dp[1], 10);
+        for (var k = s; k <= e; k++) set.add(k);
+      } else {
+        var v = namedMap[r.toUpperCase()] || parseInt(r, 10);
+        if (!isNaN(v)) set.add(v);
+      }
+    }
+    var arr = Array.from(set).sort(function (a, b) { return a - b; });
+    return { ok: true, values: arr };
+  }
+
+  /* ---------- Main parser: detect mode + parse all fields ---------- */
+  function parseExpression(expr) {
+    if (!expr || !expr.trim()) return { ok: false, mode: 'empty', error: 'Empty' };
+    var parts = expr.trim().split(/\s+/);
+    var mode, fields, ranges;
+    if (parts.length === 5) { mode = 'posix'; fields = POSIX_FIELDS; ranges = POSIX_RANGES; }
+    else if (parts.length === 6 || parts.length === 7) { mode = 'quartz'; fields = QUARTZ_FIELDS.slice(0, parts.length); ranges = QUARTZ_RANGES.slice(0, parts.length); }
+    else return { ok: false, mode: 'invalid', error: t('errFields') + ' (got ' + parts.length + ')' };
+
+    var parsed = { ok: true, mode: mode, raw: parts, fields: fields, fieldValues: [], fieldRange: ranges };
+
+    if (mode === 'posix') {
+      for (var i = 0; i < 5; i++) {
+        var res = parseField(parts[i], ranges[i][0], ranges[i][1]);
+        if (!res.ok) return { ok: false, mode: 'invalid', error: fields[i] + ': ' + res.error };
+        parsed.fieldValues.push({ name: fields[i], raw: parts[i], values: res.values });
+      }
+    } else {
+      // Quartz: 6 fields (second, minute, hour, dom, month, dow) [+ year optional]
+      var sec = parseField(parts[0], 0, 59);
+      if (!sec.ok) return { ok: false, mode: 'invalid', error: 'second: ' + sec.error };
+      parsed.fieldValues.push({ name: 'second', raw: parts[0], values: sec.values });
+
+      var min = parseField(parts[1], 0, 59);
+      if (!min.ok) return { ok: false, mode: 'invalid', error: 'minute: ' + min.error };
+      parsed.fieldValues.push({ name: 'minute', raw: parts[1], values: min.values });
+
+      var hr = parseField(parts[2], 0, 23);
+      if (!hr.ok) return { ok: false, mode: 'invalid', error: 'hour: ' + hr.error };
+      parsed.fieldValues.push({ name: 'hour', raw: parts[2], values: hr.values });
+
+      var dom = parseQuartzDayOfMonth(parts[3], 0, 0);
+      if (!dom.ok) return { ok: false, mode: 'invalid', error: 'day-of-month: ' + dom.error };
+      parsed.fieldValues.push({ name: 'day-of-month', raw: parts[3], values: dom.values, predicate: dom.predicate, mode2: dom.mode, lastDayOnly: dom.lastDayOnly });
+
+      var mo = parseField(parts[4], 1, 12);
+      if (!mo.ok) return { ok: false, mode: 'invalid', error: 'month: ' + mo.error };
+      parsed.fieldValues.push({ name: 'month', raw: parts[4], values: mo.values });
+
+      var dow = parseQuartzDayOfWeek(parts[5], 0, 0);
+      if (!dow.ok) return { ok: false, mode: 'invalid', error: 'day-of-week: ' + dow.error };
+      parsed.fieldValues.push({ name: 'day-of-week', raw: parts[5], values: dow.values, predicate: dow.predicate, mode2: dow.mode, targetDow: dow.targetDow, nth: dow.nth });
+
+      if (parts.length === 7) {
+        var yr = parseField(parts[6], 1970, 2099);
+        if (!yr.ok) return { ok: false, mode: 'invalid', error: 'year: ' + yr.error };
+        parsed.fieldValues.push({ name: 'year', raw: parts[6], values: yr.values });
+      }
+    }
+    return parsed;
+  }
+
+  /* ---------- Compute next N fire times (filter via intersection) ---------- */
+  function computeNextFires(parsed, count, baseDate) {
+    var fires = [];
+    if (!parsed || !parsed.ok) return fires;
+    var start = new Date(baseDate.getTime());
+    start.setUTCSeconds(0, 0);
+    // Start from the next minute (or second for Quartz)
+    start = new Date(start.getTime() + 60000);
+    var maxLookahead = 525600; // 1 year of minutes — hard cap to avoid infinite loops
+    var step = parsed.mode === 'quartz' ? 1000 : 60000; // 1s for Quartz, 1min for POSIX
+    var increment = parsed.mode === 'quartz' ? 60000 : 60000; // step at minute granularity either way for safety
+    var cursor = start.getTime();
+    var end = cursor + (maxLookahead * 60000);
+
+    // Extract values
+    var fields = parsed.fieldValues;
+    var findByName = function (n) {
+      for (var i = 0; i < fields.length; i++) if (fields[i].name === n) return fields[i];
+      return null;
+    };
+    var sec = findByName('second');
+    var min = findByName('minute');
+    var hr = findByName('hour');
+    var dom = findByName('day-of-month');
+    var mo = findByName('month');
+    var dow = findByName('day-of-week');
+
+    var iterations = 0;
+    var maxIter = 120000; // safety cap
+    while (fires.length < count && cursor < end && iterations < maxIter) {
+      iterations++;
+      var d = new Date(cursor);
+      var y = d.getUTCFullYear();
+      var moIdx = d.getUTCMonth(); // 0-11
+      var domNum = d.getUTCDate();
+      var hrNum = d.getUTCHours();
+      var minNum = d.getUTCMinutes();
+      var secNum = d.getUTCSeconds();
+      var dowNum = d.getUTCDay(); // 0=Sun..6=Sat
+      var dowNumQuartz = dowNum === 0 ? 7 : dowNum; // 1=Sun..7=Sat
+
+      // Check each field
+      if (mo.values.indexOf(moIdx + 1) === -1) { cursor += increment; continue; }
+      if (sec && sec.values.indexOf(secNum) === -1) { cursor += increment; continue; }
+      if (min.values.indexOf(minNum) === -1) { cursor += increment; continue; }
+      if (hr.values.indexOf(hrNum) === -1) { cursor += increment; continue; }
+
+      // Day-of-month check
+      var domMatch = false;
+      if (dom.mode2 === 'predicate') {
+        if (dom.lastDayOnly) {
+          var lastDay = new Date(y, moIdx + 1, 0).getDate();
+          if (dom.raw === 'L') {
+            domMatch = (domNum === lastDay);
+          } else if (dom.raw === 'LW') {
+            // Last weekday of month
+            var lastDate = new Date(y, moIdx, lastDay);
+            var lastDow = lastDate.getDay();
+            if (lastDow === 0) domMatch = (domNum === lastDay - 2);
+            else if (lastDow === 6) domMatch = (domNum === lastDay - 1);
+            else domMatch = (domNum === lastDay);
+          }
+        } else if (dom.targetDay) {
+          // nW pattern
+          var monthLen = new Date(y, moIdx + 1, 0).getDate();
+          var tgt = Math.min(dom.targetDay, monthLen);
+          var dt = new Date(y, moIdx, tgt);
+          var tdow = dt.getDay();
+          if (tdow === 0) domMatch = (domNum === tgt + 1 && tgt + 1 <= monthLen);
+          else if (tdow === 6) domMatch = (domNum === tgt - 1 && tgt - 1 >= 1);
+          else domMatch = (domNum === tgt);
+        }
+      } else {
+        domMatch = (dom.values.indexOf(domNum) !== -1);
+      }
+      if (!domMatch) { cursor += increment; continue; }
+
+      // Day-of-week check
+      var dowMatch = false;
+      if (dow.mode2 === 'predicate') {
+        dowMatch = true; // '?' = any
+      } else if (dow.mode2 === 'day-predicate') {
+        if (dow.targetDow && dow.nth) {
+          // n#m pattern
+          var firstDate = new Date(y, moIdx, 1);
+          var firstDow = firstDate.getDay() === 0 ? 7 : firstDate.getDay();
+          var off = (dow.targetDow - firstDow + 7) % 7;
+          var candidate = 1 + off + (dow.nth - 1) * 7;
+          var ml = new Date(y, moIdx + 1, 0).getDate();
+          dowMatch = (candidate <= ml && domNum === candidate);
+        } else if (dow.targetDow && !dow.nth) {
+          // nL pattern
+          var monthLen2 = new Date(y, moIdx + 1, 0).getDate();
+          var lastDate2 = new Date(y, moIdx, monthLen2);
+          var lastDow2 = lastDate2.getDay() === 0 ? 7 : lastDate2.getDay();
+          var diff2 = (lastDow2 - dow.targetDow + 7) % 7;
+          var resDay = monthLen2 - diff2;
+          dowMatch = (domNum === resDay);
+        }
+      } else {
+        // Numeric values
+        var dowForCheck = parsed.mode === 'quartz' ? dowNumQuartz : dowNum;
+        dowMatch = (dow.values.indexOf(dowForCheck) !== -1);
+      }
+      if (!dowMatch) { cursor += increment; continue; }
+
+      // Match — add to fires
+      var isDst = checkDst(d);
+      var dstKind = isDst;
+      fires.push({ date: new Date(d.getTime()), isDst: !!isDst, dstKind: dstKind });
+      cursor += increment;
+    }
+    return fires;
+  }
+
+  /* ---------- DST detection: check if a UTC moment is near a DST transition ---------- */
+  function checkDst(utcDate) {
+    try {
+      // Use Intl to compare offset at this UTC moment vs offset 1 day later
+      var tz = state.timezone;
+      if (tz === 'UTC') return false;
+      var fmt = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'shortOffset' });
+      var before = fmt.formatToParts(utcDate);
+      var offsetBefore = (before.find(function (p) { return p.type === 'timeZoneName'; }) || {}).value || '';
+      var oneDay = new Date(utcDate.getTime() + 86400000);
+      var after = fmt.formatToParts(oneDay);
+      var offsetAfter = (after.find(function (p) { return p.type === 'timeZoneName'; }) || {}).value || '';
+      if (offsetBefore !== offsetAfter) {
+        // Check whether utcDate is in the "transition spring-forward" gap
+        // by formatting the local hour and seeing if it changes unexpectedly
+        var hrFmt = new Intl.DateTimeFormat('en-US', { timeZone: tz, hour: 'numeric', hour12: false });
+        var localHr = parseInt(hrFmt.format(utcDate), 10);
+        // Also check 1 hour later
+        var nextHr = parseInt(hrFmt.format(new Date(utcDate.getTime() + 3600000)), 10);
+        // If localHr advances by 2 instead of 1, spring-forward
+        if (nextHr - localHr === 2) return 'spring';
+        // If localHr goes backward, fall-back
+        if (nextHr - localHr === 0 || nextHr - localHr < 0) return 'fall';
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /* ---------- Convert UTC date to a structured "local" representation in the chosen TZ ---------- */
+  function getLocalParts(utcDate, tz) {
+    try {
+      var fmt = new Intl.DateTimeFormat('en-US', {
+        timeZone: tz,
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+        hour12: false, weekday: 'short'
+      });
+      var parts = fmt.formatToParts(utcDate);
+      var out = {};
+      parts.forEach(function (p) { out[p.type] = p.value; });
+      return out;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /* ---------- Generate human-readable description ---------- */
+  function describeCron(parsed) {
+    if (!parsed || !parsed.ok) return '';
+    var fields = parsed.fieldValues;
+    var get = function (n) { for (var i = 0; i < fields.length; i++) if (fields[i].name === n) return fields[i]; return null; };
+
+    // Special cases
+    if (parsed.mode === 'posix') {
+      var raw = parsed.raw.join(' ');
+      if (raw === '* * * * *') return 'Every minute';
+      if (raw === '0 * * * *') return 'At the top of every hour';
+      if (raw === '0 0 * * *') return 'At 00:00 every day';
+      if (raw === '0 0 * * 0') return 'At 00:00 every Sunday';
+      if (raw === '0 0 1 * *') return 'At 00:00 on the 1st of every month';
+      if (raw === '0 0 1 1 *') return 'At 00:00 on January 1st';
+      if (raw === '*/5 * * * *') return 'Every 5 minutes';
+      if (raw === '*/15 * * * *') return 'Every 15 minutes';
+      if (raw === '*/30 * * * *') return 'Every 30 minutes';
+      if (raw === '0 9 * * 1-5') return 'At 09:00 Monday through Friday';
+      if (raw === '0 9-17 * * 1-5') return 'Hourly from 09:00 to 17:00 Monday through Friday';
+    }
+
+    var parts = [];
+    var min = get('minute');
+    var hr = get('hour');
+    var dom = get('day-of-month');
+    var mo = get('month');
+    var dow = get('day-of-week');
+
+    // Build phrase
+    function descField(f, fmtStr) {
+      if (!f) return '';
+      var r = f.raw;
+      if (r === '*') return '';
+      if (/^\*\/\d+$/.test(r)) return 'every ' + r.split('/')[1] + ' ' + fmtStr;
+      if (/^\d+$/.test(r)) return 'at ' + r + ' ' + fmtStr;
+      if (/^\d+-\d+$/.test(r)) return 'from ' + r.split('-')[0] + ' to ' + r.split('-')[1] + ' ' + fmtStr;
+      if (/^\d+,\d+/.test(r)) return 'on ' + r + ' ' + fmtStr;
+      return r + ' ' + fmtStr;
+    }
+
+    var minuteDesc = descField(min, 'minute');
+    var hourDesc = descField(hr, 'hour');
+    if (minuteDesc && hourDesc) parts.push('At minute ' + min.raw + ' of hour ' + hr.raw);
+    else if (minuteDesc) parts.push(minuteDesc);
+    else if (hourDesc) parts.push(hourDesc);
+    else parts.push('Every minute');
+
+    if (dom && dom.raw !== '*' && dom.mode2 !== 'predicate') parts.push('on day ' + dom.raw + ' of the month');
+    if (dom && dom.raw === 'L') parts.push('on the last day of the month');
+    if (dom && dom.raw === 'LW') parts.push('on the last weekday of the month');
+    if (dom && /^\d+W$/.test(dom.raw)) parts.push('on the nearest weekday to day ' + dom.raw.replace('W', ''));
+    if (mo && mo.raw !== '*') parts.push('in month(s) ' + mo.raw);
+    if (dow && dow.raw !== '*' && dow.raw !== '?') {
+      if (dow.mode2 === 'day-predicate' && dow.targetDow && dow.nth) {
+        var names = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        parts.push('on the ' + dow.nth + getOrdinal(dow.nth) + ' ' + names[dow.targetDow - 1] + ' of the month');
+      } else if (dow.mode2 === 'day-predicate' && dow.targetDow) {
+        var names2 = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        parts.push('on the last ' + names2[dow.targetDow - 1] + ' of the month');
+      } else {
+        parts.push('on weekday(s) ' + dow.raw);
+      }
+    }
+
+    return parts.join(', ');
+  }
+
+  function getOrdinal(n) {
+    var s = ['th', 'st', 'nd', 'rd'];
+    var v = n % 100;
+    return s[(v - 20) % 10] || s[v] || s[0];
+  }
+
+  /* ---------- Render helpers ---------- */
+  function renderSyntaxBadge(root) {
+    var badge = $('[data-crp-syntax-badge]');
+    if (!badge) return;
+    var parsed = state.parsed;
+    if (!parsed || parsed.mode === 'empty') {
+      badge.textContent = t('syntaxBadges').posix;
+      badge.setAttribute('data-mode', 'empty');
+      return;
+    }
+    if (parsed.mode === 'posix') {
+      badge.textContent = t('syntaxBadges').posix;
+      badge.setAttribute('data-mode', 'posix');
+    } else if (parsed.mode === 'quartz') {
+      badge.textContent = t('syntaxBadges').quartz;
+      badge.setAttribute('data-mode', 'quartz');
+    } else {
+      badge.textContent = t('syntaxBadges').invalid;
+      badge.setAttribute('data-mode', 'invalid');
+    }
+  }
+
+  function renderResult(root) {
+    var status = $('[data-crp-status]');
+    var desc = $('[data-crp-desc]');
+    var fields = $('[data-crp-fields]');
+    var meta = $('[data-crp-meta]');
+    var input = $('[data-crp-expr]');
+    var statusPill = $('[data-crp-status-pill]');
+    if (!input) return;
+
+    var expr = state.expression.trim();
+    input.classList.remove('is-error', 'is-warn', 'is-ok');
+    if (!expr) {
+      if (status) { status.textContent = t('statusEmpty'); status.setAttribute('data-kind', ''); }
+      if (desc) desc.textContent = '';
+      if (fields) fields.innerHTML = '<div class="crp-fields-empty">' + t('fieldsHint') + '</div>';
+      if (meta) meta.textContent = '';
+      if (statusPill) { statusPill.textContent = t('statusReady'); statusPill.removeAttribute('data-kind'); }
+      return;
+    }
+
+    var parsed = parseExpression(expr);
+    state.parsed = parsed;
+    if (!parsed.ok) {
+      input.classList.add('is-error');
+      if (status) { status.textContent = t('statusInvalid') + ': ' + parsed.error; status.setAttribute('data-kind', 'err'); }
+      if (desc) desc.textContent = '';
+      if (fields) fields.innerHTML = '';
+      if (meta) meta.textContent = '';
+      if (statusPill) { statusPill.textContent = t('statusInvalid'); statusPill.setAttribute('data-kind', 'err'); }
+      return;
+    }
+
+    input.classList.add('is-ok');
+    if (status) { status.textContent = t('statusOk'); status.setAttribute('data-kind', 'ok'); }
+    if (statusPill) { statusPill.textContent = t('statusOk'); statusPill.setAttribute('data-kind', 'ok'); }
+    if (desc) desc.textContent = describeCron(parsed);
+    if (meta) meta.textContent = parsed.fields.length + ' fields (' + parsed.mode.toUpperCase() + ') · ' + parsed.raw.join(' ');
+
+    // Field breakdown
+    var html = '';
+    parsed.fieldValues.forEach(function (f) {
+      var rangeStr = '(' + f.values[0] + '..' + f.values[f.values.length - 1] + ', ' + f.values.length + ' values)';
+      html += '<div class="crp-field">';
+      html += '<span class="crp-field-name">' + escHtml(f.name) + '</span>';
+      html += '<span class="crp-field-value">' + escHtml(f.raw) + '</span>';
+      if (f.mode2 === 'predicate' || f.mode2 === 'day-predicate') {
+        html += '<span class="crp-field-range">special</span>';
+      } else {
+        html += '<span class="crp-field-range">' + escHtml(rangeStr) + '</span>';
+      }
+      html += '</div>';
+    });
+    if (fields) fields.innerHTML = html;
+  }
+
+  function renderTimeline(root) {
+    var timeline = $('[data-crp-timeline]');
+    if (!timeline) return;
+    var parsed = state.parsed;
+    if (!parsed || !parsed.ok) {
+      timeline.innerHTML = '<div class="crp-timeline-empty">' + t('noTimeline') + '</div>';
+      return;
+    }
+    var now = new Date();
+    var fires = computeNextFires(parsed, 10, now);
+    state.fireTimes = fires;
+    if (fires.length === 0) {
+      timeline.innerHTML = '<div class="crp-timeline-empty">No fire times found within 1 year. Check expression.</div>';
+      return;
+    }
+
+    var html = '';
+    fires.forEach(function (f) {
+      var local = getLocalParts(f.date, state.timezone) || {};
+      var utcParts = getLocalParts(f.date, 'UTC') || {};
+      var localLabel = local.year + '-' + pad(local.month) + '-' + pad(local.day) + ' ' + pad(local.hour) + ':' + pad(local.minute);
+      var utcLabel = utcParts.year + '-' + pad(utcParts.month) + '-' + pad(utcParts.day) + ' ' + pad(utcParts.hour) + ':' + pad(utcParts.minute) + ' ' + t('utc');
+      // Relative
+      var diff = f.date.getTime() - now.getTime();
+      var rel = relativeLabel(diff);
+      var dstBadge = '';
+      if (f.dstKind === 'spring') dstBadge = '<span class="crp-fire-dst" title="' + t('dstSpring') + '">' + t('dstSpring') + '</span>';
+      else if (f.dstKind === 'fall') dstBadge = '<span class="crp-fire-dst" title="' + t('dstFall') + '">' + t('dstFall') + '</span>';
+
+      html += '<div class="crp-fire-card" data-dst="' + (f.dstKind || 'no') + '">';
+      html += '<span class="crp-fire-local">' + escHtml(localLabel) + '</span>';
+      html += '<span class="crp-fire-utc">' + escHtml(utcLabel) + '</span>';
+      html += '<span class="crp-fire-rel">' + escHtml(rel) + '</span>';
+      if (dstBadge) html += dstBadge;
+      html += '</div>';
+    });
+    timeline.innerHTML = html;
+  }
+
+  function pad(s) {
+    if (s === undefined || s === null) return '00';
+    return String(s).padStart(2, '0');
+  }
+
+  function relativeLabel(ms) {
+    if (ms < 60000) return t('relative').soon;
+    var mins = Math.floor(ms / 60000);
+    if (mins < 60) return 'in ' + mins + ' ' + t('relative').minutes;
+    var hrs = Math.floor(ms / 3600000);
+    if (hrs < 24) return 'in ' + hrs + ' ' + t('relative').hours;
+    var days = Math.floor(ms / 86400000);
+    return 'in ' + days + ' ' + t('relative').days;
+  }
+
+  /* ---------- Platform exports ---------- */
+  function renderExports(root) {
+    var parsed = state.parsed;
+    var expr = state.expression.trim();
+    var noExport = !parsed || !parsed.ok;
+    ['kubernetes', 'github-actions', 'aws-eventbridge', 'systemd'].forEach(function (platform) {
+      var code = $('[data-crp-code="' + platform + '"]');
+      if (!code) return;
+      if (noExport) { code.textContent = '// ' + t('statusEmpty'); return; }
+      code.textContent = generateExport(platform, parsed, expr);
+    });
+  }
+
+  function generateExport(platform, parsed, expr) {
+    if (platform === 'kubernetes') {
+      return [
+        'apiVersion: batch/v1',
+        'kind: CronJob',
+        'metadata:',
+        '  name: my-cron-job',
+        'spec:',
+        '  schedule: "' + expr + '"            # 5-field POSIX, UTC',
+        '  concurrencyPolicy: Forbid            # do not overlap runs',
+        '  successfulJobsHistoryLimit: 3',
+        '  failedJobsHistoryLimit: 1',
+        '  startingDeadlineSeconds: 60          # must start within 60s',
+        '  jobTemplate:',
+        '    spec:',
+        '      template:',
+        '        spec:',
+        '          restartPolicy: OnFailure',
+        '          containers:',
+        '          - name: main',
+        '            image: your-image:latest',
+        '            args: ["echo", "hello from cron"]',
+        ''
+      ].join('\n');
+    }
+    if (platform === 'github-actions') {
+      return [
+        'name: scheduled-job',
+        'on:',
+        '  schedule:',
+        '    - cron: "' + expr + '"            # 5-field POSIX, UTC',
+        '  workflow_dispatch:                   # allow manual trigger',
+        'jobs:',
+        '  build:',
+        '    runs-on: ubuntu-latest',
+        '    steps:',
+        '      - uses: actions/checkout@v4',
+        '      - run: echo "ran at $(date -u)"',
+        ''
+      ].join('\n');
+    }
+    if (platform === 'aws-eventbridge') {
+      // Convert 5-field POSIX to 6-field Quartz if needed
+      var ebExpr = convertToEventBridge(expr, parsed);
+      return [
+        '{',
+        '  "Name": "my-scheduled-rule",',
+        '  "ScheduleExpression": "cron(' + ebExpr + ')",',
+        '  "State": "ENABLED",',
+        '  "Targets": [',
+        '    {',
+        '      "Id": "target-1",',
+        '      "Arn": "arn:aws:lambda:REGION:ACCOUNT:function:FUNCTION_NAME"',
+        '    }',
+        '  ]',
+        '}',
+        ''
+      ].join('\n');
+    }
+    if (platform === 'systemd') {
+      var cal = convertToSystemdCalendar(parsed);
+      return [
+        '# /etc/systemd/system/my-job.timer',
+        '[Unit]',
+        'Description=My scheduled job',
+        '',
+        '[Timer]',
+        'OnCalendar=' + cal,
+        'Persistent=true',
+        '',
+        '[Install]',
+        'WantedBy=timers.target',
+        '',
+        '# /etc/systemd/system/my-job.service',
+        '[Unit]',
+        'Description=My scheduled job',
+        '',
+        '[Service]',
+        'Type=oneshot',
+        'ExecStart=/usr/local/bin/my-job.sh',
+        ''
+      ].join('\n');
+    }
+    return '';
+  }
+
+  /* Convert POSIX 5-field to AWS EventBridge 6-field Quartz */
+  function convertToEventBridge(expr, parsed) {
+    if (parsed.mode === 'quartz') return expr;
+    var parts = expr.trim().split(/\s+/);
+    // parts: minute hour day-of-month month day-of-week
+    var min = parts[0], hr = parts[1], dom = parts[2], mo = parts[3], dow = parts[4];
+    // EventBridge requires one of dom or dow to be ?
+    var domQ = dom, dowQ = dow;
+    if (dom !== '*' && dow !== '*') {
+      // Both restricted — convert dow to ? (behavior differs by intent)
+      dowQ = '?';
+    } else if (dom === '*' && dow === '*') {
+      dowQ = '?';
+    } else if (dom !== '*') {
+      dowQ = '?';
+    } else {
+      domQ = '?';
+    }
+    return '0 ' + min + ' ' + hr + ' ' + domQ + ' ' + mo + ' ' + dowQ + ' *';
+  }
+
+  /* Convert a parsed cron expression to systemd OnCalendar format (best-effort) */
+  function convertToSystemdCalendar(parsed) {
+    var fields = parsed.fieldValues;
+    var get = function (n) { for (var i = 0; i < fields.length; i++) if (fields[i].name === n) return fields[i]; return null; };
+    var min = get('minute'), hr = get('hour'), dom = get('day-of-month'), mo = get('month'), dow = get('day-of-week');
+
+    // weekday mapping
+    var dowName = { '0': 'Sun', '1': 'Mon', '2': 'Tue', '3': 'Wed', '4': 'Thu', '5': 'Fri', '6': 'Sat' };
+    var moName = { '1': 'Jan', '2': 'Feb', '3': 'Mar', '4': 'Apr', '5': 'May', '6': 'Jun', '7': 'Jul', '8': 'Aug', '9': 'Sep', '10': 'Oct', '11': 'Nov', '12': 'Dec' };
+
+    function rangeToSystemd(values, names) {
+      if (values.length === 1) return String(values[0]);
+      return values.map(function (v) { return names[v] || String(v); }).join(',');
+    }
+
+    var minStr = (min && min.raw !== '*') ? min.raw : '*';
+    var hrStr = (hr && hr.raw !== '*') ? hr.raw : '*';
+    var domStr = (dom && dom.raw !== '*') ? dom.raw : '*';
+    var moStr = (mo && mo.raw !== '*') ? mo.raw : '*';
+    var dowStr = (dow && dow.raw !== '*' && dow.raw !== '?') ? dow.raw : '*';
+
+    var parts = [];
+    // DOW
+    if (dowStr !== '*') {
+      var dowList = dow.values.map(function (v) {
+        var k = parsed.mode === 'quartz' ? v : v;
+        return dowName[String(k)] || String(k);
+      });
+      parts.push(dowList.join('..'));
+    } else {
+      parts.push('*');
+    }
+    // Year-Month-Day
+    var datePart = '*';
+    if (moStr !== '*' || domStr !== '*') {
+      var yr = '*';
+      var moList = moStr === '*' ? '*' : (mo.values || []).map(function (v) { return moName[String(v)] || String(v); }).join(',');
+      var domList = domStr === '*' ? '*' : domStr;
+      datePart = yr + '-' + moList + '-' + domList;
+    }
+    parts.push(datePart);
+    parts.push(hrStr + ':' + minStr + ':00');
+    return parts.join(' ');
+  }
+
+  /* ---------- Copy to clipboard ---------- */
+  function copyToClipboard(text, successCallback) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(successCallback).catch(function () {
+        fallbackCopy(text, successCallback);
+      });
+    } else {
+      fallbackCopy(text, successCallback);
+    }
+  }
+
+  function fallbackCopy(text, successCallback) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    ta.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(ta);
+    ta.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    if (ok) successCallback(); else setStatusPill('copyFailed', 'err');
+  }
+
+  function setStatusPill(msg, kind) {
+    var pill = $('[data-crp-status-pill]');
+    if (!pill) return;
+    pill.textContent = msg;
+    if (kind) pill.setAttribute('data-kind', kind);
+    setTimeout(function () {
+      pill.textContent = t('statusReady');
+      pill.removeAttribute('data-kind');
+    }, 1800);
+  }
+
+  /* ---------- Render presets ---------- */
+  function renderPresets(root) {
+    var container = $('[data-crp-presets]');
+    if (!container) return;
+    var html = '';
+    PRESETS.forEach(function (p, idx) {
+      var active = (p.expr === state.expression.trim()) ? 'true' : 'false';
+      html += '<button type="button" class="crp-preset" data-crp-preset="' + idx + '" data-active="' + active + '" title="Click to load">';
+      html += '<span class="crp-preset-expr">' + escHtml(p.expr) + '</span>';
+      html += '<span class="crp-preset-desc">' + escHtml(p.desc) + '</span>';
+      html += '</button>';
+    });
+    container.innerHTML = html;
+  }
+
+  function updateActivePreset() {
+    var cards = $$('[data-crp-preset]');
+    cards.forEach(function (c) {
+      var idx = parseInt(c.getAttribute('data-crp-preset'), 10);
+      var p = PRESETS[idx];
+      c.setAttribute('data-active', p.expr === state.expression.trim() ? 'true' : 'false');
+    });
+  }
+
+  /* ---------- Bind timezone dropdown ---------- */
+  function bindTimezones(root) {
+    var sel = $('[data-crp-tz]');
+    if (!sel) return;
+    var html = '';
+    TIMEZONES.forEach(function (tz) {
+      html += '<option value="' + escHtml(tz) + '">' + escHtml(tz) + '</option>';
+    });
+    sel.innerHTML = html;
+    sel.value = state.timezone;
+  }
+
+  /* ---------- Main render orchestrator ---------- */
+  function renderAll(root) {
+    renderSyntaxBadge(root);
+    renderResult(root);
+    renderTimeline(root);
+    renderExports(root);
+    updateActivePreset();
+  }
+
+  /* ---------- Init ---------- */
+  function init(root) {
+    if (!root) return;
+    state.lang = root.getAttribute('data-crp-lang') || 'en';
+    if (I18N[state.lang] === undefined) state.lang = 'en';
+
+    var input = $('[data-crp-expr]');
+    if (input) {
+      input.value = state.expression;
+      input.addEventListener('input', function () {
+        state.expression = input.value;
+        renderAll(root);
+      });
+    }
+
+    var tz = $('[data-crp-tz]');
+    if (tz) {
+      tz.addEventListener('change', function () {
+        state.timezone = tz.value;
+        renderTimeline(root);
+      });
+    }
+
+    // Action buttons
+    root.addEventListener('click', function (e) {
+      var target = e.target;
+      if (!target) return;
+
+      // Action buttons
+      var act = target.closest && target.closest('[data-crp-action]');
+      if (act) {
+        var a = act.getAttribute('data-crp-action');
+        if (a === 'sample') {
+          input.value = '0 9 * * 1-5';
+          state.expression = '0 9 * * 1-5';
+          renderAll(root);
+        } else if (a === 'clear') {
+          input.value = '';
+          state.expression = '';
+          renderAll(root);
+        }
+        return;
+      }
+
+      // Tab buttons
+      var tab = target.closest && target.closest('[data-crp-tab]');
+      if (tab) {
+        var tabId = tab.getAttribute('data-crp-tab');
+        state.activeTab = tabId;
+        $$('[data-crp-tab]').forEach(function (b) {
+          var active = b === tab;
+          b.classList.toggle('crp-tab-active', active);
+          b.setAttribute('aria-selected', String(active));
+        });
+        $$('[data-crp-pane]').forEach(function (p) {
+          var active = p.getAttribute('data-crp-pane') === tabId;
+          if (active) { p.classList.add('crp-tab-pane-active'); p.removeAttribute('hidden'); }
+          else { p.classList.remove('crp-tab-pane-active'); p.setAttribute('hidden', ''); }
+        });
+        return;
+      }
+
+      // Copy buttons
+      var copyBtn = target.closest && target.closest('[data-crp-copy]');
+      if (copyBtn) {
+        var platform = copyBtn.getAttribute('data-crp-copy');
+        var codeEl = $('[data-crp-code="' + platform + '"]');
+        if (codeEl) {
+          var originalLabel = copyBtn.textContent;
+          copyToClipboard(codeEl.textContent, function () {
+            copyBtn.textContent = t('copied');
+            copyBtn.setAttribute('data-copied', 'true');
+            setTimeout(function () {
+              copyBtn.textContent = originalLabel;
+              copyBtn.removeAttribute('data-copied');
+            }, 1500);
+          });
+        }
+        return;
+      }
+
+      // Preset buttons
+      var preset = target.closest && target.closest('[data-crp-preset]');
+      if (preset) {
+        var idx = parseInt(preset.getAttribute('data-crp-preset'), 10);
+        var p = PRESETS[idx];
+        if (p) {
+          input.value = p.expr;
+          state.expression = p.expr;
+          renderAll(root);
+        }
+        return;
+      }
+    });
+
+    // Keyboard: Enter triggers parse (already handled by input listener)
+    bindTimezones(root);
+    renderPresets(root);
+    renderAll(root);
+  }
+
+  /* ---------- Bootstrap ---------- */
+  function bootstrap() {
+    var roots = document.querySelectorAll('[data-crp-root]');
+    roots.forEach(function (r) { init(r); });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootstrap);
+  } else {
+    bootstrap();
+  }
+})();
+</script>
