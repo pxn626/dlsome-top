@@ -1,0 +1,183 @@
+{{- /*
+  Site-level extend_head.html for dlsome.top
+  Per P1-1 fix: per-slug if-block injects 4 JSON-LD schemas (WebApplication /
+  FAQPage / BreadcrumbList / HowTo) for the jwt-inspector tool page.
+  This OVERRIDES the empty stub at themes/PaperMod/layouts/partials/extend_head.html
+  by Hugo's template lookup order (site layouts take precedence over theme layouts).
+  We do NOT modify the theme.
+  JSON-LD content is verbatim from docs/jwt-inspector-plans/jwt-inspector-strategy.md §4.1-§4.4.
+*/ -}}
+{{- if eq .Slug "jwt-inspector" -}}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "JWT Inspector & Debugger — HS256 / RS256 / ES256 Verifier",
+  "alternateName": "dlsome.top JWT Inspector",
+  "url": "https://dlsome.top/tools/jwt-inspector/",
+  "applicationCategory": "DeveloperApplication",
+  "applicationSubCategory": "Security & Authentication Tool",
+  "operatingSystem": "Any (browser-based, HTTPS required for crypto.subtle)",
+  "browserRequirements": "Requires JavaScript. Requires HTML5. Requires Web Crypto API (crypto.subtle). Requires HTTPS or localhost.",
+  "inLanguage": ["en", "zh"],
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "description": "Free developer-grade JWT inspector and debugger. Decode JSON Web Tokens, verify HS256 / RS256 / ES256 signatures with real cryptographic validation (no token upload), simulate claim tampering for red-team testing, auto-extract Bearer tokens from HTTP headers, and flag algorithm confusion attacks (alg=none, HS/RS confusion). RFC 7519 compliant. 100% client-side, Web Crypto API based.",
+  "softwareVersion": "1.0.0",
+  "featureList": [
+    "Decode JWT Header, Payload, and Signature as formatted JSON",
+    "Verify HS256 (HMAC-SHA-256) signatures with a provided secret",
+    "Verify RS256 (RSA-SHA-256) signatures with an SPKI public key",
+    "Verify ES256 (ECDSA-P-256) signatures with an SPKI public key (auto P1363 \u2194 DER)",
+    "Edit any claim (exp / iat / nbf / sub / aud / iss) and auto re-sign for HS256",
+    "Detect and warn about alg=none algorithm confusion attacks (CVE-2015-9235)",
+    "Detect and warn about HS256 / RS256 algorithm confusion attacks",
+    "Auto-extract Bearer token from Authorization header / curl / fetch / Postman raw HTTP",
+    "Display RFC 7519 registered claims (iss / sub / aud / exp / nbf / iat / jti) with type validation",
+    "Show exp / nbf countdown timers in real time",
+    "Mask sensitive custom claims (password / secret / token / api_key) in the UI",
+    "Side-by-side multi-algorithm verification (same token, HS256 vs RS256 vs ES256)",
+    "JWKS endpoint support for kid-based key lookup (opt-in only, no auto-fetch)",
+    "Mobile-friendly responsive layout",
+    "Dark / light mode (PaperMod .dark class integration)",
+    "No login, no registration, no telemetry, no token upload",
+    "100% client-side execution via Web Crypto API (crypto.subtle)"
+  ],
+  "isBasedOn": [
+    "https://datatracker.ietf.org/doc/html/rfc7519",
+    "https://datatracker.ietf.org/doc/html/rfc7515",
+    "https://datatracker.ietf.org/doc/html/rfc7518",
+    "https://nvd.nist.gov/vuln/detail/CVE-2015-9235",
+    "https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/",
+    "https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto"
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is the difference between a JWT decoder and a JWT inspector?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A JWT decoder is a basic tool that base64url-decodes the three parts of a JSON Web Token (Header, Payload, Signature) and shows them as JSON. A JWT inspector goes further: it actually verifies the signature against a provided secret or public key, flags RFC 7519 standard claims (iss, sub, aud, exp, nbf, iat, jti), simulates claim tampering for red-team testing, auto-extracts Bearer tokens from HTTP headers, and warns about algorithm confusion attacks (alg=none). Use a decoder for casual reading; use an inspector when you are debugging authentication, integrating with Auth0/Cognito/Firebase, or running security audits."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I verify a JWT signed with HS256?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "HS256 (HMAC-SHA-256) is a symmetric algorithm: the same secret signs and verifies. To verify, paste your JWT into the inspector, select the HS256 algorithm tab, enter the shared secret in the password field (it stays in your browser's memory and is never sent anywhere), and click Verify. The inspector calls crypto.subtle.verify('HMAC', importedKey, signatureBytes, signedData) and shows a checkmark for valid or an X for invalid with the specific failure reason. If the JWT was signed with HS256 but the server rejects it, the secret is wrong or the algorithm in the JWT header is mismatched."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I verify a JWT signed with RS256 or ES256?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "RS256 (RSA-SHA-256) and ES256 (ECDSA-P-256) are asymmetric: the server signs with a private key and publishes a public key for verification. To verify, paste your JWT, select RS256 or ES256, and paste the SPKI-formatted public key (starts with -----BEGIN PUBLIC KEY-----, not BEGIN RSA PUBLIC KEY which is PKCS#1 and needs conversion). The inspector imports the key with crypto.subtle.importKey('spki', keyBytes, { name: 'RSASSA-PKCS1-v1_5' }, false, ['verify']) and verifies. ECDSA gotcha: JWS uses fixed-length P1363 signature encoding (R || S), but some libraries emit DER; the inspector auto-detects and converts."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I test what happens if an attacker tampers with a JWT?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes — that is the primary use case for the dlsome.top JWT Inspector's tamper mode. Click Edit exp (or any other claim), change the value (e.g., set exp to 9999999999 to simulate an immortal token), enter the signing secret in HS256 mode, and click Re-sign. The tool generates a new JWT with your modified claims and a valid signature — paste it into your server's verification endpoint to confirm your auth layer actually rejects it. For debugging and red-team use only. Never use this technique against systems you do not own."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the alg=none algorithm confusion attack?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "CVE-2015-9235: some JWT libraries accept a token with {\"alg\":\"none\"} in the header and skip signature verification entirely. An attacker takes a legitimate token, changes the header alg to none, removes the signature part, and the server accepts it as valid. The dlsome.top inspector flags any token with alg=none with a red warning badge and shows what the attack payload would look like. The fix: explicitly enforce an algorithm allow-list on your server (e.g., [RS256] only) and reject none and any algorithm not on the list. A related attack is HS256/RS256 confusion: the attacker takes an RS256 public key, signs a malicious token with HS256 using that public-key bytes as the HMAC secret, and a misconfigured server uses the same public key for both RSA-verify and HMAC-verify."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What are the standard registered claims in RFC 7519?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "RFC 7519 defines seven registered claims, all three-letter abbreviations: iss (issuer — who issued the token, e.g., https://auth.example.com), sub (subject — who the token is about, typically a user ID), aud (audience — who the token is intended for, e.g., https://api.example.com), exp (expiration time — Unix timestamp, after which the token MUST be rejected), nbf (not before — Unix timestamp, the token is invalid before this time), iat (issued at — Unix timestamp of issuance, for token-age calculations), jti (JWT ID — unique identifier to prevent replay attacks). Custom claims are allowed and typically namespaced (https://example.com/role, user_id, etc.). The inspector highlights all seven registered claims in a dedicated panel with type checking and time-remaining countdowns for exp and nbf."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is it safe to paste my JWT into an online inspector?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Only if the tool runs 100% client-side in your browser (the dlsome.top JWT Inspector does — no token is ever sent to any server). Look for these indicators: 1) the tool page loads with all JS inlined or from the same origin, no <script src=\"https://cdn...\"> external references; 2) opening DevTools Network tab while using the tool shows zero outbound POST/PUT requests carrying your token; 3) the site is served over HTTPS with HSTS, so even the page itself is not tampered with in transit. Even with client-side tools, never paste production tokens with long-lived sessions or sensitive scopes — use a fresh dev/staging token, or mint a new short-lived token (exp in 5 minutes) for debugging purposes."
+      }
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "https://dlsome.top/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Tools",
+      "item": "https://dlsome.top/tools/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "JWT Inspector",
+      "item": "https://dlsome.top/tools/jwt-inspector/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "How to inspect and verify a JSON Web Token",
+  "step": [
+    {
+      "@type": "HowToStep",
+      "position": 1,
+      "name": "Paste your JWT (or full Bearer header)",
+      "text": "Copy a token from your application's localStorage, a curl Authorization header, or a Postman response. The inspector auto-detects: a raw eyJ... string is parsed as JWT; a 'Authorization: Bearer ...' block is auto-stripped to extract the JWT; a full HTTP request dump is scanned for the Bearer prefix."
+    },
+    {
+      "@type": "HowToStep",
+      "position": 2,
+      "name": "Review the decoded Header and Payload",
+      "text": "The inspector shows the header (alg, typ, kid) and payload (claims) as formatted JSON. RFC 7519 registered claims (iss / sub / aud / exp / nbf / iat / jti) are highlighted in a dedicated panel with type checking. The exp and nbf claims show real-time countdowns (e.g., 'expires in 23 min')."
+    },
+    {
+      "@type": "HowToStep",
+      "position": 3,
+      "name": "Verify the signature",
+      "text": "Select the algorithm (HS256 / RS256 / ES256) from the dropdown. For HS256, enter the shared secret. For RS256/ES256, paste the SPKI public key (PEM block starting with -----BEGIN PUBLIC KEY-----). Click Verify. The inspector uses crypto.subtle.verify() and shows a green checkmark for valid or a red X with the specific failure reason."
+    },
+    {
+      "@type": "HowToStep",
+      "position": 4,
+      "name": "Optionally simulate claim tampering",
+      "text": "Click Edit on any claim (exp / iat / nbf / sub / aud), change its value (e.g., extend exp to 9999999999), enter the HS256 secret, and click Re-sign. The tool generates a new JWT with the modified claims and a valid signature — useful for red-team exercises and verifying your server rejects forged tokens. A red warning banner reminds you this is for debugging only."
+    }
+  ]
+}
+</script>
+{{- end -}}

@@ -1,0 +1,1450 @@
+{{- /*
+  jwt-inspector shortcode — pure client-side JWT Inspector & Debugger
+  
+  Spec: docs/jwt-inspector-plans/jwt-inspector-eng-plan.md §2
+  - HS256 / RS256 / ES256 verification via Web Crypto API
+  - ECDSA P1363 <-> DER auto-conversion
+  - PKCS#1 <-> SPKI ASN.1 wrapper in pemToDer() (P1-3 fix)
+  - Claim tampering + re-signing (HS256 only)
+  - alg=none / HS-RS confusion attack detection
+  - RFC 7519 registered claims panel + exp/nbf countdown
+  - Sensitive claim masking
+  - Bearer auto-extraction
+  - Multi-algorithm parallel verify
+  - Optional JWKS kid lookup (opt-in fetch only)
+  - IIFE / 0 CDN / 0 fetch (except user-initiated JWKS) / 0 third-party
+  - HTTPS-only (crypto.subtle unavailable over http://)
+  - i18n: en + zh placeholder
+*/ -}}
+{{- $lang := .Page.Language.Lang | default "zh" -}}
+<div class="jwt" id="jwt-tool" data-jwt-root data-jwt-lang="{{ $lang }}">
+<style>
+#jwt-tool {
+  --jwt-bg: #ffffff;
+  --jwt-fg: #0f172a;
+  --jwt-muted: #64748b;
+  --jwt-border: #e2e8f0;
+  --jwt-card-bg: #ffffff;
+  --jwt-primary: #2563eb;
+  --jwt-primary-fg: #ffffff;
+  --jwt-ok: #15803d;
+  --jwt-ok-bg: #dcfce7;
+  --jwt-warn: #b45309;
+  --jwt-warn-bg: #fef3c7;
+  --jwt-fail: #b91c1c;
+  --jwt-fail-bg: #fee2e2;
+  --jwt-mono: ui-monospace, "SFMono-Regular", "Menlo", "Consolas", monospace;
+  max-width: 920px;
+  margin: 24px auto;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: var(--jwt-fg);
+}
+@media (prefers-color-scheme: dark) {
+  #jwt-tool {
+    --jwt-bg: #0f172a;
+    --jwt-fg: #e2e8f0;
+    --jwt-muted: #94a3b8;
+    --jwt-border: #334155;
+    --jwt-card-bg: #1e293b;
+    --jwt-ok-bg: #052e16;
+    --jwt-warn-bg: #451a03;
+    --jwt-fail-bg: #450a0a;
+  }
+}
+html.dark #jwt-tool {
+  --jwt-bg: #0f172a;
+  --jwt-fg: #e2e8f0;
+  --jwt-muted: #94a3b8;
+  --jwt-border: #334155;
+  --jwt-card-bg: #1e293b;
+  --jwt-ok-bg: #052e16;
+  --jwt-warn-bg: #451a03;
+  --jwt-fail-bg: #450a0a;
+}
+#jwt-tool .jwt-card {
+  background: var(--jwt-card-bg);
+  border: 1px solid var(--jwt-border);
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+#jwt-tool .jwt-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: var(--jwt-fg);
+}
+#jwt-tool .jwt-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--jwt-border);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: var(--jwt-mono);
+  background: var(--jwt-bg);
+  color: var(--jwt-fg);
+  resize: vertical;
+  min-height: 64px;
+  box-sizing: border-box;
+}
+#jwt-tool .jwt-textarea-small { min-height: 110px; font-size: 12px; }
+#jwt-tool .jwt-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--jwt-border);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: var(--jwt-mono);
+  background: var(--jwt-bg);
+  color: var(--jwt-fg);
+  box-sizing: border-box;
+}
+#jwt-tool .jwt-select {
+  padding: 10px 12px;
+  border: 1px solid var(--jwt-border);
+  border-radius: 8px;
+  font-size: 14px;
+  background: var(--jwt-bg);
+  color: var(--jwt-fg);
+}
+#jwt-tool .jwt-btn {
+  padding: 8px 14px;
+  background: transparent;
+  color: var(--jwt-fg);
+  border: 1px solid var(--jwt-border);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+}
+#jwt-tool .jwt-btn:hover { background: var(--jwt-border); }
+#jwt-tool .jwt-btn-primary {
+  padding: 10px 18px;
+  background: var(--jwt-primary);
+  color: var(--jwt-primary-fg);
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+}
+#jwt-tool .jwt-btn-primary:hover:not(:disabled) { background: #1d4ed8; }
+#jwt-tool .jwt-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+#jwt-tool .jwt-btn-small {
+  padding: 6px 10px;
+  background: transparent;
+  color: var(--jwt-muted);
+  border: 1px solid var(--jwt-border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+}
+#jwt-tool .jwt-section-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+#jwt-tool .jwt-section-sub {
+  font-size: 12px;
+  color: var(--jwt-muted);
+  margin-top: 10px;
+  margin-bottom: 4px;
+}
+#jwt-tool .jwt-error {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: var(--jwt-fail-bg);
+  color: var(--jwt-fail);
+  border-radius: 8px;
+  font-size: 13px;
+}
+#jwt-tool .jwt-warn-card {
+  background: var(--jwt-warn-bg);
+  border-color: #fbbf24;
+  color: var(--jwt-warn);
+}
+#jwt-tool .jwt-warn-banner {
+  background: var(--jwt-fail-bg);
+  color: var(--jwt-fail);
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+#jwt-tool .jwt-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 768px) { #jwt-tool .jwt-grid { grid-template-columns: 1fr; } }
+#jwt-tool .jwt-json {
+  background: var(--jwt-bg);
+  border: 1px solid var(--jwt-border);
+  border-radius: 6px;
+  padding: 10px;
+  font-family: var(--jwt-mono);
+  font-size: 12.5px;
+  overflow-x: auto;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 320px;
+  overflow-y: auto;
+}
+#jwt-tool .jwt-bytes {
+  font-family: var(--jwt-mono);
+  font-size: 11px;
+  color: var(--jwt-muted);
+  background: var(--jwt-bg);
+  padding: 6px 8px;
+  border-radius: 4px;
+  margin: 0;
+  word-break: break-all;
+}
+#jwt-tool .jwt-input-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+#jwt-tool .jwt-input-hint {
+  font-size: 12px;
+  color: var(--jwt-muted);
+  margin-left: auto;
+}
+#jwt-tool .jwt-claims-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+#jwt-tool .jwt-claims-table th,
+#jwt-tool .jwt-claims-table td {
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--jwt-border);
+}
+#jwt-tool .jwt-claims-table th {
+  font-weight: 600;
+  color: var(--jwt-muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+#jwt-tool .jwt-claims-table td.jwt-claim-name {
+  font-family: var(--jwt-mono);
+  font-weight: 600;
+  width: 110px;
+}
+#jwt-tool .jwt-claims-table td.jwt-claim-value {
+  font-family: var(--jwt-mono);
+  word-break: break-word;
+}
+#jwt-tool .jwt-claims-table td.jwt-claim-status { width: 180px; }
+#jwt-tool .jwt-claim-masked { color: var(--jwt-muted); font-style: italic; }
+#jwt-tool .jwt-claim-reveal {
+  background: transparent;
+  border: 1px solid var(--jwt-border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 11px;
+  cursor: pointer;
+  color: var(--jwt-muted);
+  margin-left: 6px;
+}
+#jwt-tool .jwt-claim-reveal:hover { background: var(--jwt-border); }
+#jwt-tool .jwt-status-ok { color: var(--jwt-ok); }
+#jwt-tool .jwt-status-warn { color: var(--jwt-warn); }
+#jwt-tool .jwt-status-fail { color: var(--jwt-fail); }
+#jwt-tool .jwt-verify-row { margin-bottom: 12px; }
+#jwt-tool .jwt-verify-row label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+#jwt-tool .jwt-secret-wrap {
+  display: flex;
+  gap: 6px;
+}
+#jwt-tool .jwt-secret-wrap .jwt-input { flex: 1; }
+#jwt-tool .jwt-verify-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+#jwt-tool .jwt-verify-result {
+  font-family: var(--jwt-mono);
+  font-size: 13px;
+}
+#jwt-tool .jwt-checks { list-style: none; padding: 0; margin: 0; }
+#jwt-tool .jwt-checks li {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--jwt-border);
+  font-size: 13px;
+}
+#jwt-tool .jwt-checks li:last-child { border-bottom: none; }
+#jwt-tool .jwt-check-icon {
+  display: inline-block;
+  width: 18px;
+  font-weight: 700;
+}
+#jwt-tool .jwt-tamper-editor {
+  background: var(--jwt-bg);
+  border: 1px solid var(--jwt-border);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+  font-family: var(--jwt-mono);
+  font-size: 12.5px;
+}
+#jwt-tool .jwt-tamper-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+  align-items: center;
+}
+#jwt-tool .jwt-tamper-row .jwt-tamper-key {
+  font-weight: 700;
+  min-width: 120px;
+  word-break: break-word;
+}
+#jwt-tool .jwt-tamper-row .jwt-tamper-input {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid var(--jwt-border);
+  border-radius: 4px;
+  font-family: var(--jwt-mono);
+  font-size: 12.5px;
+  background: var(--jwt-bg);
+  color: var(--jwt-fg);
+  box-sizing: border-box;
+}
+#jwt-tool .jwt-tampered-output {
+  background: var(--jwt-bg);
+  border: 1px solid var(--jwt-ok);
+  border-radius: 8px;
+  padding: 12px;
+  font-family: var(--jwt-mono);
+  font-size: 12px;
+  word-break: break-all;
+  max-height: 180px;
+  overflow-y: auto;
+  margin: 8px 0 0 0;
+}
+#jwt-tool .jwt-jwks-row {
+  display: flex;
+  gap: 8px;
+  align-items: end;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+#jwt-tool .jwt-jwks-row > label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+#jwt-tool .jwt-jwks-row .jwt-input { flex: 1; min-width: 220px; }
+#jwt-tool .jwt-jwks-status {
+  font-size: 12px;
+  color: var(--jwt-muted);
+  margin-top: 6px;
+}
+#jwt-tool .jwt-banner-attack {
+  background: var(--jwt-fail-bg);
+  color: var(--jwt-fail);
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-weight: 600;
+  font-size: 13px;
+}
+#jwt-tool .jwt-claims-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+#jwt-tool a { color: var(--jwt-primary); }
+</style>
+
+<!-- ① Insecure-context warning (hidden by default; shown if !window.isSecureContext) -->
+<div class="jwt-card jwt-warn-card" data-jwt-insecure hidden>
+  <strong>HTTPS required</strong> &mdash; cryptographic operations are disabled.
+  Decode-only mode is active.
+</div>
+
+<!-- ② Token input card -->
+<div class="jwt-card jwt-input-card">
+  <label for="jwt-token-input" class="jwt-label">JWT or Bearer header</label>
+  <textarea id="jwt-token-input" class="jwt-textarea"
+            placeholder="eyJhbGciOi&hellip; or full 'Authorization: Bearer eyJ&hellip;' header"
+            spellcheck="false" autocomplete="off" rows="3"></textarea>
+  <div class="jwt-input-actions">
+    <button class="jwt-btn" data-jwt-action="sample" type="button">Load sample</button>
+    <button class="jwt-btn" data-jwt-action="clear" type="button">Clear</button>
+    <span class="jwt-input-hint" data-jwt-input-hint>Paste a JWT or a full Authorization header.</span>
+  </div>
+  <div class="jwt-error" data-jwt-input-error hidden></div>
+</div>
+
+<!-- ③ Decoded header + payload (hidden until token parses) -->
+<div data-jwt-decoded hidden>
+  <div class="jwt-grid">
+    <div class="jwt-card jwt-header-card">
+      <div class="jwt-section-title">Decoded Header</div>
+      <pre class="jwt-json" data-jwt-header-json></pre>
+      <div class="jwt-section-sub">Signature (raw bytes)</div>
+      <pre class="jwt-bytes" data-jwt-signature-bytes></pre>
+    </div>
+    <div class="jwt-card jwt-payload-card">
+      <div class="jwt-section-title">Decoded Payload</div>
+      <pre class="jwt-json" data-jwt-payload-json></pre>
+      <div class="jwt-claims-actions">
+        <button class="jwt-btn" data-jwt-action="enable-tamper" type="button" hidden>Enable tamper mode</button>
+        <button class="jwt-btn" data-jwt-action="compare-algs" type="button" hidden>Compare with other algorithms</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ④ RFC 7519 registered-claim table -->
+  <div class="jwt-card jwt-claims-card">
+    <div class="jwt-section-title">RFC 7519 Registered Claims</div>
+    <table class="jwt-claims-table">
+      <thead><tr><th>Claim</th><th>Value</th><th>Status</th></tr></thead>
+      <tbody data-jwt-claims-tbody></tbody>
+    </table>
+  </div>
+
+  <!-- ⑤ Signature verification panel -->
+  <div class="jwt-card jwt-verify-card">
+    <div class="jwt-section-title">Signature Verification</div>
+    <div class="jwt-verify-row">
+      <label for="jwt-alg-select">Algorithm</label>
+      <select id="jwt-alg-select" class="jwt-select" data-jwt-alg-select>
+        <option value="HS256">HS256 (HMAC-SHA-256, symmetric)</option>
+        <option value="RS256">RS256 (RSASSA-PKCS1-v1_5 + SHA-256, asymmetric)</option>
+        <option value="ES256">ES256 (ECDSA P-256 + SHA-256, asymmetric)</option>
+      </select>
+    </div>
+    <div class="jwt-verify-row" data-jwt-secret-row>
+      <label for="jwt-secret-input">Secret (HMAC, stays in browser memory)</label>
+      <div class="jwt-secret-wrap">
+        <input id="jwt-secret-input" type="password" class="jwt-input"
+               autocomplete="off" spellcheck="false" placeholder="shared secret">
+        <button class="jwt-btn-small" data-jwt-action="toggle-secret" type="button">show</button>
+      </div>
+    </div>
+    <div class="jwt-verify-row" data-jwt-pubkey-row hidden>
+      <label for="jwt-pubkey-input">Public Key (SPKI PEM &mdash; also accepts PKCS#1, auto-converted)</label>
+      <textarea id="jwt-pubkey-input" class="jwt-textarea jwt-textarea-small"
+                spellcheck="false" autocomplete="off" rows="5"
+                placeholder="-----BEGIN PUBLIC KEY-----&#10;&hellip;base64&hellip;&#10;-----END PUBLIC KEY-----"></textarea>
+    </div>
+    <div class="jwt-verify-actions">
+      <button class="jwt-btn-primary" data-jwt-action="verify" type="button">Verify</button>
+      <span class="jwt-verify-result" data-jwt-verify-result></span>
+    </div>
+  </div>
+
+  <!-- ⑥ Algorithm confusion / security panel -->
+  <div class="jwt-card jwt-security-card">
+    <div class="jwt-section-title">Security Checks</div>
+    <ul class="jwt-checks" data-jwt-checks></ul>
+    <div class="jwt-security-actions">
+      <button class="jwt-btn" data-jwt-action="test-confusion" type="button" hidden>
+        Test HS256/RS256 algorithm confusion (paste a public key above first)
+      </button>
+    </div>
+  </div>
+
+  <!-- ⑦ Tamper mode (gated behind confirmation per D11) -->
+  <div class="jwt-card jwt-tamper-card" data-jwt-tamper hidden>
+    <div class="jwt-warn-banner">&#9888; FOR DEBUGGING / RED TEAM USE ONLY</div>
+    <div class="jwt-section-title">Claim Tampering (HS256 only)</div>
+    <div class="jwt-tamper-editor" data-jwt-tamper-editor></div>
+    <div class="jwt-verify-actions">
+      <button class="jwt-btn-primary" data-jwt-action="resign" type="button">Re-sign &amp; generate new JWT</button>
+      <button class="jwt-btn" data-jwt-action="copy-tampered" type="button">Copy tampered JWT</button>
+    </div>
+    <pre class="jwt-tampered-output" data-jwt-tampered-output hidden></pre>
+  </div>
+
+  <!-- ⑧ Multi-algorithm parallel verify (shown when &ge;2 keys supplied, D12) -->
+  <div class="jwt-card jwt-compare-card" data-jwt-compare hidden>
+    <div class="jwt-section-title">Multi-Algorithm Comparison</div>
+    <div data-jwt-compare-results></div>
+  </div>
+
+  <!-- ⑨ JWKS kid lookup (opt-in, D13) -->
+  <div class="jwt-card jwt-jwks-card">
+    <div class="jwt-section-title">JWKS Endpoint (opt-in)</div>
+    <div class="jwt-jwks-row">
+      <div style="flex:1; min-width:220px;">
+        <label for="jwt-jwks-url">JWKS URL</label>
+        <input id="jwt-jwks-url" class="jwt-input"
+               placeholder="https://auth.example.com/.well-known/jwks.json">
+      </div>
+      <button class="jwt-btn" data-jwt-action="fetch-jwks" type="button">Fetch</button>
+    </div>
+    <div class="jwt-jwks-row" data-jwt-jwks-kid-row hidden>
+      <div style="flex:1; min-width:180px;">
+        <label for="jwt-jwks-kid">Key ID (kid)</label>
+        <select id="jwt-jwks-kid" class="jwt-select" data-jwt-jwks-kid></select>
+      </div>
+      <button class="jwt-btn" data-jwt-action="use-jwks-key" type="button">Use this key</button>
+    </div>
+    <div class="jwt-jwks-status" data-jwt-jwks-status></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ============================================================
+   * JWT Inspector — pure client-side IIFE
+   *
+   * No fetch (except user-initiated JWKS), no XHR, no CDN.
+   * All crypto via crypto.subtle. All parsing in-browser.
+   * ============================================================ */
+
+  /* ---------- Constants ---------- */
+  var JWT_ALGS = {
+    HS256: { type: 'hmac', hash: 'SHA-256', keyFormat: 'raw',  verifyAlg: 'HMAC' },
+    HS384: { type: 'hmac', hash: 'SHA-384', keyFormat: 'raw',  verifyAlg: 'HMAC' },
+    HS512: { type: 'hmac', hash: 'SHA-512', keyFormat: 'raw',  verifyAlg: 'HMAC' },
+    RS256: { type: 'rsa',  hash: 'SHA-256', keyFormat: 'spki', verifyAlg: 'RSASSA-PKCS1-v1_5' },
+    RS384: { type: 'rsa',  hash: 'SHA-384', keyFormat: 'spki', verifyAlg: 'RSASSA-PKCS1-v1_5' },
+    RS512: { type: 'rsa',  hash: 'SHA-512', keyFormat: 'spki', verifyAlg: 'RSASSA-PKCS1-v1_5' },
+    PS256: { type: 'rsa',  hash: 'SHA-256', keyFormat: 'spki', verifyAlg: 'RSA-PSS' },
+    ES256: { type: 'ec',   hash: 'SHA-256', keyFormat: 'spki', verifyAlg: 'ECDSA', curve: 'P-256' },
+    ES384: { type: 'ec',   hash: 'SHA-384', keyFormat: 'spki', verifyAlg: 'ECDSA', curve: 'P-384' },
+    ES512: { type: 'ec',   hash: 'SHA-512', keyFormat: 'spki', verifyAlg: 'ECDSA', curve: 'P-521' }
+  };
+  var JWT_ALGS_V1 = ['HS256', 'RS256', 'ES256'];
+  var SENSITIVE_CLAIMS = [
+    'password', 'passwd', 'pwd',
+    'secret', 'client_secret',
+    'api_key', 'apikey', 'api-key',
+    'token', 'access_token', 'access-token', 'refresh_token', 'refresh-token',
+    'credential', 'credentials',
+    'private_key', 'privateKey', 'private-key',
+    'session', 'session_id', 'session-id', 'sid'
+  ];
+  var RFC7519_CLAIMS = ['iss', 'sub', 'aud', 'exp', 'nbf', 'iat', 'jti'];
+  var I18N = {
+    en: {
+      verifying: 'Verifying\u2026',
+      copied: 'Copied!',
+      insecure_warning: 'JWT Inspector requires HTTPS (or localhost) for cryptographic operations. Decode-only mode is active.'
+    },
+    zh: {
+      verifying: '\u9a8c\u8bc1\u4e2d\u2026',
+      copied: '\u5df2\u590d\u5236!',
+      insecure_warning: 'JWT \u68c0\u67e5\u5668\u9700\u8981 HTTPS(\u6216 localhost)\u624d\u80fd\u6267\u884c\u52a0\u5bc6\u64cd\u4f5c\u3002\u5f53\u524d\u4ec5\u89e3\u7801\u6a21\u5f0f\u53ef\u7528\u3002'
+    }
+  };
+
+  /* ---------- DOM helpers ---------- */
+  function $(sel, root) { return (root || document).querySelector(sel); }
+  function $$(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
+
+  /* ---------- base64url codec ---------- */
+  function b64urlDecode(str) {
+    var pad = str.length % 4 === 2 ? '==' : (str.length % 4 === 3 ? '=' : '');
+    var b64 = str.replace(/-/g, '+').replace(/_/g, '/') + pad;
+    var bin = atob(b64);
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  }
+  function b64urlEncode(bytes) {
+    var bin = '';
+    for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin).replace(/=+$/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  }
+  function b64urlDecodeJson(str) {
+    var bytes = b64urlDecode(str);
+    return JSON.parse(new TextDecoder('utf-8').decode(bytes));
+  }
+
+  /* ---------- ASN.1 builders for PKCS#1 -> SPKI wrapper (P1-3 fix) ---------- */
+  function asn1Integer(n) {
+    /* BigInt -> minimal two's-complement big-endian byte array */
+    var hex = n.toString(16);
+    if (hex.length % 2) hex = '0' + hex;
+    var bytes = [];
+    for (var i = 0; i < hex.length; i += 2) bytes.push(parseInt(hex.substr(i, 2), 16));
+    /* strip leading zeros except keep one if high bit set */
+    while (bytes.length > 1 && bytes[0] === 0 && !(bytes[1] & 0x80)) bytes.shift();
+    return new Uint8Array(bytes);
+  }
+  function asn1Sequence(parts) {
+    var total = 0;
+    for (var i = 0; i < parts.length; i++) total += parts[i].length;
+    var body = new Uint8Array(total);
+    var o = 0;
+    for (var j = 0; j < parts.length; j++) { body.set(parts[j], o); o += parts[j].length; }
+    var lenBytes;
+    if (total < 0x80) { lenBytes = new Uint8Array([total]); }
+    else if (total < 0x100) { lenBytes = new Uint8Array([0x81, total]); }
+    else { lenBytes = new Uint8Array([0x82, (total >> 8) & 0xff, total & 0xff]); }
+    var out = new Uint8Array(2 + lenBytes.length + body.length);
+    out[0] = 0x30; out.set(lenBytes, 1); out.set(body, 1 + lenBytes.length);
+    return out;
+  }
+  function wrapPkcs1ToSpki(pkcs1Der, algOid) {
+    /* algOid: Array of bytes for the algorithm identifier DER (AlgorithmIdentifier SEQUENCE) */
+    var bitString = new Uint8Array(1 + pkcs1Der.length);
+    bitString[0] = 0x00;
+    bitString.set(pkcs1Der, 1);
+    var spki = new Uint8Array(algOid.length + bitString.length);
+    spki.set(algOid, 0);
+    spki.set(bitString, algOid.length);
+    return asn1Sequence(spki);
+  }
+
+  /* OID bytes for RSA rsaEncryption (1.2.840.113549.1.1.1) + NULL params */
+  var RSA_ENC_OID = (function () {
+    /* 06 09 2a 86 48 86 f7 0d 01 01 01 05 00 (SEQUENCE = OID + NULL) */
+    return new Uint8Array([0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01, 0x05, 0x00]);
+  })();
+  /* OID bytes for EC id-ecPublicKey (1.2.840.10045.2.1) + named curve OID (P-256 = 1.2.840.10045.3.1.7) */
+  var EC_OID_P256 = (function () {
+    /* 06 07 2a 86 48 ce 3d 02 01 06 08 2a 86 48 ce 3d 03 01 07 */
+    return new Uint8Array([0x30, 0x13, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07]);
+  })();
+  var EC_OID_P384 = (function () {
+    /* secp384r1 = 1.3.132.0.34 */
+    return new Uint8Array([0x30, 0x10, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01, 0x06, 0x05, 0x2b, 0x81, 0x04, 0x00, 0x22]);
+  })();
+  var EC_OID_P521 = (function () {
+    /* secp521r1 = 1.3.132.0.35 */
+    return new Uint8Array([0x30, 0x10, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01, 0x06, 0x05, 0x2b, 0x81, 0x04, 0x00, 0x23]);
+  })();
+
+  function parsePem(pem) {
+    var label = (pem.match(/-----BEGIN ([^-]+)-----/) || [])[1] || '';
+    var b64 = pem.replace(/-----BEGIN [^-]+-----/g, '')
+                 .replace(/-----END [^-]+-----/g, '')
+                 .replace(/\s+/g, '');
+    var bin = atob(b64);
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return { label: label.trim(), bytes: bytes };
+  }
+  function readAsn1Length(bytes, offset) {
+    var b = bytes[offset++];
+    if (b < 0x80) return { length: b, next: offset };
+    var n = b & 0x7f;
+    var len = 0;
+    for (var i = 0; i < n; i++) { len = (len << 8) | bytes[offset++]; }
+    return { length: len, next: offset };
+  }
+  function readAsn1Integer(bytes, offset) {
+    if (bytes[offset++] !== 0x02) throw new Error('Expected ASN.1 INTEGER at offset ' + (offset - 1));
+    var lenInfo = readAsn1Length(bytes, offset); offset = lenInfo.next;
+    var slice = bytes.slice(offset, offset + lenInfo.length);
+    var hex = '';
+    for (var i = 0; i < slice.length; i++) hex += (slice[i] < 0x10 ? '0' : '') + slice[i].toString(16);
+    return { value: BigInt('0x' + (hex || '0')), next: offset + lenInfo.length };
+  }
+
+  function pemToDer(pem) {
+    /* Returns SPKI-format DER bytes regardless of whether input is SPKI or PKCS#1.
+     * P1-3 fix: transparent PKCS#1 -> SPKI ASN.1 wrapping.
+     * Labels accepted:
+     *   "PUBLIC KEY"           -> already SPKI, return as-is
+     *   "RSA PUBLIC KEY"       -> PKCS#1 RSAPublicKey, wrap with RSA OID
+     *   "EC PUBLIC KEY"        -> PKCS#1 ECPoint (uncompressed), wrap with EC P-256 OID
+     */
+    var parsed = parsePem(pem);
+    var lbl = parsed.label.toUpperCase();
+    var der = parsed.bytes;
+    if (lbl === 'PUBLIC KEY') return der;
+    if (lbl === 'RSA PUBLIC KEY') {
+      /* PKCS#1 RSAPublicKey = SEQUENCE { INTEGER n, INTEGER e } */
+      if (der[0] !== 0x30) throw new Error('PKCS#1 RSA public key: expected SEQUENCE');
+      return wrapPkcs1ToSpki(der, RSA_ENC_OID);
+    }
+    if (lbl === 'EC PUBLIC KEY') {
+      /* PKCS#1 ECPoint: usually raw BIT STRING 0x04 X Y (uncompressed point).
+       * Some issuers wrap as DER BIT STRING; we accept both forms. */
+      var pointBytes;
+      if (der[0] === 0x03) {
+        pointBytes = der.slice(der[1] + 2);
+      } else if (der[0] === 0x04) {
+        pointBytes = der;
+      } else {
+        throw new Error('PKCS#1 EC public key: expected BIT STRING or raw point');
+      }
+      var bitString = new Uint8Array(1 + pointBytes.length);
+      bitString[0] = 0x00;
+      bitString.set(pointBytes, 1);
+      var spki = new Uint8Array(EC_OID_P256.length + bitString.length);
+      spki.set(EC_OID_P256, 0);
+      spki.set(bitString, EC_OID_P256.length);
+      return asn1Sequence(spki);
+    }
+    /* Unknown label: return as-is, hope it's SPKI */
+    return der;
+  }
+
+  /* ---------- P1363 <-> DER (for ES256, §4.2) ---------- */
+  function p1363ToDer(p1363, curveBytes) {
+    curveBytes = curveBytes || 32;
+    if (p1363.length !== curveBytes * 2) {
+      throw new Error('P1363 signature length mismatch: expected ' + (curveBytes * 2) + ' got ' + p1363.length);
+    }
+    var r = p1363.slice(0, curveBytes);
+    var s = p1363.slice(curveBytes, curveBytes * 2);
+    function trim(buf) {
+      var i = 0;
+      while (i < buf.length - 1 && buf[i] === 0) i++;
+      var sub = buf.slice(i);
+      if (sub[0] & 0x80) { var p = new Uint8Array(sub.length + 1); p[0] = 0; p.set(sub, 1); return p; }
+      return sub;
+    }
+    var rTrim = trim(r);
+    var sTrim = trim(s);
+    var seqLen = rTrim.length + sTrim.length + 4;
+    var der = new Uint8Array(seqLen + 2);
+    var o = 0;
+    der[o++] = 0x30;
+    der[o++] = 0x82;
+    der[o++] = (seqLen >> 8) & 0xff;
+    der[o++] = seqLen & 0xff;
+    der[o++] = 0x02;
+    der[o++] = rTrim.length;
+    der.set(rTrim, o); o += rTrim.length;
+    der[o++] = 0x02;
+    der[o++] = sTrim.length;
+    der.set(sTrim, o);
+    return der;
+  }
+  function derToP1363(der, curveBytes) {
+    curveBytes = curveBytes || 32;
+    if (der[0] !== 0x30) throw new Error('Not a DER SEQUENCE');
+    var o = 1;
+    if (der[o] & 0x80) o += 1 + (der[o] & 0x7f);
+    else o += 1;
+    if (der[o++] !== 0x02) throw new Error('Expected INTEGER r');
+    var rLen = der[o++];
+    var r = der.slice(o, o + rLen); o += rLen;
+    if (der[o++] !== 0x02) throw new Error('Expected INTEGER s');
+    var sLen = der[o++];
+    var s = der.slice(o, o + sLen);
+    function pad(buf, len) {
+      if (buf.length === len) return buf;
+      var p = new Uint8Array(len);
+      p.set(buf, len - buf.length);
+      return p;
+    }
+    return new Uint8Array([].concat(Array.from(pad(r, curveBytes)), Array.from(pad(s, curveBytes))));
+  }
+
+  /* ---------- Token parser ---------- */
+  function extractJwt(input) {
+    if (!input) return null;
+    var s = String(input).trim();
+    if (/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(s)) return s;
+    var m = s.match(/(?:Bearer|bearer|BEARER)\s+([A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)/);
+    if (m) return m[1];
+    m = s.match(/[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/);
+    return m ? m[0] : null;
+  }
+  function parseToken(input) {
+    var raw = extractJwt(input);
+    if (!raw) return { error: 'Could not find a JWT in the input.' };
+    var parts = raw.split('.');
+    if (parts.length !== 3) return { error: 'JWT must have exactly 3 segments.' };
+    try {
+      var header = b64urlDecodeJson(parts[0]);
+      var payload = b64urlDecodeJson(parts[1]);
+      var sigBytes = b64urlDecode(parts[2]);
+      return { raw: raw, header: header, payload: payload, signature: sigBytes,
+               parts: { h: parts[0], p: parts[1], s: parts[2] } };
+    } catch (e) {
+      return { error: 'Failed to decode: ' + e.message };
+    }
+  }
+
+  /* ---------- RFC 7519 claim validators ---------- */
+  function humanDuration(sec) {
+    sec = Math.abs(sec);
+    if (sec < 60) return sec + 's';
+    if (sec < 3600) return Math.floor(sec / 60) + 'm ' + (sec % 60) + 's';
+    if (sec < 86400) return Math.floor(sec / 3600) + 'h ' + Math.floor((sec % 3600) / 60) + 'm';
+    var d = Math.floor(sec / 86400);
+    var h = Math.floor((sec % 86400) / 3600);
+    return d + 'd ' + h + 'h';
+  }
+  function validateClaims(payload) {
+    var out = [];
+    for (var i = 0; i < RFC7519_CLAIMS.length; i++) {
+      var name = RFC7519_CLAIMS[i];
+      var present = Object.prototype.hasOwnProperty.call(payload, name);
+      if (!present) continue;
+      var value = payload[name];
+      var status = 'ok';
+      var detail = '';
+      if (name === 'exp' || name === 'nbf' || name === 'iat') {
+        if (typeof value !== 'number') { status = 'fail'; detail = 'must be a number (Unix seconds)'; }
+        else if (name === 'exp') {
+          var now = Math.floor(Date.now() / 1000);
+          status = (value > now) ? 'ok' : 'fail';
+          detail = (value > now) ? ('expires in ' + humanDuration(value - now)) : ('expired ' + humanDuration(now - value) + ' ago');
+        } else if (name === 'nbf') {
+          var now2 = Math.floor(Date.now() / 1000);
+          status = (value <= now2) ? 'ok' : 'fail';
+          detail = (value <= now2) ? ('valid since ' + humanDuration(now2 - value)) : ('not valid for ' + humanDuration(value - now2));
+        } else if (name === 'iat') {
+          var now3 = Math.floor(Date.now() / 1000);
+          var age = now3 - value;
+          status = (age >= -60) ? 'ok' : 'warn';
+          detail = (age >= 0) ? ('issued ' + humanDuration(age) + ' ago') : ('issued in ' + humanDuration(-age) + ' (future)');
+        }
+      } else {
+        status = 'ok'; detail = 'present';
+      }
+      out.push({ name: name, value: value, status: status, detail: detail });
+    }
+    return out;
+  }
+
+  /* ---------- Sensitive claim masking ---------- */
+  function isSensitive(name) {
+    var n = String(name).toLowerCase();
+    for (var i = 0; i < SENSITIVE_CLAIMS.length; i++) {
+      if (n === SENSITIVE_CLAIMS[i].toLowerCase()) return true;
+    }
+    return false;
+  }
+
+  /* ---------- Verifier: HS256 / RS256 / ES256 ---------- */
+  function verifyHS256(parsed, secret) {
+    if (!secret) return Promise.reject(new Error('HS256 requires a secret'));
+    var data = new TextEncoder().encode(parsed.parts.h + '.' + parsed.parts.p);
+    return crypto.subtle.importKey(
+      'raw', new TextEncoder().encode(secret),
+      { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']
+    ).then(function (key) {
+      return crypto.subtle.verify({ name: 'HMAC' }, key, parsed.signature, data);
+    });
+  }
+  function verifyRS256(parsed, publicKeyPem) {
+    if (!publicKeyPem) return Promise.reject(new Error('RS256 requires an SPKI public key'));
+    var spkiDer = pemToDer(publicKeyPem);
+    var data = new TextEncoder().encode(parsed.parts.h + '.' + parsed.parts.p);
+    return crypto.subtle.importKey(
+      'spki', spkiDer,
+      { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['verify']
+    ).then(function (key) {
+      return crypto.subtle.verify({ name: 'RSASSA-PKCS1-v1_5' }, key, parsed.signature, data);
+    });
+  }
+  function verifyES256(parsed, publicKeyPem) {
+    if (!publicKeyPem) return Promise.reject(new Error('ES256 requires an SPKI public key'));
+    var spkiDer = pemToDer(publicKeyPem);
+    var data = new TextEncoder().encode(parsed.parts.h + '.' + parsed.parts.p);
+    return crypto.subtle.importKey(
+      'spki', spkiDer,
+      { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']
+    ).then(function (key) {
+      var sigInput = parsed.signature[0] === 0x30
+        ? parsed.signature
+        : p1363ToDer(parsed.signature, 32);
+      return crypto.subtle.verify({ name: 'ECDSA', hash: 'SHA-256' }, key, sigInput, data);
+    });
+  }
+
+  /* ---------- Algorithm confusion attack simulator (D10.B) ---------- */
+  function testConfusion(parsed, publicKeyPem) {
+    if (!publicKeyPem) return Promise.reject(new Error('Test requires an SPKI public key'));
+    var pubKeyBytes = pemToDer(publicKeyPem);
+    var pubKeyStr = b64urlEncode(pubKeyBytes);
+    return verifyHS256(parsed, pubKeyStr);
+  }
+
+  /* ---------- Re-signer (tamper mode, D11) ---------- */
+  function resignHS256(parsed, modifiedPayload, secret) {
+    if (!secret) return Promise.reject(new Error('Re-sign requires a secret'));
+    var payloadStr = JSON.stringify(modifiedPayload);
+    var payloadB64 = b64urlEncode(new TextEncoder().encode(payloadStr));
+    var data = new TextEncoder().encode(parsed.parts.h + '.' + payloadB64);
+    return crypto.subtle.importKey(
+      'raw', new TextEncoder().encode(secret),
+      { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+    ).then(function (key) {
+      return crypto.subtle.sign('HMAC', key, data);
+    }).then(function (sigBuffer) {
+      var sigB64 = b64urlEncode(new Uint8Array(sigBuffer));
+      return parsed.parts.h + '.' + payloadB64 + '.' + sigB64;
+    });
+  }
+
+  /* ---------- JWKS fetcher (D13) ---------- */
+  function fetchJwks(url) {
+    if (!/^https?:\/\//i.test(url)) return Promise.reject(new Error('JWKS URL must be http(s)'));
+    return fetch(url, { credentials: 'omit', cache: 'no-store' }).then(function (resp) {
+      if (!resp.ok) throw new Error('JWKS fetch failed: HTTP ' + resp.status);
+      return resp.json();
+    }).then(function (json) {
+      if (!json || !Array.isArray(json.keys)) throw new Error('JWKS response missing "keys" array');
+      return json.keys;
+    });
+  }
+  function pickJwksKey(keys, kid) {
+    if (!kid) return keys[0];
+    for (var i = 0; i < keys.length; i++) if (keys[i].kid === kid) return keys[i];
+    return null;
+  }
+
+  /* ---------- JWK -> SPKI PEM (D13 follow-up, Option A) ---------- */
+  function b64urlToBigInt(s) {
+    var bin = atob(s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice(0, (4 - s.length % 4) % 4));
+    var hex = '';
+    for (var i = 0; i < bin.length; i++) hex += (bin.charCodeAt(i) < 0x10 ? '0' : '') + bin.charCodeAt(i).toString(16);
+    return BigInt('0x' + (hex || '0'));
+  }
+  function jwkRsaToPem(jwk) {
+    if (!jwk.n || !jwk.e) throw new Error('RSA JWK missing n/e');
+    var n = asn1Integer(b64urlToBigInt(jwk.n));
+    var e = asn1Integer(b64urlToBigInt(jwk.e));
+    var pkcs1 = asn1Sequence([n, e]);
+    var spki = wrapPkcs1ToSpki(pkcs1, RSA_ENC_OID);
+    return derToPem(spki, 'PUBLIC KEY');
+  }
+  function jwkEcToPem(jwk) {
+    if (!jwk.x || !jwk.y) throw new Error('EC JWK missing x/y');
+    var x = b64urlDecode(jwk.x);
+    var y = b64urlDecode(jwk.y);
+    var point = new Uint8Array(1 + x.length + y.length);
+    point[0] = 0x04;
+    point.set(x, 1);
+    point.set(y, 1 + x.length);
+    var bitString = new Uint8Array(1 + point.length);
+    bitString[0] = 0x00;
+    bitString.set(point, 1);
+    var curveOid;
+    var crv = jwk.crv || 'P-256';
+    if (crv === 'P-256') curveOid = EC_OID_P256;
+    else if (crv === 'P-384') curveOid = EC_OID_P384;
+    else if (crv === 'P-521') curveOid = EC_OID_P521;
+    else throw new Error('Unsupported EC curve: ' + crv);
+    var spki = new Uint8Array(curveOid.length + bitString.length);
+    spki.set(curveOid, 0);
+    spki.set(bitString, curveOid.length);
+    var wrapped = asn1Sequence(spki);
+    return derToPem(wrapped, 'PUBLIC KEY');
+  }
+  function jwkToPem(jwk) {
+    if (jwk.kty === 'RSA') return jwkRsaToPem(jwk);
+    if (jwk.kty === 'EC') return jwkEcToPem(jwk);
+    throw new Error('Unsupported JWK kty: ' + jwk.kty);
+  }
+  function derToPem(der, label) {
+    var bin = '';
+    for (var i = 0; i < der.length; i++) bin += String.fromCharCode(der[i]);
+    var b64 = btoa(bin);
+    var lines = [];
+    for (var j = 0; j < b64.length; j += 64) lines.push(b64.substr(j, 64));
+    return '-----BEGIN ' + label + '-----\n' + lines.join('\n') + '\n-----END ' + label + '-----\n';
+  }
+
+  /* ---------- Module state ---------- */
+  var state = {
+    parsed: null,
+    tamperUnlocked: false,
+    jwksCache: null,
+    tickerHandle: null
+  };
+
+  /* ---------- Render helpers ---------- */
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function renderJsonCard(el, obj) {
+    var masked = {};
+    var keys = Object.keys(obj);
+    for (var i = 0; i < keys.length; i++) {
+      var k = keys[i];
+      if (isSensitive(k)) masked[k] = '__MASKED__';
+      else masked[k] = obj[k];
+    }
+    el.textContent = JSON.stringify(masked, null, 2);
+  }
+  function renderClaimsTable(tbody, claims) {
+    var html = '';
+    for (var i = 0; i < claims.length; i++) {
+      var c = claims[i];
+      var valHtml;
+      if (isSensitive(c.name)) {
+        valHtml = '<span class="jwt-claim-masked">\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022</span>'
+                + '<button class="jwt-claim-reveal" data-jwt-reveal="' + escapeHtml(c.name) + '" type="button">reveal</button>';
+      } else if (typeof c.value === 'number') {
+        valHtml = '<span>' + c.value + '</span>';
+      } else {
+        valHtml = '<span>' + escapeHtml(String(c.value)) + '</span>';
+      }
+      html += '<tr data-jwt-claim="' + escapeHtml(c.name) + '">'
+            + '<td class="jwt-claim-name">' + escapeHtml(c.name) + '</td>'
+            + '<td class="jwt-claim-value">' + valHtml + '</td>'
+            + '<td class="jwt-claim-status jwt-status-' + c.status + '">'
+            + (c.detail ? escapeHtml(c.detail) : c.status)
+            + '</td></tr>';
+    }
+    tbody.innerHTML = html;
+  }
+  function renderSecurityChecks(ul, parsed) {
+    var html = '';
+    var alg = String(parsed.header.alg || '');
+    if (alg === 'none' || alg === 'None' || alg === 'NONE' || alg === 'NUL') {
+      html += '<li><span class="jwt-check-icon jwt-status-fail">&#9888;</span> '
+            + '<strong>alg=none detected</strong> &mdash; CVE-2015-9235: this token has no signature. '
+            + 'Servers that accept this without an allow-list are vulnerable to forgery. '
+            + '<a href="https://nvd.nist.gov/vuln/detail/CVE-2015-9235" target="_blank" rel="noopener">CVE-2015-9235</a>'
+            + '</li>';
+    } else if (alg === 'HS256' || alg === 'HS384' || alg === 'HS512') {
+      html += '<li><span class="jwt-check-icon jwt-status-warn">&#9888;</span> '
+            + '<strong>Symmetric algorithm (' + escapeHtml(alg) + ')</strong> &mdash; '
+            + 'the secret is the only thing protecting this token. Ensure the secret is high-entropy '
+            + 'and never leaks (e.g., to a public-key byte-array, which would enable HS/RS confusion attacks).'
+            + '</li>';
+    } else if (alg === 'RS256' || alg === 'RS384' || alg === 'RS512'
+            || alg === 'ES256' || alg === 'ES384' || alg === 'ES512'
+            || alg === 'PS256' || alg === 'PS384' || alg === 'PS512') {
+      html += '<li><span class="jwt-check-icon jwt-status-ok">&#10003;</span> '
+            + '<strong>Asymmetric algorithm (' + escapeHtml(alg) + ')</strong> &mdash; '
+            + 'verify with the issuer\'s public key. Beware of HS/RS confusion attacks: '
+            + 'do not also verify HS256 with the same public-key bytes.'
+            + '</li>';
+    } else {
+      html += '<li><span class="jwt-check-icon jwt-status-warn">&#9888;</span> '
+            + '<strong>Unknown algorithm (' + escapeHtml(alg) + ')</strong> &mdash; '
+            + 'this tool supports HS256 / RS256 / ES256 in v1.0.0.'
+            + '</li>';
+    }
+    if (parsed.header.kid) {
+      html += '<li><span class="jwt-check-icon jwt-status-ok">i</span> '
+            + '<strong>kid header present</strong> &mdash; ' + escapeHtml(parsed.header.kid)
+            + ' &mdash; use the JWKS panel to fetch the corresponding public key.'
+            + '</li>';
+    }
+    ul.innerHTML = html;
+  }
+  function renderAlgSelect(select, parsed) {
+    var detected = parsed.header.alg;
+    var supported = ['HS256', 'RS256', 'ES256'];
+    var html = '';
+    for (var i = 0; i < supported.length; i++) {
+      var sel = (detected === supported[i]) ? ' selected' : '';
+      html += '<option value="' + supported[i] + '"' + sel + '>' + supported[i] + '</option>';
+    }
+    select.innerHTML = html;
+  }
+  function renderTamperEditor(editor, payload) {
+    var html = '';
+    var keys = Object.keys(payload);
+    for (var i = 0; i < keys.length; i++) {
+      var k = keys[i];
+      var v = payload[k];
+      var vStr = (typeof v === 'object') ? JSON.stringify(v) : String(v);
+      html += '<div class="jwt-tamper-row">'
+            + '<span class="jwt-tamper-key">' + escapeHtml(k) + '</span>'
+            + '<input class="jwt-tamper-input" data-jwt-tamper-key="' + escapeHtml(k) + '" value="' + escapeHtml(vStr) + '">'
+            + '</div>';
+    }
+    editor.innerHTML = html;
+  }
+  function readTamperEditor(editor, origPayload) {
+    var inputs = $$('[data-jwt-tamper-key]', editor);
+    var out = JSON.parse(JSON.stringify(origPayload));
+    for (var i = 0; i < inputs.length; i++) {
+      var k = inputs[i].getAttribute('data-jwt-tamper-key');
+      var raw = inputs[i].value;
+      if (typeof origPayload[k] === 'number') {
+        var n = Number(raw);
+        if (!Number.isNaN(n)) out[k] = n;
+        else out[k] = raw;
+      } else if (typeof origPayload[k] === 'boolean') {
+        out[k] = (raw === 'true');
+      } else if (typeof origPayload[k] === 'object' && origPayload[k] !== null) {
+        try { out[k] = JSON.parse(raw); } catch (e) { out[k] = raw; }
+      } else {
+        out[k] = raw;
+      }
+    }
+    return out;
+  }
+
+  /* ---------- Countdown ticker (D14) ---------- */
+  function startTicker(root, parsed) {
+    if (state.tickerHandle) clearInterval(state.tickerHandle);
+    function tick() {
+      var claims = validateClaims(parsed.payload);
+      var expClaim = null, nbfClaim = null;
+      for (var i = 0; i < claims.length; i++) {
+        if (claims[i].name === 'exp') expClaim = claims[i];
+        if (claims[i].name === 'nbf') nbfClaim = claims[i];
+      }
+      var tbody = $('[data-jwt-claims-tbody]', root);
+      if (!tbody) return;
+      var rows = $$('[data-jwt-claim]', tbody);
+      for (var j = 0; j < rows.length; j++) {
+        var name = rows[j].getAttribute('data-jwt-claim');
+        var statusCell = rows[j].querySelector('.jwt-claim-status');
+        if (name === 'exp' && expClaim) statusCell.textContent = expClaim.detail;
+        if (name === 'nbf' && nbfClaim) statusCell.textContent = nbfClaim.detail;
+      }
+    }
+    state.tickerHandle = setInterval(tick, 1000);
+  }
+  function stopTicker() {
+    if (state.tickerHandle) clearInterval(state.tickerHandle);
+    state.tickerHandle = null;
+  }
+
+  /* ---------- Sample token (RFC 7519 Appendix A.1) ---------- */
+  var SAMPLE_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
+
+  /* ---------- copyToClipboard ---------- */
+  function fallbackCopy(text, cb) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed'; ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); if (cb) cb(); } catch (e) { /* swallow */ }
+    document.body.removeChild(ta);
+  }
+  function copyToClipboard(text, cb) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(cb, function () { fallbackCopy(text, cb); });
+    } else {
+      fallbackCopy(text, cb);
+    }
+  }
+
+  /* ---------- i18n lookup ---------- */
+  function t(key, lang) {
+    return (I18N[lang] && I18N[lang][key]) || (I18N.en[key]) || key;
+  }
+
+  /* ---------- init(root) — main controller ---------- */
+  function init(root) {
+    var lang = root.getAttribute('data-jwt-lang') || 'en';
+
+    /* Insecure-context warning */
+    if (!window.isSecureContext) {
+      $('[data-jwt-insecure]', root).hidden = false;
+    }
+
+    var tokenInput = $('#jwt-token-input', root);
+    var decodedWrap = $('[data-jwt-decoded]', root);
+    var headerJson = $('[data-jwt-header-json]', root);
+    var payloadJson = $('[data-jwt-payload-json]', root);
+    var sigBytes = $('[data-jwt-signature-bytes]', root);
+    var claimsTbody = $('[data-jwt-claims-tbody]', root);
+    var algSelect = $('[data-jwt-alg-select]', root);
+    var secretInput = $('#jwt-secret-input', root);
+    var pubKeyInput = $('#jwt-pubkey-input', root);
+    var secretRow = $('[data-jwt-secret-row]', root);
+    var pubKeyRow = $('[data-jwt-pubkey-row]', root);
+    var verifyResult = $('[data-jwt-verify-result]', root);
+    var checksUl = $('[data-jwt-checks]', root);
+    var inputError = $('[data-jwt-input-error]', root);
+    var tamperCard = $('[data-jwt-tamper]', root);
+    var tamperEditor = $('[data-jwt-tamper-editor]', root);
+    var tamperedOutput = $('[data-jwt-tampered-output]', root);
+    var compareCard = $('[data-jwt-compare]', root);
+    var compareResults = $('[data-jwt-compare-results]', root);
+    var confusionBtn = $('[data-jwt-action="test-confusion"]', root);
+    var tamperEnableBtn = $('[data-jwt-action="enable-tamper"]', root);
+    var compareAlgsBtn = $('[data-jwt-action="compare-algs"]', root);
+
+    /* Auto-decode on input (debounced) */
+    var decodeTimer = null;
+    function scheduleDecode() {
+      if (decodeTimer) clearTimeout(decodeTimer);
+      decodeTimer = setTimeout(decodeNow, 150);
+    }
+    function decodeNow() {
+      var raw = tokenInput.value;
+      inputError.hidden = true;
+      inputError.textContent = '';
+      if (!raw.trim()) {
+        decodedWrap.hidden = true;
+        state.parsed = null;
+        stopTicker();
+        return;
+      }
+      var parsed = parseToken(raw);
+      if (parsed.error) {
+        inputError.hidden = false;
+        inputError.textContent = parsed.error;
+        decodedWrap.hidden = true;
+        state.parsed = null;
+        stopTicker();
+        return;
+      }
+      state.parsed = parsed;
+      decodedWrap.hidden = false;
+      renderJsonCard(headerJson, parsed.header);
+      renderJsonCard(payloadJson, parsed.payload);
+      sigBytes.textContent = parsed.signature.length === 0
+        ? '(empty signature \u2014 alg=none)'
+        : Array.from(parsed.signature).map(function (b) {
+            return (b < 0x10 ? '0' : '') + b.toString(16);
+          }).join(' ').match(/.{1,48}/g).join('\n');
+      var claims = validateClaims(parsed.payload);
+      renderClaimsTable(claimsTbody, claims);
+      renderAlgSelect(algSelect, parsed);
+      onAlgChange();
+      renderSecurityChecks(checksUl, parsed);
+      startTicker(root, parsed);
+      tamperEnableBtn.hidden = !(parsed.header.alg === 'HS256' || parsed.header.alg === 'HS384' || parsed.header.alg === 'HS512');
+    }
+
+    function onAlgChange() {
+      var alg = algSelect.value;
+      if (alg === 'HS256' || alg === 'HS384' || alg === 'HS512') {
+        secretRow.hidden = false;
+        pubKeyRow.hidden = true;
+      } else {
+        secretRow.hidden = true;
+        pubKeyRow.hidden = false;
+      }
+      compareAlgsBtn.hidden = !(secretInput.value || pubKeyInput.value);
+      confusionBtn.hidden = !(pubKeyInput.value);
+    }
+    algSelect.addEventListener('change', onAlgChange);
+    secretInput.addEventListener('input', onAlgChange);
+    pubKeyInput.addEventListener('input', onAlgChange);
+
+    tokenInput.addEventListener('input', scheduleDecode);
+
+    /* Action: Verify */
+    function doVerify() {
+      if (!state.parsed) return;
+      var alg = algSelect.value;
+      verifyResult.textContent = t('verifying', lang);
+      verifyResult.className = 'jwt-verify-result';
+      var p;
+      if (alg === 'HS256') p = verifyHS256(state.parsed, secretInput.value);
+      else if (alg === 'RS256') p = verifyRS256(state.parsed, pubKeyInput.value);
+      else if (alg === 'ES256') p = verifyES256(state.parsed, pubKeyInput.value);
+      else p = Promise.reject(new Error('Unsupported algorithm: ' + alg));
+      p.then(function (ok) {
+        if (ok) {
+          verifyResult.textContent = '\u2713 valid';
+          verifyResult.classList.add('jwt-status-ok');
+        } else {
+          verifyResult.textContent = '\u2717 invalid (signature does not match)';
+          verifyResult.classList.add('jwt-status-fail');
+        }
+      }).catch(function (e) {
+        verifyResult.textContent = '\u2717 error: ' + e.message;
+        verifyResult.classList.add('jwt-status-fail');
+      });
+    }
+
+    /* Action: Test confusion */
+    function doTestConfusion() {
+      if (!state.parsed || !pubKeyInput.value) return;
+      testConfusion(state.parsed, pubKeyInput.value).then(function (ok) {
+        var msg = ok
+          ? '\u26a0 VULNERABLE \u2014 the public key bytes, when used as HS256 HMAC secret, validate this token. The server is exposed to HS/RS algorithm confusion attacks.'
+          : '\u2713 not vulnerable \u2014 HS256 with public-key bytes does NOT validate this token (good).';
+        var banner = document.createElement('div');
+        banner.className = 'jwt-banner-attack';
+        banner.textContent = msg;
+        confusionBtn.parentNode.insertBefore(banner, confusionBtn);
+        setTimeout(function () { banner.remove(); }, 12000);
+      }).catch(function (e) {
+        var banner2 = document.createElement('div');
+        banner2.className = 'jwt-banner-attack';
+        banner2.textContent = '\u2717 test failed: ' + e.message;
+        confusionBtn.parentNode.insertBefore(banner2, confusionBtn);
+      });
+    }
+
+    /* Action: Enable tamper mode (one-time confirmation per session, D11) */
+    function doEnableTamper() {
+      if (state.tamperUnlocked) {
+        tamperCard.hidden = false;
+        return;
+      }
+      var ok = window.confirm(
+        'FOR DEBUGGING / RED TEAM USE ONLY.\n\n' +
+        'You are about to enable claim tampering. You can edit any claim in the ' +
+        'current JWT and re-sign it with the HS256 secret you provide.\n\n' +
+        'Never tamper with tokens you do not own. Unauthorized use may violate ' +
+        'computer-misuse laws in your jurisdiction.\n\n' +
+        'Proceed?'
+      );
+      if (!ok) return;
+      state.tamperUnlocked = true;
+      tamperCard.hidden = false;
+      renderTamperEditor(tamperEditor, state.parsed.payload);
+    }
+
+    /* Action: Re-sign (tamper) */
+    function doResign() {
+      if (!state.parsed || !secretInput.value) {
+        alert('Re-sign requires the HS256 secret in the verify panel.');
+        return;
+      }
+      var modified = readTamperEditor(tamperEditor, state.parsed.payload);
+      resignHS256(state.parsed, modified, secretInput.value).then(function (newJwt) {
+        tamperedOutput.hidden = false;
+        tamperedOutput.textContent = newJwt;
+      }).catch(function (e) {
+        tamperedOutput.hidden = false;
+        tamperedOutput.textContent = 'Error: ' + e.message;
+      });
+    }
+    function doCopyTampered() {
+      if (tamperedOutput.textContent) {
+        copyToClipboard(tamperedOutput.textContent, function () { /* silent ok */ });
+      }
+    }
+
+    /* Action: Compare algorithms (D12) */
+    function doCompareAlgs() {
+      if (!state.parsed) return;
+      compareCard.hidden = false;
+      compareResults.textContent = 'Running\u2026';
+      var results = [];
+      var pending = [];
+      if (secretInput.value) {
+        pending.push(verifyHS256(state.parsed, secretInput.value).then(function (ok) {
+          results.push({ alg: 'HS256', ok: ok });
+        }).catch(function (e) { results.push({ alg: 'HS256', error: e.message }); }));
+      }
+      if (pubKeyInput.value) {
+        pending.push(verifyRS256(state.parsed, pubKeyInput.value).then(function (ok) {
+          results.push({ alg: 'RS256', ok: ok });
+        }).catch(function (e) { results.push({ alg: 'RS256', error: e.message }); }));
+        pending.push(verifyES256(state.parsed, pubKeyInput.value).then(function (ok) {
+          results.push({ alg: 'ES256', ok: ok });
+        }).catch(function (e) { results.push({ alg: 'ES256', error: e.message }); }));
+      }
+      Promise.all(pending).then(function () {
+        var html = '<ul class="jwt-checks">';
+        for (var i = 0; i < results.length; i++) {
+          var r = results[i];
+          var status = r.error ? ('\u2717 error: ' + escapeHtml(r.error)) : (r.ok ? '\u2713 valid' : '\u2717 invalid');
+          var cls = r.error ? 'jwt-status-warn' : (r.ok ? 'jwt-status-ok' : 'jwt-status-fail');
+          html += '<li><span class="jwt-check-icon ' + cls + '">' + (r.ok ? '\u2713' : '\u2717') + '</span> '
+                + '<strong>' + r.alg + '</strong> ' + status + '</li>';
+        }
+        html += '</ul>';
+        compareResults.innerHTML = html;
+      });
+    }
+
+    /* Action: Fetch JWKS */
+    function doFetchJwks() {
+      var urlInput = $('#jwt-jwks-url', root);
+      var statusEl = $('[data-jwt-jwks-status]', root);
+      var kidRow = $('[data-jwt-jwks-kid-row]', root);
+      var kidSelect = $('[data-jwt-jwks-kid]', root);
+      statusEl.textContent = 'Fetching\u2026';
+      fetchJwks(urlInput.value).then(function (keys) {
+        state.jwksCache = keys;
+        statusEl.textContent = '\u2713 Fetched ' + keys.length + ' key(s).';
+        var html = '';
+        for (var i = 0; i < keys.length; i++) {
+          var k = keys[i];
+          html += '<option value="' + escapeHtml(k.kid || ('key-' + i)) + '">' + escapeHtml(k.kid || ('key-' + i)) + ' (' + escapeHtml(k.kty || '?') + ')</option>';
+        }
+        kidSelect.innerHTML = html;
+        kidRow.hidden = false;
+      }).catch(function (e) {
+        statusEl.textContent = '\u2717 ' + e.message;
+      });
+    }
+
+    /* Action: Use JWKS key */
+    function doUseJwksKey() {
+      var kidSelect = $('[data-jwt-jwks-kid]', root);
+      var kid = kidSelect.value;
+      var jwk = pickJwksKey(state.jwksCache, kid);
+      if (!jwk) { alert('Key not found: ' + kid); return; }
+      try {
+        var pem = jwkToPem(jwk);
+        pubKeyInput.value = pem;
+        algSelect.value = (jwk.kty === 'RSA') ? 'RS256' : 'ES256';
+        onAlgChange();
+      } catch (e) {
+        alert('JWKS \u2192 PEM conversion: ' + e.message);
+      }
+    }
+
+    /* Click delegation */
+    root.addEventListener('click', function (e) {
+      var target = e.target;
+      if (!target) return;
+      var act = target.closest && target.closest('[data-jwt-action]');
+      if (!act) return;
+      var a = act.getAttribute('data-jwt-action');
+      if (a === 'sample') { tokenInput.value = SAMPLE_TOKEN; decodeNow(); }
+      else if (a === 'clear') { tokenInput.value = ''; decodeNow(); }
+      else if (a === 'toggle-secret') {
+        var cur = secretInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        secretInput.setAttribute('type', cur);
+        act.textContent = (cur === 'password') ? 'show' : 'hide';
+      }
+      else if (a === 'verify') { doVerify(); }
+      else if (a === 'test-confusion') { doTestConfusion(); }
+      else if (a === 'enable-tamper') { doEnableTamper(); }
+      else if (a === 'resign') { doResign(); }
+      else if (a === 'copy-tampered') { doCopyTampered(); }
+      else if (a === 'compare-algs') { doCompareAlgs(); }
+      else if (a === 'fetch-jwks') { doFetchJwks(); }
+      else if (a === 'use-jwks-key') { doUseJwksKey(); }
+    });
+
+    /* Reveal handlers for masked claims (event delegation) */
+    root.addEventListener('click', function (e) {
+      var reveal = e.target.closest && e.target.closest('[data-jwt-reveal]');
+      if (!reveal) return;
+      var name = reveal.getAttribute('data-jwt-reveal');
+      var valueCell = reveal.parentNode;
+      var cur = valueCell.getAttribute('data-jwt-revealed');
+      if (cur === 'true') {
+        valueCell.innerHTML = '<span class="jwt-claim-masked">\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022</span>'
+          + '<button class="jwt-claim-reveal" data-jwt-reveal="' + escapeHtml(name) + '" type="button">reveal</button>';
+      } else {
+        var v = state.parsed && state.parsed.payload ? state.parsed.payload[name] : '';
+        valueCell.innerHTML = '<span>' + escapeHtml(String(v)) + '</span>'
+          + '<button class="jwt-claim-reveal" data-jwt-reveal="' + escapeHtml(name) + '" data-jwt-revealed="true" type="button">hide</button>';
+      }
+    });
+
+    /* Cleanup ticker on page hide */
+    window.addEventListener('pagehide', stopTicker);
+  }
+
+  /* ---------- Bootstrap ---------- */
+  function bootstrap() {
+    var roots = document.querySelectorAll('[data-jwt-root]');
+    roots.forEach(function (r) { init(r); });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootstrap);
+  } else {
+    bootstrap();
+  }
+})();
+</script>
+</div>
