@@ -1,3 +1,8 @@
+---
+build: never
+draft: true
+---
+
 # Engineering Plan: JWT Inspector (Developer Debug Edition)
 
 > **Slug:** `jwt-inspector`

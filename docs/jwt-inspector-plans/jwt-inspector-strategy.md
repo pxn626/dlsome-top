@@ -1,3 +1,8 @@
+---
+build: never
+draft: true
+---
+
 # Strategy: JWT Inspector (Developer Debug Edition)
 
 > **Slug:** `jwt-inspector`
