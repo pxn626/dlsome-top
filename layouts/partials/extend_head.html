@@ -188,4 +188,117 @@
 }
 </script>
 
+{{- end -}}{{- if and (eq .Kind "page") (eq .Section "tools") (eq .Slug "cron-parser") -}}
+
+<meta property="og:title" content="Cron Expression Parser & Generator — Free Online Tool" />
+<meta property="og:description" content="Parse any cron expression. Supports POSIX 5-field + Quartz 6-field. One-click export to K8s CronJob YAML, GitHub Actions, AWS EventBridge. No login." />
+<meta property="og:image" content="https://dlsome.top/og-images/cron-parser.png" />
+<meta property="og:image:alt" content="Cron expression parser showing 5-field input, time preview timeline, and platform export buttons" />
+<meta property="og:url" content="https://dlsome.top/tools/cron-parser/" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="dlsome.top" />
+<meta property="og:locale" content="en_US" />
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Cron Expression Parser & Generator — Free Online Tool" />
+<meta name="twitter:description" content="Parse any cron expression. POSIX + Quartz syntax. Export to K8s, GitHub Actions, EventBridge. 100% client-side." />
+<meta name="twitter:image" content="https://dlsome.top/og-images/cron-parser.png" />
+<meta name="twitter:image:alt" content="Cron expression parser UI with timeline preview and platform export" />
+
+<link rel="canonical" href="https://dlsome.top/tools/cron-parser/" />
+{{- if eq .Lang "zh" -}}
+<link rel="canonical" href="https://dlsome.top/zh/tools/cron-parser/" />
+{{- end -}}
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Cron Expression Parser",
+  "alternateName": "cron-parser",
+  "url": "https://dlsome.top/tools/cron-parser/",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any (browser-based)",
+  "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
+  "featureList": [
+    "POSIX 5-field cron parser (minute / hour / day-of-month / month / day-of-week)",
+    "Quartz 6-field cron parser (with seconds field, L / W / # / ? wildcards)",
+    "Real-time next-10-fires preview with timezone selector",
+    "Platform export: Kubernetes CronJob YAML",
+    "Platform export: GitHub Actions cron schedule",
+    "Platform export: AWS EventBridge rule JSON",
+    "Platform export: systemd-timer unit",
+    "30+ ready-to-use cron expression library",
+    "DST and timezone edge case handling (IANA tz database)",
+    "Visual timeline of next fire times",
+    "Share URL with hash fragment encoding",
+    "100% client-side execution (zero network requests)",
+    "Dark / light mode (PaperMod .dark class integration)",
+    "Bilingual EN + ZH UI"
+  ],
+  "isBasedOn": [
+    "https://man7.org/linux/man-pages/man5/crontab.5.html",
+    "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/",
+    "https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows",
+    "https://docs.aws.amazon.com/scheduler/latest/UserGuide/schedule-types.html",
+    "https://www.quartz-scheduler.org/documentation/quartz-2.3.0/tutorials/crontrigger.html"
+  ],
+  "browserRequirements": "Requires modern browser with IANA timezone database. Last 2 versions of Chrome, Firefox, Safari, Edge. ES2017+ required.",
+  "softwareVersion": "1.0",
+  "datePublished": "2026-07-23",
+  "creator": {"@type": "Organization", "name": "dlsome.top", "url": "https://dlsome.top/"}
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type": "Question", "name": "How do I write a cron expression?",
+     "acceptedAnswer": {"@type": "Answer", "text": "A cron expression has 5 fields (POSIX) or 6 fields (Quartz), separated by spaces. Read left to right: minute (0-59), hour (0-23), day of month (1-31), month (1-12), day of week (0-6, Sunday = 0). Example: 0 9 * * 1-5 fires at 09:00 every weekday. Special characters: * (every), , (list), - (range), / (step). For Quartz add a leading seconds field (0/30 * * * * ? = every 30 seconds)."}},
+    {"@type": "Question", "name": "What's the difference between day-of-week and day-of-month in a cron expression?",
+     "acceptedAnswer": {"@type": "Answer", "text": "Day-of-week (5th field) matches when day-of-month field is * — but if both are restricted, most cron implementations fire only when both match (intersection), while a few (Quartz, AWS EventBridge) fire when either matches (union, controlled by ?). This is the #1 source of 'my cron didn't fire' bugs. When in doubt, set one to * and the other to your target."}},
+    {"@type": "Question", "name": "How do I write a Kubernetes CronJob schedule?",
+     "acceptedAnswer": {"@type": "Answer", "text": "A Kubernetes CronJob uses standard 5-field POSIX cron, but always in UTC (the kube-controller-manager ignores your local timezone). Example: 0 2 * * * runs daily at 02:00 UTC, which is 10:00 Beijing time (UTC+8). For 'every 5 minutes': */5 * * * *. Use this tool's Kubernetes export button to generate the full CronJob YAML with the correct schedule field, restart policy, and concurrency policy."}},
+    {"@type": "Question", "name": "How do I write a GitHub Actions cron schedule?",
+     "acceptedAnswer": {"@type": "Answer", "text": "GitHub Actions uses standard 5-field POSIX cron in UTC. Example: 0 3 * * * runs daily at 03:00 UTC. GitHub adds one quirk: due to shared infrastructure load, scheduled workflows may run up to ~15 minutes late — the cron field is 'approximately' on time, not 'exactly' on time. Format: on: schedule: - cron: '0 3 * * *'. Use this tool's GitHub Actions export to copy the exact YAML block."}},
+    {"@type": "Question", "name": "How do I write an AWS EventBridge cron expression?",
+     "acceptedAnswer": {"@type": "Answer", "text": "EventBridge uses 6-field Quartz-style cron (minute hour day-of-month month day-of-week year), all in UTC. Example: 0 8 ? * MON-FRI * runs at 08:00 UTC every weekday. Note the ? wildcard — EventBridge requires you to set either day-of-month or day-of-week to ? (you cannot leave both as *). Use this tool's AWS EventBridge export to generate the full rule JSON with the correct ScheduleExpression."}},
+    {"@type": "Question", "name": "How does timezone affect cron jobs?",
+     "acceptedAnswer": {"@type": "Answer", "text": "Cron timezone handling is platform-specific. Linux system cron (crontab -e) runs in the host's local timezone, meaning DST changes affect fire times — 0 2 * * * may fire at 03:00 local on spring-forward day. Kubernetes CronJob always uses UTC. GitHub Actions always UTC. AWS EventBridge always UTC. Spring @Scheduled uses the JVM's default timezone unless you set zone = .... This tool defaults to UTC and lets you switch to any IANA timezone (e.g., America/New_York, Europe/London) for visualization only — the export strings always use the platform's required timezone."}},
+    {"@type": "Question", "name": "What is the difference between Quartz cron and Unix/POSIX cron?",
+     "acceptedAnswer": {"@type": "Answer", "text": "POSIX cron (5 fields, Linux system cron, Kubernetes, GitHub Actions) is the legacy standard: minute, hour, day-of-month, month, day-of-week. Quartz cron (6 fields, Java Quartz, Spring, AWS EventBridge, cron4j) adds a leading seconds field and supports L (last day of month), W (nearest weekday), # (Nth weekday of month), and ? (no-specific-value). Modern frameworks have largely migrated to Quartz for sub-minute precision. This tool supports both: type a 5-field expression and the parser detects POSIX mode; type a 6-field expression and it detects Quartz mode automatically."}}
+  ]
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "How to parse and export a cron expression in 3 steps",
+  "step": [
+    {"@type": "HowToStep", "position": 1, "name": "Enter a cron expression",
+     "text": "Type or paste a 5-field POSIX expression (e.g., 0 9 * * 1-5) or a 6-field Quartz expression (e.g., 0 0/30 * * * ?) into the input field. The parser auto-detects mode based on field count."},
+    {"@type": "HowToStep", "position": 2, "name": "Pick a timezone for preview",
+     "text": "Choose your IANA timezone (UTC by default) to see the next 10 fire times in your local clock. The visualization is purely for preview — exported strings always use the platform's required timezone (UTC for K8s / GitHub Actions / EventBridge)."},
+    {"@type": "HowToStep", "position": 3, "name": "Export to your platform",
+     "text": "Click Kubernetes for a complete CronJob YAML (with schedule, restartPolicy, concurrencyPolicy), GitHub Actions for a copy-paste on: schedule block, AWS EventBridge for a ScheduleExpression rule JSON, or systemd-timer for a .timer + .service pair."}
+  ]
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://dlsome.top/"},
+    {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://dlsome.top/tools/"},
+    {"@type": "ListItem", "position": 3, "name": "Cron Expression Parser", "item": "https://dlsome.top/tools/cron-parser/"}
+  ]
+}
+</script>
+
 {{- end -}}
