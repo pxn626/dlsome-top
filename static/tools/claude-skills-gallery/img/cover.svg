@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" role="img" aria-label="Claude Skills Template Gallery cover">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="50%" stop-color="#a855f7"/>
+      <stop offset="100%" stop-color="#ec4899"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Decorative grid dots (suggests 50 templates) -->
+  <g fill="#312e81" opacity="0.6">
+    <!-- 10 columns x 5 rows = 50 dots -->
+    <g id="row1">
+      <circle cx="60" cy="60" r="6"/><circle cx="180" cy="60" r="6"/><circle cx="300" cy="60" r="6"/><circle cx="420" cy="60" r="6"/><circle cx="540" cy="60" r="6"/><circle cx="660" cy="60" r="6"/><circle cx="780" cy="60" r="6"/><circle cx="900" cy="60" r="6"/><circle cx="1020" cy="60" r="6"/><circle cx="1140" cy="60" r="6"/>
+    </g>
+    <g id="row2" transform="translate(0,30)">
+      <circle cx="60" cy="60" r="6"/><circle cx="180" cy="60" r="6"/><circle cx="300" cy="60" r="6"/><circle cx="420" cy="60" r="6"/><circle cx="540" cy="60" r="6"/><circle cx="660" cy="60" r="6"/><circle cx="780" cy="60" r="6"/><circle cx="900" cy="60" r="6"/><circle cx="1020" cy="60" r="6"/><circle cx="1140" cy="60" r="6"/>
+    </g>
+    <g id="row3" transform="translate(0,60)">
+      <circle cx="60" cy="60" r="6"/><circle cx="180" cy="60" r="6"/><circle cx="300" cy="60" r="6"/><circle cx="420" cy="60" r="6"/><circle cx="540" cy="60" r="6"/><circle cx="660" cy="60" r="6"/><circle cx="780" cy="60" r="6"/><circle cx="900" cy="60" r="6"/><circle cx="1020" cy="60" r="6"/><circle cx="1140" cy="60" r="6"/>
+    </g>
+    <g id="row4" transform="translate(0,90)">
+      <circle cx="60" cy="60" r="6"/><circle cx="180" cy="60" r="6"/><circle cx="300" cy="60" r="6"/><circle cx="420" cy="60" r="6"/><circle cx="540" cy="60" r="6"/><circle cx="660" cy="60" r="6"/><circle cx="780" cy="60" r="6"/><circle cx="900" cy="60" r="6"/><circle cx="1020" cy="60" r="6"/><circle cx="1140" cy="60" r="6"/>
+    </g>
+    <g id="row5" transform="translate(0,120)">
+      <circle cx="60" cy="60" r="6"/><circle cx="180" cy="60" r="6"/><circle cx="300" cy="60" r="6"/><circle cx="420" cy="60" r="6"/><circle cx="540" cy="60" r="6"/><circle cx="660" cy="60" r="6"/><circle cx="780" cy="60" r="6"/><circle cx="900" cy="60" r="6"/><circle cx="1020" cy="60" r="6"/><circle cx="1140" cy="60" r="6"/>
+    </g>
+  </g>
+
+  <!-- Big "CSG" letterform -->
+  <text x="60" y="370" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="240" font-weight="900" fill="url(#accent)" letter-spacing="-8">CSG</text>
+
+  <!-- Title -->
+  <text x="60" y="450" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="44" font-weight="700" fill="#f1f5f9">Claude Skills Template Gallery</text>
+
+  <!-- Subtitle -->
+  <text x="60" y="500" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="26" font-weight="400" fill="#94a3b8">50+ Skills · 5 Categories · Anthropic Skills v1.0</text>
+
+  <!-- Tagline -->
+  <text x="60" y="555" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="20" font-weight="400" fill="#cbd5e1">Browse · Preview · Copy · Compose</text>
+
+  <!-- Site badge -->
+  <rect x="60" y="580" width="180" height="32" rx="6" fill="#312e81"/>
+  <text x="150" y="601" font-family="ui-sans-serif, system-ui, sans-serif" font-size="16" font-weight="600" fill="#a5b4fc" text-anchor="middle">dlsome.top</text>
+
+  <!-- Right side: category chips -->
+  <g transform="translate(720,140)">
+    <g transform="translate(0,0)">
+      <rect width="200" height="44" rx="22" fill="#3b82f6"/>
+      <text x="100" y="29" font-family="ui-sans-serif, system-ui, sans-serif" font-size="18" font-weight="600" fill="white" text-anchor="middle">🔍 Code · 10</text>
+    </g>
+    <g transform="translate(220,0)">
+      <rect width="200" height="44" rx="22" fill="#a855f7"/>
+      <text x="100" y="29" font-family="ui-sans-serif, system-ui, sans-serif" font-size="18" font-weight="600" fill="white" text-anchor="middle">✍️ Writing · 10</text>
+    </g>
+    <g transform="translate(0,60)">
+      <rect width="200" height="44" rx="22" fill="#10b981"/>
+      <text x="100" y="29" font-family="ui-sans-serif, system-ui, sans-serif" font-size="18" font-weight="600" fill="white" text-anchor="middle">📊 Data · 10</text>
+    </g>
+    <g transform="translate(220,60)">
+      <rect width="200" height="44" rx="22" fill="#f59e0b"/>
+      <text x="100" y="29" font-family="ui-sans-serif, system-ui, sans-serif" font-size="18" font-weight="600" fill="white" text-anchor="middle">🔬 SEO · 10</text>
+    </g>
+    <g transform="translate(110,120)">
+      <rect width="200" height="44" rx="22" fill="#ef4444"/>
+      <text x="100" y="29" font-family="ui-sans-serif, system-ui, sans-serif" font-size="18" font-weight="600" fill="white" text-anchor="middle">📦 General · 10</text>
+    </g>
+  </g>
+</svg>

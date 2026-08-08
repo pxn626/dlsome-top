@@ -1,0 +1,81 @@
+{{- /*
+  Shortcode: claude-skills-gallery
+
+  Browser-based gallery for 50+ Claude Skills templates (Anthropic Skills v1.0).
+  3 panels: Browse (50 cards × 5 categories) / Preview (code-split-render + copy/download/share) / Composer (YAML form + validateSkill).
+
+  Self-contained HTML + external CSS + external JS + inline JSON data.
+  Zero CDN, zero fetch (data inline). PaperMod `.dark` class compatible. Hugo 0.164 verified.
+
+  Usage:
+    {{< claude-skills-gallery >}}
+
+  CSS namespace: --csg-* / .csg-* (Claude Skills Gallery)
+  JS data-attr:  data-csg-*
+  i18n:          inline JS objects (dlsome-top has no i18n/*.yaml)
+  Slug:          claude-skills-gallery
+*/ -}}
+
+{{- $lang := .Page.Language.Lang | default "en" -}}
+{{- $dataPath := "/tools/claude-skills-gallery/data/skills.json" -}}
+{{- $cssPath := "/tools/claude-skills-gallery/css/csg.css" -}}
+{{- $jsPath := "/tools/claude-skills-gallery/js/csg.js" -}}
+
+<link rel="stylesheet" href="{{ $cssPath }}" />
+
+<div class="csg-tool" data-csg-root data-csg-lang="{{ $lang }}" data-csg-mode="browse" data-csg-base="/tools/claude-skills-gallery/data/">
+
+  <!-- ===== Top mode tabs ===== -->
+  <div class="csg-tabs" role="tablist">
+    <button type="button" class="csg-tab active" data-csg-tab="browse" role="tab" aria-selected="true">📚 Browse</button>
+    <button type="button" class="csg-tab" data-csg-tab="preview" role="tab" aria-selected="false">👁 Preview</button>
+    <button type="button" class="csg-tab" data-csg-tab="composer" role="tab" aria-selected="false">✏️ Composer</button>
+  </div>
+
+  <!-- ===== Panel A: Browse ===== -->
+  <div class="csg-panel active" data-csg-panel="browse">
+    <div class="csg-toolbar" data-csg-browse-toolbar>
+      <!-- injected by JS: search + categories + count -->
+    </div>
+    <div class="csg-grid" data-csg-grid>
+      <!-- 50 cards injected by JS -->
+    </div>
+  </div>
+
+  <!-- ===== Panel B: Preview ===== -->
+  <div class="csg-panel" data-csg-panel="preview">
+    <div class="csg-toolbar" data-csg-preview-toolbar>
+      <!-- injected by JS: skill picker + view tabs + actions -->
+    </div>
+    <div class="csg-preview-grid csg-view-split" data-csg-preview-body>
+      <pre class="csg-code" data-csg-code></pre>
+      <div class="csg-render" data-csg-render></div>
+    </div>
+    <div class="csg-example-block">
+      <h4 data-csg-example-label>Example invocation</h4>
+      <code class="csg-example-code" data-csg-example></code>
+    </div>
+  </div>
+
+  <!-- ===== Panel C: Composer ===== -->
+  <div class="csg-panel" data-csg-panel="composer">
+    <form class="csg-compose-form" data-csg-compose onsubmit="return false">
+      <!-- injected by JS: name / description / allowed-tools / version / license / action buttons -->
+    </form>
+    <div class="csg-validation" data-csg-validation></div>
+    <div class="csg-compose-output">
+      <h4 style="margin: 0.5rem 0; font-size: 0.85rem; color: var(--csg-fg-muted); text-transform: uppercase; letter-spacing: 0.05em;">Live preview</h4>
+      <pre class="csg-code" data-csg-compose-preview></pre>
+    </div>
+  </div>
+
+  <!-- ===== Standard reference (Anthropic Skills schema) ===== -->
+  <div class="csg-standard" data-csg-standard>
+    <!-- injected by JS -->
+  </div>
+
+  <!-- ===== Disclaimer ===== -->
+  <div class="csg-disclaimer" data-csg-disclaimer></div>
+</div>
+
+<script src="{{ $jsPath }}" defer></script>
