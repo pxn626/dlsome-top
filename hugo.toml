@@ -14,8 +14,20 @@ enableRobotsTXT = true
 
 [params]
   env = "production"
-  description = "dlsome.top — 工具站矩阵第二极(暂未启用)"
+  description = "AI 和开发者工具集 — 浏览器端免费工具,涵盖 AI prompt 构造器、Claude Skills 模板、YAML/JSON 转换、Token 成本计算等。"
   author = "dlsome.top"
+  keywords = [
+    "AI 工具",
+    "开发者工具",
+    "Prompt 构造器",
+    "Claude Skills",
+    "YAML 转换",
+    "JSON 转换",
+    "Token 计算",
+    "JWT 解析",
+    "Cron 解析",
+    "TypeScript 类型生成",
+  ]
   ShowReadingTime = false
   ShowShareButtons = false
   ShowPostNavLinks = false
@@ -31,8 +43,8 @@ enableRobotsTXT = true
   [params.homeInfoParams]
     Title = "dlsome.top"
     Content = """
-    工具站矩阵第二极 · 暂未启用
-    方向待定 · 暂不开放
+    AI 和开发者工具集 · 浏览器端免费 · 零网络上传
+    Prompt · Claude Skills · YAML/JSON · JWT · Cron · 全部本地运行
     """
 
 [[menu.main]]
