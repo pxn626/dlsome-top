@@ -1,0 +1,94 @@
+{{- /*
+  Shortcode: ai-image-prompt-builder
+
+  Browser-based AI image prompt builder for Stable Diffusion, Midjourney, Flux, DALL-E.
+  60 templates × 6 categories × 4 model syntax + 5 negative prompt categories + 6 ratios.
+
+  Self-contained HTML + external CSS + external JS + fetched JSON data.
+  Zero AI API calls (data fetched from same-origin static JSON).
+  PaperMod `.dark` class compatible. Hugo 0.158+ verified.
+
+  Usage:
+    {{< ai-image-prompt-builder >}}
+
+  CSS namespace: --aipb-* / .aipb-* (AI Prompt Builder)
+  JS data-attr:  data-aipb-*
+  i18n:          inline JS objects (dlsome-top has no i18n/*.yaml)
+  Slug:          ai-image-prompt-builder
+*/ -}}
+
+{{- $lang := .Page.Language.Lang | default "en" -}}
+{{- $cssPath := "/tools/ai-image-prompt-builder/css/aipb.css" -}}
+{{- $jsPath := "/tools/ai-image-prompt-builder/js/aipb.js" -}}
+{{- $dataPath := "/tools/ai-image-prompt-builder/data/prompts.json" -}}
+
+<link rel="stylesheet" href="{{ $cssPath }}" />
+
+<div class="aipb-tool" data-aipb-root data-aipb-lang="{{ $lang }}" data-aipb-data="{{ $dataPath }}" data-aipb-mode="compose">
+
+  <!-- ===== Top disclaimer (3 重防误用保险 #1) ===== -->
+  <div class="aipb-disclaimer" data-aipb-disclaimer-text>
+    <span class="aipb-warn-icon">⚠️</span><strong>Loading...</strong>
+  </div>
+
+  <!-- ===== Model tabs (4 model switcher) ===== -->
+  <div class="aipb-model-tabs" role="tablist">
+    <button type="button" class="aipb-model-tab active" data-aipb-model="sd" role="tab" aria-selected="true">🟢 Stable Diffusion</button>
+    <button type="button" class="aipb-model-tab" data-aipb-model="mj" role="tab" aria-selected="false">🔵 Midjourney v6</button>
+    <button type="button" class="aipb-model-tab" data-aipb-model="flux" role="tab" aria-selected="false">🟣 Flux Pro / Dev</button>
+    <button type="button" class="aipb-model-tab" data-aipb-model="dalle" role="tab" aria-selected="false">🟠 DALL-E 3 / GPT Image</button>
+  </div>
+
+  <!-- ===== Main layout: Compose (left) + Output (right) ===== -->
+  <div class="aipb-main">
+
+    <!-- ===== Left: Compose panel ===== -->
+    <div class="aipb-compose">
+
+      <!-- Templates section -->
+      <div class="aipb-templates">
+        <h4 class="aipb-templates-title" data-aipb-templates-label>📚 Templates</h4>
+        <input type="search" class="aipb-search" data-aipb-search placeholder="Search templates…" aria-label="search templates" />
+        <div class="aipb-cat-bar" data-aipb-catbar role="tablist">
+          <!-- injected by JS -->
+        </div>
+        <div class="aipb-template-grid" data-aipb-grid>
+          <!-- 60 cards injected by JS -->
+        </div>
+        <div class="aipb-result-count" data-aipb-count style="margin-top: 0.5rem; font-size: 0.75rem; color: var(--aipb-fg-dim);">
+          <!-- injected by JS -->
+        </div>
+      </div>
+
+      <!-- Form: subject + chips + ratio -->
+      <form class="aipb-form" data-aipb-form onsubmit="return false">
+        <!-- injected by JS -->
+      </form>
+
+      <!-- Negative prompts -->
+      <div class="aipb-negative" data-aipb-negative>
+        <!-- injected by JS -->
+      </div>
+
+    </div>
+
+    <!-- ===== Right: Output panel ===== -->
+    <div class="aipb-output">
+      <div class="aipb-output-header">
+        <span class="aipb-token-count" data-aipb-token-count>0 tokens</span>
+        <span style="font-size: 0.75rem; color: var(--aipb-fg-dim);" data-aipb-model-label></span>
+      </div>
+      <pre class="aipb-output-text" data-aipb-output-text>Loading prompt data…</pre>
+      <div data-aipb-qg><!-- Quality Gate injected by JS --></div>
+      <div class="aipb-output-actions">
+        <button type="button" class="aipb-btn aipb-btn-primary" data-aipb-action="copy" data-aipb-ui-warning="true">📋 Copy</button>
+        <button type="button" class="aipb-btn" data-aipb-action="download">⬇ Download .txt</button>
+        <button type="button" class="aipb-btn" data-aipb-action="share">🔗 Share URL</button>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script src="{{ $jsPath }}" defer></script>

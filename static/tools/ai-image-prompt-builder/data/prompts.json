@@ -1,0 +1,1536 @@
+{
+  "schemaVersion": "1.0",
+  "toolName": "AI Image Prompt Builder",
+  "framework": "AI Image Generation (SD / MJ / Flux / DALL-E)",
+  "models": [
+    { "id": "sd", "emoji": "🟢", "label_en": "Stable Diffusion", "label_zh": "Stable Diffusion" },
+    { "id": "mj", "emoji": "🔵", "label_en": "Midjourney v6", "label_zh": "Midjourney v6" },
+    { "id": "flux", "emoji": "🟣", "label_en": "Flux Pro / Dev", "label_zh": "Flux Pro / Dev" },
+    { "id": "dalle", "emoji": "🟠", "label_en": "DALL-E 3 / GPT Image", "label_zh": "DALL-E 3 / GPT Image" }
+  ],
+  "categories": [
+    { "id": "people", "emoji": "👤", "label_en": "People & Portraits", "label_zh": "人物肖像", "color": "#ec4899" },
+    { "id": "landscape", "emoji": "🏔️", "label_en": "Landscapes", "label_zh": "自然风景", "color": "#10b981" },
+    { "id": "product", "emoji": "📦", "label_en": "Products & E-commerce", "label_zh": "产品电商", "color": "#f59e0b" },
+    { "id": "abstract", "emoji": "🎨", "label_en": "Abstract & Artistic", "label_zh": "抽象艺术", "color": "#8b5cf6" },
+    { "id": "logo", "emoji": "🎯", "label_en": "Logo & Branding", "label_zh": "标识品牌", "color": "#3b82f6" },
+    { "id": "ui", "emoji": "🖥️", "label_en": "UI / Wireframe", "label_zh": "界面线框", "color": "#06b6d4" }
+  ],
+  "negative_library": {
+    "anatomy": ["extra fingers", "mutated hands", "poor anatomy", "extra limbs", "deformed", "disfigured", "bad proportions", "missing fingers", "extra digits", "fused fingers"],
+    "quality": ["blurry", "low quality", "low resolution", "pixelated", "jpeg artifacts", "noise", "worst quality", "compression artifacts"],
+    "face": ["bad eyes", "crossed eyes", "asymmetric eyes", "bad mouth", "extra teeth", "deformed face", "poorly drawn face", "mutated face"],
+    "style": ["cartoon when photorealistic", "3d render when 2d", "watermark", "signature", "text", "logo overlay", "username", "website URL"],
+    "content": ["nsfw", "violent", "disturbing", "celebrity likeness", "political", "religious symbol", "weapon", "drug"]
+  },
+  "ratios": [
+    { "id": "1:1", "label_en": "Square (1:1)", "label_zh": "方形 (1:1)" },
+    { "id": "16:9", "label_en": "Widescreen (16:9)", "label_zh": "宽屏 (16:9)" },
+    { "id": "9:16", "label_en": "Portrait (9:16)", "label_zh": "竖屏 (9:16)" },
+    { "id": "4:3", "label_en": "Standard (4:3)", "label_zh": "标准 (4:3)" },
+    { "id": "3:2", "label_en": "Photo (3:2)", "label_zh": "照片 (3:2)" },
+    { "id": "21:9", "label_en": "Cinematic (21:9)", "label_zh": "影院 (21:9)" }
+  ],
+  "templates": [
+    {
+      "id": "studio-portrait", "category": "people", "emoji": "👤",
+      "title_en": "Studio Portrait", "title_zh": "影棚人像",
+      "description_en": "Professional studio-lit portrait, shallow depth of field, photorealistic.",
+      "description_zh": "专业影棚人像,浅景深,照片写实风格。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a young woman", "default_zh": "年轻女性", "placeholder_en": "describe the subject…", "placeholder_zh": "描述主体…" },
+        "style": { "type": "multiselect", "options_en": ["photorealistic", "cinematic", "studio photography", "fashion editorial"], "options_zh": ["照片写实", "电影感", "影棚摄影", "时尚编辑"] },
+        "lighting": { "type": "multiselect", "options_en": ["studio lighting", "softbox", "rim light", "low-key", "high-key"], "options_zh": ["影棚灯", "柔光箱", "轮廓光", "低调光", "高调光"] },
+        "camera": { "type": "multiselect", "options_en": ["85mm lens", "50mm prime", "f/1.4 bokeh", "shallow depth of field"], "options_zh": ["85mm 镜头", "50mm 定焦", "f/1.4 虚化", "浅景深"] },
+        "post": { "type": "multiselect", "options_en": ["high detail", "8k uhd", "RAW photo", "film grain", "professional color grading"], "options_zh": ["高细节", "8K 超清", "RAW 照片", "胶片颗粒", "专业调色"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "{subject} {style} {lighting} {camera} {post} --ar {ratio} --v 6 --s 250 --style raw",
+        "flux": "{subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "A photograph of {subject}, {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": ["anatomy", "quality", "face"],
+      "ratio_compatible": ["1:1", "2:3", "3:2", "4:5", "9:16", "16:9"],
+      "tags_en": ["portrait", "studio", "fashion", "photorealistic", "model"],
+      "tags_zh": ["人像", "影棚", "时尚", "写实", "模特"],
+      "example_subject_en": "a young woman with red hair, freckles, blue eyes",
+      "example_subject_zh": "红发蓝眼带雀斑的年轻女性"
+    },
+    {
+      "id": "outdoor-portrait", "category": "people", "emoji": "👤",
+      "title_en": "Outdoor Portrait", "title_zh": "户外人像",
+      "description_en": "Natural-light outdoor portrait, environmental context, candid feel.",
+      "description_zh": "自然光户外人像,环境背景,抓拍感。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a person", "default_zh": "一个人", "placeholder_en": "describe the subject…", "placeholder_zh": "描述主体…" },
+        "style": { "type": "multiselect", "options_en": ["candid", "lifestyle", "photojournalistic", "natural"], "options_zh": ["抓拍", "生活方式", "新闻摄影", "自然"] },
+        "lighting": { "type": "multiselect", "options_en": ["golden hour", "overcast soft light", "backlit", "dappled sunlight"], "options_zh": ["黄金时刻", "阴天柔光", "逆光", "斑驳阳光"] },
+        "camera": { "type": "multiselect", "options_en": ["50mm prime", "85mm lens", "shallow depth of field", "eye-level"], "options_zh": ["50mm 定焦", "85mm 镜头", "浅景深", "平视"] },
+        "post": { "type": "multiselect", "options_en": ["natural colors", "RAW photo", "high detail", "film grain"], "options_zh": ["自然色彩", "RAW 照片", "高细节", "胶片颗粒"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "{subject} outdoors, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 200",
+        "flux": "Outdoor portrait of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "An outdoor portrait of {subject}, {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": ["anatomy", "quality"],
+      "ratio_compatible": ["3:2", "4:3", "16:9", "9:16"],
+      "tags_en": ["outdoor", "candid", "lifestyle", "natural-light"],
+      "tags_zh": ["户外", "抓拍", "生活", "自然光"],
+      "example_subject_en": "a hiker resting on a mountain trail",
+      "example_subject_zh": "徒步者在山间小径休息"
+    },
+    {
+      "id": "fashion-editorial", "category": "people", "emoji": "👤",
+      "title_en": "Fashion Editorial", "title_zh": "时尚大片",
+      "description_en": "High-fashion editorial look, dramatic posing, magazine-grade styling.",
+      "description_zh": "高端时尚大片,戏剧化姿态,杂志级造型。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a fashion model", "default_zh": "时装模特", "placeholder_en": "describe the model…", "placeholder_zh": "描述模特…" },
+        "style": { "type": "multiselect", "options_en": ["high fashion", "editorial", "avant-garde", "vogue"], "options_zh": ["高定时装", "编辑大片", "前卫", "Vogue 风格"] },
+        "lighting": { "type": "multiselect", "options_en": ["dramatic", "harsh shadows", "studio strobe", "rim light"], "options_zh": ["戏剧化", "硬阴影", "影棚闪光", "轮廓光"] },
+        "camera": { "type": "multiselect", "options_en": ["35mm lens", "50mm prime", "low angle", "dynamic composition"], "options_zh": ["35mm 镜头", "50mm 定焦", "低角度", "动态构图"] },
+        "post": { "type": "multiselect", "options_en": ["magazine grade", "professional color grading", "high detail", "8k uhd"], "options_zh": ["杂志级", "专业调色", "高细节", "8K 超清"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "{subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 750",
+        "flux": "Editorial fashion photograph of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "A high-fashion editorial photograph of {subject}, featuring {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": ["anatomy", "quality"],
+      "ratio_compatible": ["2:3", "3:4", "9:16"],
+      "tags_en": ["fashion", "editorial", "magazine", "model"],
+      "tags_zh": ["时尚", "大片", "杂志", "模特"],
+      "example_subject_en": "a model wearing a flowing red gown on a rooftop",
+      "example_subject_zh": "穿红色飘逸长裙的模特在屋顶"
+    },
+    {
+      "id": "vintage-portrait", "category": "people", "emoji": "👤",
+      "title_en": "Vintage Portrait", "title_zh": "复古人像",
+      "description_en": "Nostalgic vintage portrait with period-appropriate styling and grading.",
+      "description_zh": "怀旧复古人像,年代造型与色调。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a person in vintage attire", "default_zh": "复古装扮的人物", "placeholder_en": "describe the subject…", "placeholder_zh": "描述主体…" },
+        "style": { "type": "multiselect", "options_en": ["1950s", "1970s", "art deco", "film noir"], "options_zh": ["50 年代", "70 年代", "装饰艺术", "黑色电影"] },
+        "lighting": { "type": "multiselect", "options_en": ["warm tungsten", "soft window light", "dramatic side light"], "options_zh": ["暖色钨丝灯", "柔和窗光", "戏剧侧光"] },
+        "camera": { "type": "multiselect", "options_en": ["medium format film", "Kodak Portra 400", "vintage lens", "soft focus"], "options_zh": ["中画幅胶片", "柯达 Portra 400", "复古镜头", "柔焦"] },
+        "post": { "type": "multiselect", "options_en": ["film grain", "faded colors", "warm tone", "vignette"], "options_zh": ["胶片颗粒", "褪色", "暖色调", "暗角"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "{subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --style raw",
+        "flux": "Vintage portrait of {subject}. {style} era. {lighting}. {camera}. {post}.",
+        "dalle": "A vintage {style} portrait of {subject}, with {lighting}, {camera}, {post}."
+      },
+      "negative_default": ["quality"],
+      "ratio_compatible": ["3:4", "4:5", "1:1"],
+      "tags_en": ["vintage", "retro", "film", "nostalgia"],
+      "tags_zh": ["复古", "怀旧", "胶片", "老照片"],
+      "example_subject_en": "a woman in a 1950s dress, soft smile",
+      "example_subject_zh": "穿 50 年代裙装的女性,温柔微笑"
+    },
+    {
+      "id": "cyberpunk-character", "category": "people", "emoji": "👤",
+      "title_en": "Cyberpunk Character", "title_zh": "赛博朋克角色",
+      "description_en": "Neon-lit cyberpunk character with cybernetic augmentations.",
+      "description_zh": "霓虹灯光下赛博朋克角色,机械义体增强。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a cyberpunk character", "default_zh": "赛博朋克角色", "placeholder_en": "describe the character…", "placeholder_zh": "描述角色…" },
+        "style": { "type": "multiselect", "options_en": ["cyberpunk", "sci-fi", "neon-noir", "dystopian"], "options_zh": ["赛博朋克", "科幻", "霓虹黑色", "反乌托邦"] },
+        "lighting": { "type": "multiselect", "options_en": ["neon lights", "holographic", "rim light", "moody atmosphere"], "options_zh": ["霓虹灯", "全息光", "轮廓光", "阴郁氛围"] },
+        "camera": { "type": "multiselect", "options_en": ["35mm lens", "low angle", "cinematic composition", "rain reflections"], "options_zh": ["35mm 镜头", "低角度", "电影构图", "雨水倒影"] },
+        "post": { "type": "multiselect", "options_en": ["high detail", "8k uhd", "neon glow", "color graded cyan-magenta"], "options_zh": ["高细节", "8K 超清", "霓虹辉光", "青紫调色"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "{subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 500",
+        "flux": "Cyberpunk character portrait of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "A cyberpunk portrait of {subject}, featuring {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": ["anatomy", "quality"],
+      "ratio_compatible": ["2:3", "9:16", "16:9"],
+      "tags_en": ["cyberpunk", "neon", "sci-fi", "dystopian"],
+      "tags_zh": ["赛博朋克", "霓虹", "科幻", "反乌托邦"],
+      "example_subject_en": "a hacker with cybernetic arm implants under neon signs",
+      "example_subject_zh": "霓虹招牌下有义体手臂植入的黑客"
+    },
+    {
+      "id": "anime-character", "category": "people", "emoji": "👤",
+      "title_en": "Anime Character", "title_zh": "动漫角色",
+      "description_en": "Stylized anime character illustration, vibrant colors, clean lines.",
+      "description_zh": "风格化动漫角色插画,色彩鲜艳,线条清晰。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "an anime character", "default_zh": "动漫角色", "placeholder_en": "describe the character…", "placeholder_zh": "描述角色…" },
+        "style": { "type": "multiselect", "options_en": ["anime", "manga", "shounen", "studio ghibli"], "options_zh": ["动漫", "漫画", "少年向", "吉卜力"] },
+        "lighting": { "type": "multiselect", "options_en": ["soft light", "dramatic lighting", "rim light", "cel shading"], "options_zh": ["柔光", "戏剧光", "轮廓光", "赛璐璐渲染"] },
+        "camera": { "type": "multiselect", "options_en": ["full body", "portrait", "dynamic angle", "close-up"], "options_zh": ["全身", "半身", "动态角度", "特写"] },
+        "post": { "type": "multiselect", "options_en": ["vibrant colors", "clean lines", "high detail", "cel shading"], "options_zh": ["鲜艳色彩", "干净线条", "高细节", "赛璐璐渲染"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, anime style, {style}, {lighting}, {camera}, {post}",
+        "mj": "{subject}, {style}, anime, {lighting}, {camera}, {post} --ar {ratio} --v 6 --niji 6",
+        "flux": "Anime illustration of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "An anime-style illustration of {subject}, featuring {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": ["quality", "face"],
+      "ratio_compatible": ["2:3", "9:16", "1:1"],
+      "tags_en": ["anime", "manga", "illustration", "character"],
+      "tags_zh": ["动漫", "漫画", "插画", "角色"],
+      "example_subject_en": "a magical girl with silver hair and a glowing staff",
+      "example_subject_zh": "银发魔法国女,手持发光法杖"
+    },
+    {
+      "id": "chibi-style", "category": "people", "emoji": "👤",
+      "title_en": "Chibi Style", "title_zh": "Q 版风格",
+      "description_en": "Cute chibi-style character with exaggerated proportions, kawaii feel.",
+      "description_zh": "可爱 Q 版角色,夸张比例,卡哇伊风格。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a chibi character", "default_zh": "Q 版角色", "placeholder_en": "describe the character…", "placeholder_zh": "描述角色…" },
+        "style": { "type": "multiselect", "options_en": ["chibi", "kawaii", "cute", "super-deformed"], "options_zh": ["Q 版", "卡哇伊", "可爱", "SD 比例"] },
+        "lighting": { "type": "multiselect", "options_en": ["soft light", "pastel tones", "even lighting"], "options_zh": ["柔光", "粉彩色调", "均匀光照"] },
+        "camera": { "type": "multiselect", "options_en": ["full body", "dynamic pose", "three-quarter view"], "options_zh": ["全身", "动态姿态", "四分之三视角"] },
+        "post": { "type": "multiselect", "options_en": ["clean lines", "vibrant colors", "high detail", "simple background"], "options_zh": ["干净线条", "鲜艳色彩", "高细节", "简洁背景"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, chibi style, {style}, {lighting}, {camera}, {post}",
+        "mj": "{subject}, chibi, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --niji 6",
+        "flux": "Chibi illustration of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "A cute chibi-style illustration of {subject}, featuring {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": ["quality"],
+      "ratio_compatible": ["1:1", "4:5", "2:3"],
+      "tags_en": ["chibi", "kawaii", "cute", "super-deformed"],
+      "tags_zh": ["Q 版", "卡哇伊", "可爱", "SD 比例"],
+      "example_subject_en": "a small wizard casting a sparkle spell",
+      "example_subject_zh": "小巫师释放闪光魔法"
+    },
+    {
+      "id": "elderly-portrait", "category": "people", "emoji": "👤",
+      "title_en": "Elderly Portrait", "title_zh": "老人肖像",
+      "description_en": "Dignified portrait of an elderly person, character-rich, expressive face.",
+      "description_zh": "庄重的老人肖像,表情丰富,岁月感。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "an elderly person", "default_zh": "一位老人", "placeholder_en": "describe the subject…", "placeholder_zh": "描述主体…" },
+        "style": { "type": "multiselect", "options_en": ["documentary", "fine art", "black and white", "natural"], "options_zh": ["纪实", "艺术", "黑白", "自然"] },
+        "lighting": { "type": "multiselect", "options_en": ["natural window light", "soft side light", "rim light"], "options_zh": ["自然窗光", "柔和侧光", "轮廓光"] },
+        "camera": { "type": "multiselect", "options_en": ["85mm lens", "close-up", "shallow depth of field", "eye-level"], "options_zh": ["85mm 镜头", "特写", "浅景深", "平视"] },
+        "post": { "type": "multiselect", "options_en": ["high detail", "RAW photo", "natural skin texture", "film grain"], "options_zh": ["高细节", "RAW 照片", "自然皮肤质感", "胶片颗粒"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "{subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --style raw",
+        "flux": "Portrait of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "A dignified portrait of {subject}, captured with {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": ["quality", "face"],
+      "ratio_compatible": ["3:4", "4:5", "1:1"],
+      "tags_en": ["elderly", "portrait", "documentary", "fine-art"],
+      "tags_zh": ["老人", "肖像", "纪实", "艺术"],
+      "example_subject_en": "an elderly fisherman with weathered hands",
+      "example_subject_zh": "一位饱经风霜的老渔夫"
+    },
+    {
+      "id": "children-portrait", "category": "people", "emoji": "👤",
+      "title_en": "Children Portrait", "title_zh": "儿童肖像",
+      "description_en": "Joyful children portrait, candid moments, natural expressions.",
+      "description_zh": "快乐的儿童肖像,抓拍瞬间,自然表情。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a child", "default_zh": "一个孩子", "placeholder_en": "describe the child…", "placeholder_zh": "描述孩子…" },
+        "style": { "type": "multiselect", "options_en": ["candid", "lifestyle", "natural", "joyful"], "options_zh": ["抓拍", "生活", "自然", "欢快"] },
+        "lighting": { "type": "multiselect", "options_en": ["natural light", "golden hour", "soft window light", "backlit"], "options_zh": ["自然光", "黄金时刻", "柔和窗光", "逆光"] },
+        "camera": { "type": "multiselect", "options_en": ["50mm prime", "85mm lens", "shallow depth of field", "eye-level"], "options_zh": ["50mm 定焦", "85mm 镜头", "浅景深", "平视"] },
+        "post": { "type": "multiselect", "options_en": ["natural colors", "high detail", "RAW photo", "soft tones"], "options_zh": ["自然色彩", "高细节", "RAW 照片", "柔和色调"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "{subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --style raw",
+        "flux": "Portrait of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "A joyful portrait of {subject}, with {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": ["anatomy", "quality"],
+      "ratio_compatible": ["3:4", "4:5", "1:1"],
+      "tags_en": ["children", "candid", "lifestyle", "joyful"],
+      "tags_zh": ["儿童", "抓拍", "生活", "欢快"],
+      "example_subject_en": "a child laughing while holding balloons",
+      "example_subject_zh": "孩子拿着气球大笑"
+    },
+    {
+      "id": "silhouette", "category": "people", "emoji": "👤",
+      "title_en": "Silhouette", "title_zh": "剪影",
+      "description_en": "Dramatic silhouette shot against colorful sky or backlight.",
+      "description_zh": "戏剧化剪影,色彩天空或逆光背景。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a person standing", "default_zh": "站立的人", "placeholder_en": "describe the silhouette…", "placeholder_zh": "描述剪影…" },
+        "style": { "type": "multiselect", "options_en": ["silhouette", "dramatic", "minimal", "fine art"], "options_zh": ["剪影", "戏剧", "极简", "艺术"] },
+        "lighting": { "type": "multiselect", "options_en": ["sunset backlight", "dramatic backlight", "golden hour", "silhouette lighting"], "options_zh": ["日落逆光", "戏剧逆光", "黄金时刻", "剪影光"] },
+        "camera": { "type": "multiselect", "options_en": ["low angle", "wide-angle", "telephoto compression", "dramatic composition"], "options_zh": ["低角度", "广角", "长焦压缩", "戏剧构图"] },
+        "post": { "type": "multiselect", "options_en": ["high contrast", "vibrant sky", "film grain", "cinematic"], "options_zh": ["高对比", "鲜艳天空", "胶片颗粒", "电影感"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, silhouette, {style}, {lighting}, {camera}, {post}",
+        "mj": "{subject} silhouette, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 500",
+        "flux": "Silhouette of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "A silhouette photograph of {subject}, with {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": [],
+      "ratio_compatible": ["16:9", "21:9", "9:16", "2:3"],
+      "tags_en": ["silhouette", "dramatic", "minimal", "sky"],
+      "tags_zh": ["剪影", "戏剧", "极简", "天空"],
+      "example_subject_en": "a lone figure on a hilltop against orange sunset",
+      "example_subject_zh": "橙色夕阳下山顶孤独的身影"
+    },
+    {
+      "id": "mountain-mist", "category": "landscape", "emoji": "🏔️",
+      "title_en": "Mountain Mist", "title_zh": "山间晨雾",
+      "description_en": "Misty mountain landscape at dawn, atmospheric depth.",
+      "description_zh": "黎明时分的朦胧山景,大气景深。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "snow-capped peaks at dawn", "default_zh": "黎明时分的雪峰", "placeholder_en": "describe the landscape…", "placeholder_zh": "描述风景…" },
+        "style": { "type": "multiselect", "options_en": ["fine art landscape", "National Geographic", "epic", "serene"], "options_zh": ["艺术风景", "国家地理", "史诗", "宁静"] },
+        "lighting": { "type": "multiselect", "options_en": ["golden hour", "volumetric mist", "soft side light", "atmospheric haze"], "options_zh": ["黄金时刻", "体积雾", "柔和侧光", "大气雾霭"] },
+        "camera": { "type": "multiselect", "options_en": ["wide-angle", "aerial", "telephoto compression", "16-35mm lens"], "options_zh": ["广角", "航拍", "长焦压缩", "16-35mm 镜头"] },
+        "post": { "type": "multiselect", "options_en": ["HDR", "high detail", "8k uhd", "color graded teal-orange"], "options_zh": ["HDR", "高细节", "8K 超清", "青橙调色"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "{subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 500 --style raw",
+        "flux": "Landscape photograph of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "A landscape photograph of {subject}, with {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": ["quality"],
+      "ratio_compatible": ["16:9", "21:9", "3:2"],
+      "tags_en": ["mountain", "landscape", "mist", "dawn"],
+      "tags_zh": ["山脉", "风景", "晨雾", "黎明"],
+      "example_subject_en": "snow-capped peaks emerging from morning fog",
+      "example_subject_zh": "雪峰从晨雾中浮现"
+    },
+    {
+      "id": "ocean-sunset", "category": "landscape", "emoji": "🏔️",
+      "title_en": "Ocean Sunset", "title_zh": "海上日落",
+      "description_en": "Vivid ocean sunset with warm sky, reflections on water.",
+      "description_zh": "鲜艳的海上日落,温暖天空,水面反射。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "ocean at sunset", "default_zh": "海上日落", "placeholder_en": "describe the scene…", "placeholder_zh": "描述场景…" },
+        "style": { "type": "multiselect", "options_en": ["fine art landscape", "cinematic", "epic", "dreamy"], "options_zh": ["艺术风景", "电影感", "史诗", "梦幻"] },
+        "lighting": { "type": "multiselect", "options_en": ["golden hour", "warm sunset glow", "rim light", "soft pastel sky"], "options_zh": ["黄金时刻", "温暖日落光", "轮廓光", "柔和粉彩天空"] },
+        "camera": { "type": "multiselect", "options_en": ["wide-angle", "polarizing filter", "low angle", "horizon line"], "options_zh": ["广角", "偏振镜", "低角度", "水平线"] },
+        "post": { "type": "multiselect", "options_en": ["vivid colors", "HDR", "high detail", "8k uhd"], "options_zh": ["鲜艳色彩", "HDR", "高细节", "8K 超清"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "{subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 750",
+        "flux": "Landscape photograph of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "A vivid landscape photograph of {subject}, featuring {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": ["quality"],
+      "ratio_compatible": ["16:9", "21:9", "3:2"],
+      "tags_en": ["ocean", "sunset", "landscape", "warm"],
+      "tags_zh": ["海洋", "日落", "风景", "温暖"],
+      "example_subject_en": "a calm ocean reflecting a fiery orange sunset",
+      "example_subject_zh": "平静海面倒映火橙色日落"
+    },
+    {
+      "id": "forest-foggy", "category": "landscape", "emoji": "🏔️",
+      "title_en": "Forest in Fog", "title_zh": "雾中森林",
+      "description_en": "Misty forest scene with depth, atmospheric perspective.",
+      "description_zh": "朦胧森林场景,空间深度,大气透视。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a foggy forest", "default_zh": "雾中森林", "placeholder_en": "describe the forest…", "placeholder_zh": "描述森林…" },
+        "style": { "type": "multiselect", "options_en": ["fine art", "atmospheric", "moody", "ethereal"], "options_zh": ["艺术", "氛围", "阴郁", "空灵"] },
+        "lighting": { "type": "multiselect", "options_en": ["volumetric fog", "soft diffused light", "god rays", "low light"], "options_zh": ["体积雾", "柔和漫射光", "上帝之光", "低光"] },
+        "camera": { "type": "multiselect", "options_en": ["wide-angle", "35mm prime", "eye-level", "vanishing point"], "options_zh": ["广角", "35mm 定焦", "平视", "消失点"] },
+        "post": { "type": "multiselect", "options_en": ["high detail", "moody colors", "film grain", "8k uhd"], "options_zh": ["高细节", "阴郁色调", "胶片颗粒", "8K 超清"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "{subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --style raw",
+        "flux": "Atmospheric photograph of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "An atmospheric photograph of {subject}, with {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": ["quality"],
+      "ratio_compatible": ["9:16", "3:4", "16:9"],
+      "tags_en": ["forest", "fog", "moody", "atmospheric"],
+      "tags_zh": ["森林", "雾", "阴郁", "氛围"],
+      "example_subject_en": "tall pines disappearing into thick morning fog",
+      "example_subject_zh": "高耸松树消失在浓密晨雾中"
+    },
+    {
+      "id": "desert-dunes", "category": "landscape", "emoji": "🏔️",
+      "title_en": "Desert Dunes", "title_zh": "沙漠沙丘",
+      "description_en": "Vast desert dunes with sand patterns, golden light.",
+      "description_zh": "广阔沙漠沙丘,沙纹图案,金色光线。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "vast sand dunes", "default_zh": "广阔沙丘", "placeholder_en": "describe the desert…", "placeholder_zh": "描述沙漠…" },
+        "style": { "type": "multiselect", "options_en": ["fine art landscape", "minimal", "vast", "minimalist"], "options_zh": ["艺术风景", "极简", "广阔", "极简主义"] },
+        "lighting": { "type": "multiselect", "options_en": ["golden hour", "warm directional light", "rim light on dunes", "long shadows"], "options_zh": ["黄金时刻", "暖色定向光", "沙丘轮廓光", "长阴影"] },
+        "camera": { "type": "multiselect", "options_en": ["wide-angle", "aerial", "telephoto compression", "low angle"], "options_zh": ["广角", "航拍", "长焦压缩", "低角度"] },
+        "post": { "type": "multiselect", "options_en": ["warm tones", "high detail", "8k uhd", "HDR"], "options_zh": ["暖色调", "高细节", "8K 超清", "HDR"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "{subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 500",
+        "flux": "Landscape photograph of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "A wide landscape photograph of {subject}, with {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": [],
+      "ratio_compatible": ["16:9", "21:9", "3:2"],
+      "tags_en": ["desert", "dunes", "minimal", "sand"],
+      "tags_zh": ["沙漠", "沙丘", "极简", "沙"],
+      "example_subject_en": "rolling sand dunes under a clear orange sky",
+      "example_subject_zh": "橙黄天空下起伏的沙丘"
+    },
+    {
+      "id": "aurora-night", "category": "landscape", "emoji": "🏔️",
+      "title_en": "Aurora Night", "title_zh": "极光夜空",
+      "description_en": "Vibrant aurora borealis dancing across a starry night sky.",
+      "description_zh": "鲜艳北极光在繁星夜空中舞动。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "aurora borealis over a fjord", "default_zh": "峡湾上的北极光", "placeholder_en": "describe the scene…", "placeholder_zh": "描述场景…" },
+        "style": { "type": "multiselect", "options_en": ["astrophotography", "fine art landscape", "epic", "cinematic"], "options_zh": ["天文摄影", "艺术风景", "史诗", "电影感"] },
+        "lighting": { "type": "multiselect", "options_en": ["aurora glow", "starlight", "moonlight", "long exposure"], "options_zh": ["极光辉光", "星光", "月光", "长曝光"] },
+        "camera": { "type": "multiselect", "options_en": ["wide-angle", "14mm lens", "tripod long exposure", "low ISO"], "options_zh": ["广角", "14mm 镜头", "三脚架长曝光", "低 ISO"] },
+        "post": { "type": "multiselect", "options_en": ["vivid colors", "high detail", "low noise", "8k uhd"], "options_zh": ["鲜艳色彩", "高细节", "低噪点", "8K 超清"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "{subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 750",
+        "flux": "Astrophotography of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "An astrophotograph of {subject}, featuring {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": ["quality"],
+      "ratio_compatible": ["16:9", "21:9"],
+      "tags_en": ["aurora", "night", "astrophotography", "stars"],
+      "tags_zh": ["极光", "夜空", "天文摄影", "星空"],
+      "example_subject_en": "green and purple aurora swirling over snow-covered mountains",
+      "example_subject_zh": "绿色与紫色极光在雪山之巅盘旋"
+    },
+    {
+      "id": "waterfall-flowing", "category": "landscape", "emoji": "🏔️",
+      "title_en": "Waterfall", "title_zh": "瀑布",
+      "description_en": "Flowing waterfall with motion blur, lush surrounding vegetation.",
+      "description_zh": "流水瀑布,运动模糊,葱郁植被环绕。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a powerful waterfall", "default_zh": "壮观的瀑布", "placeholder_en": "describe the waterfall…", "placeholder_zh": "描述瀑布…" },
+        "style": { "type": "multiselect", "options_en": ["fine art landscape", "long exposure", "epic", "natural"], "options_zh": ["艺术风景", "长曝光", "史诗", "自然"] },
+        "lighting": { "type": "multiselect", "options_en": ["dappled sunlight", "soft side light", "misty spray light", "natural light"], "options_zh": ["斑驳阳光", "柔和侧光", "水雾光", "自然光"] },
+        "camera": { "type": "multiselect", "options_en": ["wide-angle", "tripod long exposure", "low angle", "polarizing filter"], "options_zh": ["广角", "三脚架长曝光", "低角度", "偏振镜"] },
+        "post": { "type": "multiselect", "options_en": ["silky water", "vivid greens", "high detail", "8k uhd"], "options_zh": ["丝绸水流", "鲜艳绿色", "高细节", "8K 超清"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "{subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 500",
+        "flux": "Landscape photograph of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "A landscape photograph of {subject}, with {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": ["quality"],
+      "ratio_compatible": ["9:16", "3:4", "16:9"],
+      "tags_en": ["waterfall", "nature", "long-exposure", "lush"],
+      "tags_zh": ["瀑布", "自然", "长曝光", "葱郁"],
+      "example_subject_en": "a tall waterfall cascading into a turquoise pool",
+      "example_subject_zh": "高瀑布倾泻入翠绿水池"
+    },
+    {
+      "id": "city-skyline", "category": "landscape", "emoji": "🏔️",
+      "title_en": "City Skyline", "title_zh": "城市天际线",
+      "description_en": "Iconic city skyline at twilight, lights reflecting on water.",
+      "description_zh": "标志性城市天际线,暮色灯光映水面。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "city skyline at twilight", "default_zh": "暮色城市天际线", "placeholder_en": "describe the city…", "placeholder_zh": "描述城市…" },
+        "style": { "type": "multiselect", "options_en": ["urban landscape", "cinematic", "fine art", "architectural"], "options_zh": ["城市风景", "电影感", "艺术", "建筑"] },
+        "lighting": { "type": "multiselect", "options_en": ["blue hour", "city lights", "twilight", "long exposure"], "options_zh": ["蓝调时刻", "城市灯光", "暮色", "长曝光"] },
+        "camera": { "type": "multiselect", "options_en": ["wide-angle", "telephoto compression", "elevated viewpoint", "panorama"], "options_zh": ["广角", "长焦压缩", "高位视角", "全景"] },
+        "post": { "type": "multiselect", "options_en": ["vibrant colors", "HDR", "high detail", "8k uhd"], "options_zh": ["鲜艳色彩", "HDR", "高细节", "8K 超清"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "{subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 500",
+        "flux": "Urban landscape of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "An urban landscape photograph of {subject}, with {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": ["quality"],
+      "ratio_compatible": ["16:9", "21:9", "3:2"],
+      "tags_en": ["city", "skyline", "urban", "twilight"],
+      "tags_zh": ["城市", "天际线", "都市", "暮色"],
+      "example_subject_en": "Manhattan skyline with the Empire State Building glowing at dusk",
+      "example_subject_zh": "曼哈顿天际线,帝国大厦在黄昏发光"
+    },
+    {
+      "id": "rural-village", "category": "landscape", "emoji": "🏔️",
+      "title_en": "Rural Village", "title_zh": "乡村村庄",
+      "description_en": "Quiet rural village scene with traditional architecture.",
+      "description_zh": "宁静乡村场景,传统建筑。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a small village in the countryside", "default_zh": "乡村小村庄", "placeholder_en": "describe the village…", "placeholder_zh": "描述村庄…" },
+        "style": { "type": "multiselect", "options_en": ["documentary", "fine art", "pastoral", "natural"], "options_zh": ["纪实", "艺术", "田园", "自然"] },
+        "lighting": { "type": "multiselect", "options_en": ["golden hour", "soft morning light", "warm afternoon light"], "options_zh": ["黄金时刻", "柔和晨光", "温暖午后光"] },
+        "camera": { "type": "multiselect", "options_en": ["35mm prime", "50mm prime", "eye-level", "rule of thirds"], "options_zh": ["35mm 定焦", "50mm 定焦", "平视", "三分构图"] },
+        "post": { "type": "multiselect", "options_en": ["natural colors", "warm tones", "high detail", "film grain"], "options_zh": ["自然色彩", "暖色调", "高细节", "胶片颗粒"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "{subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --style raw",
+        "flux": "Landscape photograph of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "A peaceful landscape photograph of {subject}, with {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": [],
+      "ratio_compatible": ["16:9", "3:2", "4:3"],
+      "tags_en": ["village", "rural", "countryside", "pastoral"],
+      "tags_zh": ["村庄", "乡村", "田园", "自然"],
+      "example_subject_en": "stone cottages nestled in a green valley at sunrise",
+      "example_subject_zh": "石屋村落在朝阳下的翠绿山谷中"
+    },
+    {
+      "id": "tropical-beach", "category": "landscape", "emoji": "🏔️",
+      "title_en": "Tropical Beach", "title_zh": "热带海滩",
+      "description_en": "Paradise tropical beach with turquoise water and palm trees.",
+      "description_zh": "天堂般的热带海滩,绿松石海水与棕榈树。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a tropical beach paradise", "default_zh": "热带海滩天堂", "placeholder_en": "describe the beach…", "placeholder_zh": "描述海滩…" },
+        "style": { "type": "multiselect", "options_en": ["travel photography", "fine art", "paradise", "vibrant"], "options_zh": ["旅行摄影", "艺术", "天堂", "鲜艳"] },
+        "lighting": { "type": "multiselect", "options_en": ["bright tropical sun", "golden hour", "soft midday light"], "options_zh": ["明亮热带阳光", "黄金时刻", "柔和正午光"] },
+        "camera": { "type": "multiselect", "options_en": ["wide-angle", "drone aerial", "polarizing filter", "low angle"], "options_zh": ["广角", "无人机航拍", "偏振镜", "低角度"] },
+        "post": { "type": "multiselect", "options_en": ["vivid turquoise water", "vibrant colors", "high detail", "8k uhd"], "options_zh": ["鲜艳绿松石海水", "鲜艳色彩", "高细节", "8K 超清"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "{subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 750",
+        "flux": "Travel photograph of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "A vibrant travel photograph of {subject}, with {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": ["quality"],
+      "ratio_compatible": ["16:9", "21:9", "3:2"],
+      "tags_en": ["beach", "tropical", "paradise", "travel"],
+      "tags_zh": ["海滩", "热带", "天堂", "旅行"],
+      "example_subject_en": "white sand beach with palm trees and clear turquoise water",
+      "example_subject_zh": "白沙滩、棕榈树与清澈绿松石海水"
+    },
+    {
+      "id": "snow-glacier", "category": "landscape", "emoji": "🏔️",
+      "title_en": "Snow Glacier", "title_zh": "冰川雪山",
+      "description_en": "Massive glacier landscape with icy blue crevasses.",
+      "description_zh": "庞大冰川风景,冰蓝裂缝。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a massive glacier", "default_zh": "巨大冰川", "placeholder_en": "describe the glacier…", "placeholder_zh": "描述冰川…" },
+        "style": { "type": "multiselect", "options_en": ["fine art landscape", "epic", "documentary", "National Geographic"], "options_zh": ["艺术风景", "史诗", "纪实", "国家地理"] },
+        "lighting": { "type": "multiselect", "options_en": ["high alpine light", "cold blue light", "soft side light", "rim light on ice"], "options_zh": ["高山强光", "冷蓝光", "柔和侧光", "冰面轮廓光"] },
+        "camera": { "type": "multiselect", "options_en": ["wide-angle", "telephoto compression", "aerial drone", "polarizing filter"], "options_zh": ["广角", "长焦压缩", "无人机航拍", "偏振镜"] },
+        "post": { "type": "multiselect", "options_en": ["icy blue tones", "high detail", "8k uhd", "HDR"], "options_zh": ["冰蓝色调", "高细节", "8K 超清", "HDR"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "{subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 500",
+        "flux": "Landscape photograph of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "A landscape photograph of {subject}, with {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": ["quality"],
+      "ratio_compatible": ["16:9", "21:9", "3:2"],
+      "tags_en": ["glacier", "snow", "ice", "alpine"],
+      "tags_zh": ["冰川", "雪", "冰", "高山"],
+      "example_subject_en": "a glacier with deep blue crevasses under a clear sky",
+      "example_subject_zh": "晴空下深蓝裂缝的冰川"
+    },
+    {
+      "id": "white-bg-product", "category": "product", "emoji": "📦",
+      "title_en": "White-Background Product", "title_zh": "白底产品图",
+      "description_en": "Clean white-background product shot, e-commerce standard.",
+      "description_zh": "干净白底产品图,电商标准。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a product on white background", "default_zh": "白底产品", "placeholder_en": "describe the product…", "placeholder_zh": "描述产品…" },
+        "style": { "type": "multiselect", "options_en": ["product photography", "e-commerce", "clean", "studio"], "options_zh": ["产品摄影", "电商", "干净", "影棚"] },
+        "lighting": { "type": "multiselect", "options_en": ["softbox", "even studio lighting", "shadow-free", "soft diffused light"], "options_zh": ["柔光箱", "均匀影棚光", "无阴影", "柔和漫射光"] },
+        "camera": { "type": "multiselect", "options_en": ["85mm lens", "macro detail", "eye-level", "slight angle"], "options_zh": ["85mm 镜头", "微距细节", "平视", "微侧角"] },
+        "post": { "type": "multiselect", "options_en": ["pure white background", "high detail", "8k uhd", "professional color accuracy"], "options_zh": ["纯白背景", "高细节", "8K 超清", "专业色彩准确"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}, pure white background",
+        "mj": "{subject}, {style}, {lighting}, {camera}, {post}, white background --ar {ratio} --v 6 --style raw",
+        "flux": "Product photograph of {subject}. {style}. {lighting}. {camera}. {post}. Pure white background.",
+        "dalle": "A clean product photograph of {subject}, isolated on a pure white background, featuring {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": ["style", "quality"],
+      "ratio_compatible": ["1:1", "4:5"],
+      "tags_en": ["product", "white-background", "e-commerce", "studio"],
+      "tags_zh": ["产品", "白底", "电商", "影棚"],
+      "example_subject_en": "a luxury watch on a clean white background",
+      "example_subject_zh": "干净白底上的奢华手表"
+    },
+    {
+      "id": "lifestyle-product", "category": "product", "emoji": "📦",
+      "title_en": "Lifestyle Product", "title_zh": "生活方式产品图",
+      "description_en": "Product in real-life context, lifestyle setting, aspirational.",
+      "description_zh": "产品在实际使用场景,生活方式,向往感。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a product in lifestyle setting", "default_zh": "生活方式场景中的产品", "placeholder_en": "describe the scene…", "placeholder_zh": "描述场景…" },
+        "style": { "type": "multiselect", "options_en": ["lifestyle photography", "aspirational", "editorial", "natural"], "options_zh": ["生活方式摄影", "向往感", "编辑大片", "自然"] },
+        "lighting": { "type": "multiselect", "options_en": ["natural window light", "golden hour", "warm interior light"], "options_zh": ["自然窗光", "黄金时刻", "温暖室内光"] },
+        "camera": { "type": "multiselect", "options_en": ["35mm prime", "50mm prime", "shallow depth of field", "lifestyle composition"], "options_zh": ["35mm 定焦", "50mm 定焦", "浅景深", "生活构图"] },
+        "post": { "type": "multiselect", "options_en": ["warm tones", "natural colors", "high detail", "professional color grading"], "options_zh": ["暖色调", "自然色彩", "高细节", "专业调色"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "{subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 250 --style raw",
+        "flux": "Lifestyle photograph of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "A lifestyle photograph of {subject} in a real-world setting, with {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": ["quality"],
+      "ratio_compatible": ["4:5", "1:1", "3:4"],
+      "tags_en": ["lifestyle", "product", "aspirational", "natural"],
+      "tags_zh": ["生活", "产品", "向往", "自然"],
+      "example_subject_en": "a coffee mug on a wooden table by a sunny window",
+      "example_subject_zh": "阳光窗边木桌上的咖啡杯"
+    },
+    {
+      "id": "food-photography", "category": "product", "emoji": "📦",
+      "title_en": "Food Photography", "title_zh": "美食摄影",
+      "description_en": "Appetizing food shot with rich detail, magazine quality.",
+      "description_zh": "诱人的美食摄影,丰富细节,杂志品质。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a beautifully plated dish", "default_zh": "精致摆盘的菜肴", "placeholder_en": "describe the food…", "placeholder_zh": "描述美食…" },
+        "style": { "type": "multiselect", "options_en": ["food photography", "editorial", "appetizing", "rustic"], "options_zh": ["美食摄影", "编辑大片", "诱人", "质朴"] },
+        "lighting": { "type": "multiselect", "options_en": ["soft side light", "natural window light", "warm directional light", "rim light"], "options_zh": ["柔和侧光", "自然窗光", "温暖定向光", "轮廓光"] },
+        "camera": { "type": "multiselect", "options_en": ["85mm lens", "100mm macro", "shallow depth of field", "45-degree angle"], "options_zh": ["85mm 镜头", "100mm 微距", "浅景深", "45 度角"] },
+        "post": { "type": "multiselect", "options_en": ["vibrant colors", "high detail", "8k uhd", "mouth-watering"], "options_zh": ["鲜艳色彩", "高细节", "8K 超清", "令人垂涎"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "{subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 500",
+        "flux": "Food photograph of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "An appetizing food photograph of {subject}, featuring {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": ["quality"],
+      "ratio_compatible": ["4:5", "1:1", "3:4"],
+      "tags_en": ["food", "photography", "editorial", "cuisine"],
+      "tags_zh": ["美食", "摄影", "编辑", "菜肴"],
+      "example_subject_en": "a fresh gourmet burger with melted cheese on a wooden board",
+      "example_subject_zh": "木板上融化的奶酪新鲜汉堡"
+    },
+    {
+      "id": "jewelry-macro", "category": "product", "emoji": "📦",
+      "title_en": "Jewelry Macro", "title_zh": "珠宝微距",
+      "description_en": "Extreme close-up jewelry shot, sparkling details, luxury feel.",
+      "description_zh": "极近距珠宝摄影,闪烁细节,奢华感。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a luxury jewelry piece", "default_zh": "奢华珠宝", "placeholder_en": "describe the jewelry…", "placeholder_zh": "描述珠宝…" },
+        "style": { "type": "multiselect", "options_en": ["luxury product", "macro", "editorial", "high-end"], "options_zh": ["奢华产品", "微距", "编辑大片", "高端"] },
+        "lighting": { "type": "multiselect", "options_en": ["studio strobe", "rim light", "specular highlights", "controlled reflections"], "options_zh": ["影棚闪光", "轮廓光", "镜面高光", "控制反射"] },
+        "camera": { "type": "multiselect", "options_en": ["100mm macro", "extreme close-up", "shallow depth of field", "studio tripod"], "options_zh": ["100mm 微距", "极近距", "浅景深", "影棚三脚架"] },
+        "post": { "type": "multiselect", "options_en": ["high detail", "8k uhd", "sparkle highlights", "luxury color grading"], "options_zh": ["高细节", "8K 超清", "闪光高光", "奢华调色"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}, bokeh background",
+        "mj": "{subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 750",
+        "flux": "Macro photograph of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "A luxurious macro photograph of {subject}, featuring {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": ["quality"],
+      "ratio_compatible": ["1:1", "4:5", "3:4"],
+      "tags_en": ["jewelry", "macro", "luxury", "sparkle"],
+      "tags_zh": ["珠宝", "微距", "奢华", "闪光"],
+      "example_subject_en": "a diamond ring with prismatic light reflections",
+      "example_subject_zh": "折射光线的钻石戒指"
+    },
+    {
+      "id": "car-commercial", "category": "product", "emoji": "📦",
+      "title_en": "Car Commercial", "title_zh": "汽车广告",
+      "description_en": "Dramatic car commercial shot, glossy paint, cinematic atmosphere.",
+      "description_zh": "戏剧化汽车广告,光泽车漆,电影氛围。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a sleek sports car", "default_zh": "一辆流线型跑车", "placeholder_en": "describe the car…", "placeholder_zh": "描述汽车…" },
+        "style": { "type": "multiselect", "options_en": ["commercial", "automotive photography", "cinematic", "luxury"], "options_zh": ["商业广告", "汽车摄影", "电影感", "奢华"] },
+        "lighting": { "type": "multiselect", "options_en": ["dramatic studio", "rim light", "specular highlights", "controlled reflections"], "options_zh": ["戏剧化影棚", "轮廓光", "镜面高光", "控制反射"] },
+        "camera": { "type": "multiselect", "options_en": ["low angle", "wide-angle", "tracking shot feel", "dynamic composition"], "options_zh": ["低角度", "广角", "跟踪镜头感", "动态构图"] },
+        "post": { "type": "multiselect", "options_en": ["high detail", "8k uhd", "glossy reflections", "cinematic color grading"], "options_zh": ["高细节", "8K 超清", "光泽反射", "电影调色"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "{subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 500",
+        "flux": "Automotive photograph of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "A cinematic automotive photograph of {subject}, featuring {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": ["quality"],
+      "ratio_compatible": ["16:9", "21:9", "3:2"],
+      "tags_en": ["car", "automotive", "commercial", "cinematic"],
+      "tags_zh": ["汽车", "汽车", "广告", "电影感"],
+      "example_subject_en": "a red Ferrari on a coastal road at golden hour",
+      "example_subject_zh": "黄金时刻沿海公路上的红色法拉利"
+    },
+    {
+      "id": "fashion-flatlay", "category": "product", "emoji": "📦",
+      "title_en": "Fashion Flat Lay", "title_zh": "时尚平铺图",
+      "description_en": "Top-down fashion flat lay with curated accessories, editorial styling.",
+      "description_zh": "俯拍时尚平铺,精选配饰,编辑造型。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a fashion flat lay arrangement", "default_zh": "时尚平铺造型", "placeholder_en": "describe the items…", "placeholder_zh": "描述物品…" },
+        "style": { "type": "multiselect", "options_en": ["flat lay", "editorial", "fashion", "curated"], "options_zh": ["平铺", "编辑大片", "时尚", "精选"] },
+        "lighting": { "type": "multiselect", "options_en": ["soft overhead light", "even studio lighting", "shadow-free", "natural light"], "options_zh": ["柔和顶光", "均匀影棚光", "无阴影", "自然光"] },
+        "camera": { "type": "multiselect", "options_en": ["top-down", "35mm lens", "50mm prime", "perfect framing"], "options_zh": ["俯拍", "35mm 镜头", "50mm 定焦", "完美构图"] },
+        "post": { "type": "multiselect", "options_en": ["natural colors", "high detail", "8k uhd", "magazine style"], "options_zh": ["自然色彩", "高细节", "8K 超清", "杂志风格"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}, top-down view",
+        "mj": "{subject}, {style}, flat lay, {lighting}, {camera}, {post} --ar {ratio} --v 6 --style raw",
+        "flux": "Flat lay photograph of {subject}. {style}. {lighting}. {camera}. {post}. Top-down view.",
+        "dalle": "A flat lay photograph of {subject} from above, featuring {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": ["quality"],
+      "ratio_compatible": ["1:1", "4:5"],
+      "tags_en": ["fashion", "flat-lay", "editorial", "top-down"],
+      "tags_zh": ["时尚", "平铺", "编辑", "俯拍"],
+      "example_subject_en": "a curated flat lay of sunglasses, hat, and skincare on marble",
+      "example_subject_zh": "大理石上精选的墨镜、帽子与护肤品平铺"
+    },
+    {
+      "id": "tech-gadget", "category": "product", "emoji": "📦",
+      "title_en": "Tech Gadget", "title_zh": "科技产品",
+      "description_en": "Modern tech gadget shot with dramatic lighting, futuristic feel.",
+      "description_zh": "现代科技产品摄影,戏剧化光影,未来感。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a modern tech gadget", "default_zh": "现代科技产品", "placeholder_en": "describe the gadget…", "placeholder_zh": "描述产品…" },
+        "style": { "type": "multiselect", "options_en": ["tech product", "futuristic", "minimal", "modern"], "options_zh": ["科技产品", "未来感", "极简", "现代"] },
+        "lighting": { "type": "multiselect", "options_en": ["dramatic studio", "rim light", "controlled reflections", "specular highlights"], "options_zh": ["戏剧化影棚", "轮廓光", "控制反射", "镜面高光"] },
+        "camera": { "type": "multiselect", "options_en": ["macro detail", "85mm lens", "eye-level", "low angle hero shot"], "options_zh": ["微距细节", "85mm 镜头", "平视", "低角度英雄镜头"] },
+        "post": { "type": "multiselect", "options_en": ["high detail", "8k uhd", "futuristic color grading", "tech aesthetic"], "options_zh": ["高细节", "8K 超清", "未来感调色", "科技美学"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "{subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 500",
+        "flux": "Product photograph of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "A futuristic product photograph of {subject}, featuring {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": ["quality"],
+      "ratio_compatible": ["1:1", "4:5", "16:9"],
+      "tags_en": ["tech", "gadget", "modern", "futuristic"],
+      "tags_zh": ["科技", "产品", "现代", "未来感"],
+      "example_subject_en": "a sleek wireless headphone on a glossy black surface",
+      "example_subject_zh": "光泽黑面上流线型无线耳机"
+    },
+    {
+      "id": "perfume-bottle", "category": "product", "emoji": "📦",
+      "title_en": "Perfume Bottle", "title_zh": "香水瓶",
+      "description_en": "Elegant perfume bottle shot with refraction and atmospheric lighting.",
+      "description_zh": "优雅香水瓶摄影,折射与氛围光。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "an elegant perfume bottle", "default_zh": "优雅的香水瓶", "placeholder_en": "describe the bottle…", "placeholder_zh": "描述瓶子…" },
+        "style": { "type": "multiselect", "options_en": ["luxury product", "editorial", "elegant", "fine art"], "options_zh": ["奢华产品", "编辑大片", "优雅", "艺术"] },
+        "lighting": { "type": "multiselect", "options_en": ["rim light", "backlight", "refraction light", "moody atmosphere"], "options_zh": ["轮廓光", "背光", "折射光", "阴郁氛围"] },
+        "camera": { "type": "multiselect", "options_en": ["100mm macro", "low angle hero shot", "shallow depth of field", "eye-level"], "options_zh": ["100mm 微距", "低角度英雄镜头", "浅景深", "平视"] },
+        "post": { "type": "multiselect", "options_en": ["high detail", "8k uhd", "luxury color grading", "rich shadows"], "options_zh": ["高细节", "8K 超清", "奢华调色", "浓郁阴影"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "{subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 750",
+        "flux": "Product photograph of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "An elegant product photograph of {subject}, featuring {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": ["quality"],
+      "ratio_compatible": ["4:5", "1:1", "9:16"],
+      "tags_en": ["perfume", "bottle", "luxury", "elegant"],
+      "tags_zh": ["香水", "瓶子", "奢华", "优雅"],
+      "example_subject_en": "a faceted crystal perfume bottle with golden liquid and rose petals",
+      "example_subject_zh": "水晶切割香水瓶中金液与玫瑰花瓣"
+    },
+    {
+      "id": "furniture-interior", "category": "product", "emoji": "📦",
+      "title_en": "Furniture Interior", "title_zh": "家具室内",
+      "description_en": "Furniture in a styled interior setting, magazine quality.",
+      "description_zh": "造型室内中的家具,杂志品质。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a styled furniture piece", "default_zh": "造型家具", "placeholder_en": "describe the furniture…", "placeholder_zh": "描述家具…" },
+        "style": { "type": "multiselect", "options_en": ["interior design", "editorial", "scandinavian", "modern"], "options_zh": ["室内设计", "编辑大片", "北欧", "现代"] },
+        "lighting": { "type": "multiselect", "options_en": ["natural window light", "soft interior light", "warm ambient", "diffused light"], "options_zh": ["自然窗光", "柔和室内光", "温暖环境光", "漫射光"] },
+        "camera": { "type": "multiselect", "options_en": ["wide-angle", "35mm prime", "interior composition", "rule of thirds"], "options_zh": ["广角", "35mm 定焦", "室内构图", "三分构图"] },
+        "post": { "type": "multiselect", "options_en": ["natural colors", "warm tones", "high detail", "8k uhd"], "options_zh": ["自然色彩", "暖色调", "高细节", "8K 超清"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "{subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --style raw",
+        "flux": "Interior photograph of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "An interior photograph of {subject}, featuring {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": [],
+      "ratio_compatible": ["4:3", "16:9", "3:2"],
+      "tags_en": ["furniture", "interior", "design", "modern"],
+      "tags_zh": ["家具", "室内", "设计", "现代"],
+      "example_subject_en": "a mid-century modern chair in a sunlit minimalist living room",
+      "example_subject_zh": "阳光极简客厅中的世纪中叶现代椅"
+    },
+    {
+      "id": "apparel-model", "category": "product", "emoji": "📦",
+      "title_en": "Apparel on Model", "title_zh": "服装模特图",
+      "description_en": "Apparel shot on a model, e-commerce-ready, on-brand styling.",
+      "description_zh": "模特服装图,电商就绪,品牌造型。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a model wearing apparel", "default_zh": "穿服装的模特", "placeholder_en": "describe the apparel…", "placeholder_zh": "描述服装…" },
+        "style": { "type": "multiselect", "options_en": ["e-commerce", "fashion catalog", "lifestyle", "on-brand"], "options_zh": ["电商", "服装目录", "生活", "品牌风"] },
+        "lighting": { "type": "multiselect", "options_en": ["soft studio", "natural light", "even lighting", "shadow-free"], "options_zh": ["柔和影棚", "自然光", "均匀光", "无阴影"] },
+        "camera": { "type": "multiselect", "options_en": ["85mm lens", "eye-level", "full body", "three-quarter view"], "options_zh": ["85mm 镜头", "平视", "全身", "四分之三视角"] },
+        "post": { "type": "multiselect", "options_en": ["natural colors", "high detail", "true-to-life", "professional color accuracy"], "options_zh": ["自然色彩", "高细节", "忠于实物", "专业色彩准确"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "{subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --style raw",
+        "flux": "Apparel photograph of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "An apparel photograph of {subject}, featuring {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": ["anatomy", "quality"],
+      "ratio_compatible": ["2:3", "4:5", "9:16"],
+      "tags_en": ["apparel", "model", "e-commerce", "fashion"],
+      "tags_zh": ["服装", "模特", "电商", "时尚"],
+      "example_subject_en": "a model wearing a summer dress in a sunlit garden",
+      "example_subject_zh": "阳光花园中穿夏装的模特"
+    },
+    {
+      "id": "geometric-pattern", "category": "abstract", "emoji": "🎨",
+      "title_en": "Geometric Pattern", "title_zh": "几何图案",
+      "description_en": "Clean geometric pattern with mathematical precision, tessellation.",
+      "description_zh": "干净几何图案,数学精度,镶嵌。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a geometric pattern", "default_zh": "几何图案", "placeholder_en": "describe the pattern…", "placeholder_zh": "描述图案…" },
+        "style": { "type": "multiselect", "options_en": ["geometric", "tessellation", "minimal", "mathematical"], "options_zh": ["几何", "镶嵌", "极简", "数学"] },
+        "lighting": { "type": "multiselect", "options_en": ["even lighting", "soft directional", "ambient"], "options_zh": ["均匀光", "柔和定向", "环境光"] },
+        "camera": { "type": "multiselect", "options_en": ["flat", "top-down", "macro detail", "perfect symmetry"], "options_zh": ["平面", "俯拍", "微距细节", "完美对称"] },
+        "post": { "type": "multiselect", "options_en": ["vibrant colors", "clean lines", "high detail", "8k uhd"], "options_zh": ["鲜艳色彩", "干净线条", "高细节", "8K 超清"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}, seamless pattern",
+        "mj": "{subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 250",
+        "flux": "Geometric pattern of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "A geometric pattern of {subject}, featuring {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": ["anatomy"],
+      "ratio_compatible": ["1:1", "4:5"],
+      "tags_en": ["geometric", "pattern", "tessellation", "minimal"],
+      "tags_zh": ["几何", "图案", "镶嵌", "极简"],
+      "example_subject_en": "a seamless hexagonal tessellation in blue and gold",
+      "example_subject_zh": "蓝色与金色的无缝六边形镶嵌"
+    },
+    {
+      "id": "fluid-art", "category": "abstract", "emoji": "🎨",
+      "title_en": "Fluid Art", "title_zh": "流体艺术",
+      "description_en": "Flowing fluid art with swirling colors, organic movement.",
+      "description_zh": "流动流体艺术,旋转色彩,有机运动。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "flowing fluid colors", "default_zh": "流动的色彩", "placeholder_en": "describe the fluid art…", "placeholder_zh": "描述流体艺术…" },
+        "style": { "type": "multiselect", "options_en": ["fluid art", "abstract", "organic", "swirling"], "options_zh": ["流体艺术", "抽象", "有机", "旋涡"] },
+        "lighting": { "type": "multiselect", "options_en": ["studio lighting", "rim light", "specular highlights", "soft diffused"], "options_zh": ["影棚光", "轮廓光", "镜面高光", "柔和漫射"] },
+        "camera": { "type": "multiselect", "options_en": ["macro", "close-up", "flat top-down", "eye-level"], "options_zh": ["微距", "特写", "俯拍平面", "平视"] },
+        "post": { "type": "multiselect", "options_en": ["vibrant colors", "high detail", "8k uhd", "smooth gradients"], "options_zh": ["鲜艳色彩", "高细节", "8K 超清", "平滑渐变"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "{subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 750",
+        "flux": "Fluid art photograph of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "A vibrant fluid art image of {subject}, featuring {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": [],
+      "ratio_compatible": ["1:1", "16:9", "9:16"],
+      "tags_en": ["fluid-art", "abstract", "swirling", "organic"],
+      "tags_zh": ["流体艺术", "抽象", "旋涡", "有机"],
+      "example_subject_en": "swirling acrylic pour art in teal, magenta, and gold",
+      "example_subject_zh": "青绿、洋红与金色的旋涡丙烯倾倒艺术"
+    },
+    {
+      "id": "fractal-art", "category": "abstract", "emoji": "🎨",
+      "title_en": "Fractal Art", "title_zh": "分形艺术",
+      "description_en": "Self-similar fractal pattern with infinite depth, mathematical beauty.",
+      "description_zh": "自相似分形图案,无限深度,数学之美。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a fractal pattern", "default_zh": "分形图案", "placeholder_en": "describe the fractal…", "placeholder_zh": "描述分形…" },
+        "style": { "type": "multiselect", "options_en": ["fractal", "mathematical", "self-similar", "psychedelic"], "options_zh": ["分形", "数学", "自相似", "迷幻"] },
+        "lighting": { "type": "multiselect", "options_en": ["glowing", "luminescent", "internal light", "neon glow"], "options_zh": ["发光", "夜光", "内发光", "霓虹辉光"] },
+        "camera": { "type": "multiselect", "options_en": ["flat", "centered", "macro detail", "perfect symmetry"], "options_zh": ["平面", "居中", "微距细节", "完美对称"] },
+        "post": { "type": "multiselect", "options_en": ["vibrant colors", "high detail", "8k uhd", "infinite depth"], "options_zh": ["鲜艳色彩", "高细节", "8K 超清", "无限深度"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "{subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 750",
+        "flux": "Fractal art of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "A fractal art image of {subject}, featuring {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": [],
+      "ratio_compatible": ["1:1", "4:5"],
+      "tags_en": ["fractal", "mathematical", "psychedelic", "pattern"],
+      "tags_zh": ["分形", "数学", "迷幻", "图案"],
+      "example_subject_en": "an infinite Mandelbrot-style fractal in violet and cyan",
+      "example_subject_zh": "紫色与青色的曼德博分形"
+    },
+    {
+      "id": "generative-art", "category": "abstract", "emoji": "🎨",
+      "title_en": "Generative Art", "title_zh": "生成艺术",
+      "description_en": "Algorithmic generative art with code-inspired randomness.",
+      "description_zh": "算法生成艺术,代码启发的随机性。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a generative art piece", "default_zh": "生成艺术作品", "placeholder_en": "describe the generative art…", "placeholder_zh": "描述生成艺术…" },
+        "style": { "type": "multiselect", "options_en": ["generative", "algorithmic", "code art", "digital abstract"], "options_zh": ["生成", "算法", "代码艺术", "数字抽象"] },
+        "lighting": { "type": "multiselect", "options_en": ["glowing", "luminescent", "digital screen", "self-illuminated"], "options_zh": ["发光", "夜光", "数字屏幕", "自发光"] },
+        "camera": { "type": "multiselect", "options_en": ["flat", "centered", "macro detail", "dynamic composition"], "options_zh": ["平面", "居中", "微距细节", "动态构图"] },
+        "post": { "type": "multiselect", "options_en": ["vibrant colors", "high detail", "8k uhd", "smooth gradients"], "options_zh": ["鲜艳色彩", "高细节", "8K 超清", "平滑渐变"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "{subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 500",
+        "flux": "Generative art of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "A generative art image of {subject}, featuring {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": [],
+      "ratio_compatible": ["16:9", "1:1", "9:16"],
+      "tags_en": ["generative", "algorithmic", "digital", "abstract"],
+      "tags_zh": ["生成", "算法", "数字", "抽象"],
+      "example_subject_en": "flowing particle trails in deep blue and electric pink",
+      "example_subject_zh": "深蓝与电粉色的流动粒子轨迹"
+    },
+    {
+      "id": "minimal-abstract", "category": "abstract", "emoji": "🎨",
+      "title_en": "Minimal Abstract", "title_zh": "极简抽象",
+      "description_en": "Restrained minimal abstract composition, negative space.",
+      "description_zh": "克制极简抽象构图,留白。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a minimal abstract composition", "default_zh": "极简抽象构图", "placeholder_en": "describe the composition…", "placeholder_zh": "描述构图…" },
+        "style": { "type": "multiselect", "options_en": ["minimal", "abstract", "restrained", "bauhaus"], "options_zh": ["极简", "抽象", "克制", "包豪斯"] },
+        "lighting": { "type": "multiselect", "options_en": ["soft side light", "even lighting", "ambient", "subtle gradient"], "options_zh": ["柔和侧光", "均匀光", "环境光", "微妙渐变"] },
+        "camera": { "type": "multiselect", "options_en": ["flat", "centered", "rule of thirds", "perfect composition"], "options_zh": ["平面", "居中", "三分构图", "完美构图"] },
+        "post": { "type": "multiselect", "options_en": ["subtle colors", "clean composition", "high detail", "8k uhd"], "options_zh": ["微妙色彩", "干净构图", "高细节", "8K 超清"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "{subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --style raw",
+        "flux": "Minimal abstract composition of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "A minimal abstract composition of {subject}, featuring {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": [],
+      "ratio_compatible": ["1:1", "4:5", "16:9"],
+      "tags_en": ["minimal", "abstract", "bauhaus", "restrained"],
+      "tags_zh": ["极简", "抽象", "包豪斯", "克制"],
+      "example_subject_en": "a single red circle on a cream background",
+      "example_subject_zh": "奶油底上的单个红色圆圈"
+    },
+    {
+      "id": "gradient-flow", "category": "abstract", "emoji": "🎨",
+      "title_en": "Gradient Flow", "title_zh": "渐变流动",
+      "description_en": "Smooth gradient flow with vibrant color transitions, dreamy.",
+      "description_zh": "平滑渐变流动,鲜艳色彩过渡,梦幻。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a flowing gradient", "default_zh": "流动渐变", "placeholder_en": "describe the gradient…", "placeholder_zh": "描述渐变…" },
+        "style": { "type": "multiselect", "options_en": ["gradient", "dreamy", "soft", "atmospheric"], "options_zh": ["渐变", "梦幻", "柔和", "氛围"] },
+        "lighting": { "type": "multiselect", "options_en": ["luminescent", "glowing", "soft diffused", "ambient"], "options_zh": ["夜光", "发光", "柔和漫射", "环境光"] },
+        "camera": { "type": "multiselect", "options_en": ["flat", "macro", "dynamic composition", "perfect framing"], "options_zh": ["平面", "微距", "动态构图", "完美取景"] },
+        "post": { "type": "multiselect", "options_en": ["vibrant colors", "smooth gradients", "high detail", "8k uhd"], "options_zh": ["鲜艳色彩", "平滑渐变", "高细节", "8K 超清"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "{subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 500",
+        "flux": "Gradient flow of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "A flowing gradient image of {subject}, featuring {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": [],
+      "ratio_compatible": ["16:9", "9:16", "1:1"],
+      "tags_en": ["gradient", "flow", "dreamy", "colorful"],
+      "tags_zh": ["渐变", "流动", "梦幻", "色彩"],
+      "example_subject_en": "a flowing gradient from sunset orange to deep purple",
+      "example_subject_zh": "日落橙到深紫的流动渐变"
+    },
+    {
+      "id": "op-art", "category": "abstract", "emoji": "🎨",
+      "title_en": "Op Art", "title_zh": "光效艺术",
+      "description_en": "Optical illusion art with high-contrast patterns, mesmerizing.",
+      "description_zh": "视错觉艺术,高对比图案,迷人。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "an op art pattern", "default_zh": "光效艺术图案", "placeholder_en": "describe the op art…", "placeholder_zh": "描述光效艺术…" },
+        "style": { "type": "multiselect", "options_en": ["op art", "optical illusion", "high contrast", "black and white"], "options_zh": ["光效艺术", "视错觉", "高对比", "黑白"] },
+        "lighting": { "type": "multiselect", "options_en": ["even lighting", "high contrast", "stark lighting"], "options_zh": ["均匀光", "高对比", "硬光"] },
+        "camera": { "type": "multiselect", "options_en": ["flat", "centered", "perfect symmetry", "macro"], "options_zh": ["平面", "居中", "完美对称", "微距"] },
+        "post": { "type": "multiselect", "options_en": ["high contrast", "clean lines", "high detail", "8k uhd"], "options_zh": ["高对比", "干净线条", "高细节", "8K 超清"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "{subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 500",
+        "flux": "Op art composition of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "An op art composition of {subject}, featuring {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": [],
+      "ratio_compatible": ["1:1", "4:5"],
+      "tags_en": ["op-art", "illusion", "high-contrast", "geometric"],
+      "tags_zh": ["光效艺术", "错觉", "高对比", "几何"],
+      "example_subject_en": "a black-and-white concentric circle pattern that appears to move",
+      "example_subject_zh": "看似移动的黑白同心圆图案"
+    },
+    {
+      "id": "cubist-style", "category": "abstract", "emoji": "🎨",
+      "title_en": "Cubist Style", "title_zh": "立体派风格",
+      "description_en": "Cubist-inspired fragmentation with multiple perspectives.",
+      "description_zh": "立体派启发的碎片化,多重视角。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a cubist composition", "default_zh": "立体派构图", "placeholder_en": "describe the subject…", "placeholder_zh": "描述主体…" },
+        "style": { "type": "multiselect", "options_en": ["cubist", "fragmented", "Picasso-inspired", "geometric abstraction"], "options_zh": ["立体派", "碎片化", "毕加索风格", "几何抽象"] },
+        "lighting": { "type": "multiselect", "options_en": ["painterly lighting", "studio chiaroscuro", "flat lighting"], "options_zh": ["绘画光", "影棚明暗对比", "平面光"] },
+        "camera": { "type": "multiselect", "options_en": ["multiple perspectives", "dynamic angle", "fragmented view"], "options_zh": ["多重视角", "动态角度", "碎片化视角"] },
+        "post": { "type": "multiselect", "options_en": ["painterly texture", "vintage palette", "high detail", "8k uhd"], "options_zh": ["绘画质感", "复古色调", "高细节", "8K 超清"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "{subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 500",
+        "flux": "Cubist composition of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "A cubist-style composition of {subject}, featuring {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": [],
+      "ratio_compatible": ["1:1", "4:5"],
+      "tags_en": ["cubist", "fragmented", "Picasso", "geometric"],
+      "tags_zh": ["立体派", "碎片化", "毕加索", "几何"],
+      "example_subject_en": "a fragmented cubist portrait in earth tones",
+      "example_subject_zh": "大地色调的碎片化立体派肖像"
+    },
+    {
+      "id": "surreal-collage", "category": "abstract", "emoji": "🎨",
+      "title_en": "Surreal Collage", "title_zh": "超现实拼贴",
+      "description_en": "Surreal collage with unexpected juxtapositions, dreamlike.",
+      "description_zh": "超现实拼贴,意外并置,梦幻。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a surreal collage", "default_zh": "超现实拼贴", "placeholder_en": "describe the surreal scene…", "placeholder_zh": "描述超现实场景…" },
+        "style": { "type": "multiselect", "options_en": ["surreal", "collage", "dreamlike", "Dalí-inspired"], "options_zh": ["超现实", "拼贴", "梦幻", "达利风格"] },
+        "lighting": { "type": "multiselect", "options_en": ["dramatic", "rim light", "moody atmosphere", "impossible light"], "options_zh": ["戏剧", "轮廓光", "阴郁氛围", "不可能的光"] },
+        "camera": { "type": "multiselect", "options_en": ["wide-angle", "dynamic composition", "impossible perspective", "eye-level"], "options_zh": ["广角", "动态构图", "不可能视角", "平视"] },
+        "post": { "type": "multiselect", "options_en": ["vibrant colors", "high detail", "8k uhd", "painterly texture"], "options_zh": ["鲜艳色彩", "高细节", "8K 超清", "绘画质感"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "{subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 750",
+        "flux": "Surreal collage of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "A surreal collage of {subject}, featuring {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": ["anatomy"],
+      "ratio_compatible": ["4:3", "16:9", "1:1"],
+      "tags_en": ["surreal", "collage", "dreamlike", "Dalí"],
+      "tags_zh": ["超现实", "拼贴", "梦幻", "达利"],
+      "example_subject_en": "a melting clock draped over a desert cactus under a violet sky",
+      "example_subject_zh": "紫色天空下沙漠仙人掌上融化的时钟"
+    },
+    {
+      "id": "glitch-art", "category": "abstract", "emoji": "🎨",
+      "title_en": "Glitch Art", "title_zh": "故障艺术",
+      "description_en": "Digital glitch aesthetic with pixel sorting, datamosh, vibrant noise.",
+      "description_zh": "数字故障美学,像素排序,数据融化,鲜艳噪点。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a glitch art piece", "default_zh": "故障艺术作品", "placeholder_en": "describe the glitch art…", "placeholder_zh": "描述故障艺术…" },
+        "style": { "type": "multiselect", "options_en": ["glitch art", "datamosh", "pixel sorting", "digital corruption"], "options_zh": ["故障艺术", "数据融化", "像素排序", "数字损坏"] },
+        "lighting": { "type": "multiselect", "options_en": ["screen glow", "digital luminescence", "RGB split", "scanlines"], "options_zh": ["屏幕光", "数字荧光", "RGB 分离", "扫描线"] },
+        "camera": { "type": "multiselect", "options_en": ["flat", "centered", "macro detail", "dynamic composition"], "options_zh": ["平面", "居中", "微距细节", "动态构图"] },
+        "post": { "type": "multiselect", "options_en": ["vibrant colors", "high detail", "8k uhd", "digital artifacts"], "options_zh": ["鲜艳色彩", "高细节", "8K 超清", "数字伪影"] }
+      },
+      "model_syntax": {
+        "sd": "{subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "{subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 750",
+        "flux": "Glitch art of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "A glitch art image of {subject}, featuring {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": [],
+      "ratio_compatible": ["16:9", "9:16", "1:1"],
+      "tags_en": ["glitch", "digital", "datamosh", "cyberpunk"],
+      "tags_zh": ["故障", "数字", "数据融化", "赛博朋克"],
+      "example_subject_en": "a digital face corrupted by RGB-shift and scanlines",
+      "example_subject_zh": "被 RGB 偏移与扫描线损坏的数字面孔"
+    },
+    {
+      "id": "minimalist-logo", "category": "logo", "emoji": "🎯",
+      "title_en": "Minimalist Logo", "title_zh": "极简 Logo",
+      "description_en": "Clean minimalist logo with strong silhouette, scalable.",
+      "description_zh": "干净极简 Logo,强烈轮廓,可缩放。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a coffee bean", "default_zh": "一颗咖啡豆", "placeholder_en": "describe the subject…", "placeholder_zh": "描述主体…" },
+        "style": { "type": "multiselect", "options_en": ["minimalist logo", "flat design", "vector-style", "modern"], "options_zh": ["极简 Logo", "扁平设计", "矢量风格", "现代"] },
+        "lighting": { "type": "multiselect", "options_en": ["even lighting", "flat lighting", "studio"], "options_zh": ["均匀光", "平面光", "影棚"] },
+        "camera": { "type": "multiselect", "options_en": ["centered", "front view", "flat", "perfect symmetry"], "options_zh": ["居中", "正面", "平面", "完美对称"] },
+        "post": { "type": "multiselect", "options_en": ["clean lines", "vector clean", "high detail", "8k uhd"], "options_zh": ["干净线条", "矢量干净", "高细节", "8K 超清"] }
+      },
+      "model_syntax": {
+        "sd": "minimalist logo of {subject}, {style}, {lighting}, {camera}, {post}, white background",
+        "mj": "minimalist logo of {subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 50",
+        "flux": "Minimalist logo of {subject}. {style}. {lighting}. {camera}. {post}. White background.",
+        "dalle": "A minimalist logo design of {subject}, featuring {style}, {lighting}, {camera}, {post}, on a clean white background."
+      },
+      "negative_default": ["anatomy"],
+      "ratio_compatible": ["1:1"],
+      "tags_en": ["logo", "minimalist", "vector", "clean"],
+      "tags_zh": ["Logo", "极简", "矢量", "干净"],
+      "example_subject_en": "a coffee bean with a single flowing line through it",
+      "example_subject_zh": "一颗咖啡豆中穿过一条流畅的线"
+    },
+    {
+      "id": "mascot-logo", "category": "logo", "emoji": "🎯",
+      "title_en": "Mascot Logo", "title_zh": "吉祥物 Logo",
+      "description_en": "Friendly mascot logo with character personality, brand-ready.",
+      "description_zh": "友好吉祥物 Logo,角色个性,品牌就绪。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a friendly mascot", "default_zh": "一个友好吉祥物", "placeholder_en": "describe the mascot…", "placeholder_zh": "描述吉祥物…" },
+        "style": { "type": "multiselect", "options_en": ["mascot", "character logo", "cute", "brand"], "options_zh": ["吉祥物", "角色 Logo", "可爱", "品牌"] },
+        "lighting": { "type": "multiselect", "options_en": ["even lighting", "studio", "flat lighting"], "options_zh": ["均匀光", "影棚", "平面光"] },
+        "camera": { "type": "multiselect", "options_en": ["front view", "centered", "eye-level", "flat"], "options_zh": ["正面", "居中", "平视", "平面"] },
+        "post": { "type": "multiselect", "options_en": ["clean lines", "vibrant colors", "high detail", "vector clean"], "options_zh": ["干净线条", "鲜艳色彩", "高细节", "矢量干净"] }
+      },
+      "model_syntax": {
+        "sd": "mascot logo of {subject}, {style}, {lighting}, {camera}, {post}, white background",
+        "mj": "mascot logo of {subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 250",
+        "flux": "Mascot logo of {subject}. {style}. {lighting}. {camera}. {post}. White background.",
+        "dalle": "A friendly mascot logo of {subject}, featuring {style}, {lighting}, {camera}, {post}, on a clean white background."
+      },
+      "negative_default": ["anatomy"],
+      "ratio_compatible": ["1:1"],
+      "tags_en": ["mascot", "character", "logo", "brand"],
+      "tags_zh": ["吉祥物", "角色", "Logo", "品牌"],
+      "example_subject_en": "a friendly fox mascot holding a paintbrush",
+      "example_subject_zh": "手持画笔的友好狐狸吉祥物"
+    },
+    {
+      "id": "wordmark-logo", "category": "logo", "emoji": "🎯",
+      "title_en": "Wordmark Logo", "title_zh": "字标 Logo",
+      "description_en": "Typography-focused wordmark logo, custom lettering, brand identity.",
+      "description_zh": "字体聚焦的字标 Logo,定制字形,品牌识别。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "the brand name 'ACME'", "default_zh": "品牌名 'ACME'", "placeholder_en": "describe the wordmark…", "placeholder_zh": "描述字标…" },
+        "style": { "type": "multiselect", "options_en": ["wordmark", "typography", "custom lettering", "modern"], "options_zh": ["字标", "字体", "定制字形", "现代"] },
+        "lighting": { "type": "multiselect", "options_en": ["even lighting", "flat lighting", "studio"], "options_zh": ["均匀光", "平面光", "影棚"] },
+        "camera": { "type": "multiselect", "options_en": ["centered", "front view", "flat", "perfect framing"], "options_zh": ["居中", "正面", "平面", "完美取景"] },
+        "post": { "type": "multiselect", "options_en": ["clean lines", "vector clean", "high detail", "perfect kerning"], "options_zh": ["干净线条", "矢量干净", "高细节", "完美字距"] }
+      },
+      "model_syntax": {
+        "sd": "wordmark logo of {subject}, {style}, {lighting}, {camera}, {post}, white background",
+        "mj": "wordmark logo of {subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 50",
+        "flux": "Wordmark logo of {subject}. {style}. {lighting}. {camera}. {post}. White background.",
+        "dalle": "A wordmark logo of {subject}, featuring {style}, {lighting}, {camera}, {post}, on a clean white background."
+      },
+      "negative_default": ["style"],
+      "ratio_compatible": ["16:9", "4:1", "1:1"],
+      "tags_en": ["wordmark", "typography", "logo", "branding"],
+      "tags_zh": ["字标", "字体", "Logo", "品牌"],
+      "example_subject_en": "a custom lettered wordmark in a modern sans-serif font",
+      "example_subject_zh": "现代无衬线字体的定制字标"
+    },
+    {
+      "id": "emblem-logo", "category": "logo", "emoji": "🎯",
+      "title_en": "Emblem Logo", "title_zh": "徽章 Logo",
+      "description_en": "Traditional emblem logo with badge structure, heraldic feel.",
+      "description_zh": "传统徽章 Logo,徽章结构,纹章感。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a vintage emblem", "default_zh": "复古徽章", "placeholder_en": "describe the emblem…", "placeholder_zh": "描述徽章…" },
+        "style": { "type": "multiselect", "options_en": ["emblem", "heraldic", "badge", "vintage"], "options_zh": ["徽章", "纹章", "徽标", "复古"] },
+        "lighting": { "type": "multiselect", "options_en": ["even lighting", "studio", "soft lighting"], "options_zh": ["均匀光", "影棚", "柔光"] },
+        "camera": { "type": "multiselect", "options_en": ["front view", "centered", "perfect symmetry"], "options_zh": ["正面", "居中", "完美对称"] },
+        "post": { "type": "multiselect", "options_en": ["clean lines", "vintage colors", "high detail", "engraved texture"], "options_zh": ["干净线条", "复古色调", "高细节", "雕刻质感"] }
+      },
+      "model_syntax": {
+        "sd": "emblem logo of {subject}, {style}, {lighting}, {camera}, {post}, white background",
+        "mj": "emblem logo of {subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 250",
+        "flux": "Emblem logo of {subject}. {style}. {lighting}. {camera}. {post}. White background.",
+        "dalle": "An emblem logo of {subject}, featuring {style}, {lighting}, {camera}, {post}, on a clean white background."
+      },
+      "negative_default": ["style"],
+      "ratio_compatible": ["1:1"],
+      "tags_en": ["emblem", "badge", "heraldic", "vintage"],
+      "tags_zh": ["徽章", "徽标", "纹章", "复古"],
+      "example_subject_en": "a vintage circular emblem with mountain and eagle motifs",
+      "example_subject_zh": "山脉与鹰图案的复古圆形徽章"
+    },
+    {
+      "id": "3d-logo", "category": "logo", "emoji": "🎯",
+      "title_en": "3D Logo", "title_zh": "3D Logo",
+      "description_en": "Dimensional 3D logo with depth, materials, and lighting.",
+      "description_zh": "立体 3D Logo,深度、材质与光影。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a 3D logo", "default_zh": "一个 3D Logo", "placeholder_en": "describe the 3D logo…", "placeholder_zh": "描述 3D Logo…" },
+        "style": { "type": "multiselect", "options_en": ["3D logo", "dimensional", "material-rich", "modern"], "options_zh": ["3D Logo", "立体", "材质丰富", "现代"] },
+        "lighting": { "type": "multiselect", "options_en": ["studio 3-point lighting", "rim light", "specular highlights", "soft shadows"], "options_zh": ["影棚三点光", "轮廓光", "镜面高光", "柔和阴影"] },
+        "camera": { "type": "multiselect", "options_en": ["front view", "low angle hero", "centered", "perfect framing"], "options_zh": ["正面", "低角度英雄", "居中", "完美取景"] },
+        "post": { "type": "multiselect", "options_en": ["high detail", "8k uhd", "physically based rendering", "rich materials"], "options_zh": ["高细节", "8K 超清", "基于物理渲染", "丰富材质"] }
+      },
+      "model_syntax": {
+        "sd": "3D logo of {subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "3D logo of {subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 500",
+        "flux": "3D logo of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "A 3D logo of {subject}, featuring {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": [],
+      "ratio_compatible": ["1:1", "4:5"],
+      "tags_en": ["3d-logo", "dimensional", "render", "modern"],
+      "tags_zh": ["3D Logo", "立体", "渲染", "现代"],
+      "example_subject_en": "a glossy 3D letter 'A' with metallic gold finish",
+      "example_subject_zh": "光泽金属金色 3D 字母 'A'"
+    },
+    {
+      "id": "isometric-logo", "category": "logo", "emoji": "🎯",
+      "title_en": "Isometric Logo", "title_zh": "等距 Logo",
+      "description_en": "Isometric 3D logo with axonometric projection, modern tech feel.",
+      "description_zh": "等距 3D Logo,轴测投影,现代科技感。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "an isometric logo", "default_zh": "等距 Logo", "placeholder_en": "describe the isometric logo…", "placeholder_zh": "描述等距 Logo…" },
+        "style": { "type": "multiselect", "options_en": ["isometric", "axonometric", "3D flat", "modern"], "options_zh": ["等距", "轴测", "3D 平面", "现代"] },
+        "lighting": { "type": "multiselect", "options_en": ["even isometric lighting", "soft shadows", "ambient"], "options_zh": ["均匀等距光", "柔和阴影", "环境光"] },
+        "camera": { "type": "multiselect", "options_en": ["isometric projection", "30-degree angle", "perfect framing"], "options_zh": ["等距投影", "30 度角", "完美取景"] },
+        "post": { "type": "multiselect", "options_en": ["clean lines", "vibrant colors", "high detail", "vector clean"], "options_zh": ["干净线条", "鲜艳色彩", "高细节", "矢量干净"] }
+      },
+      "model_syntax": {
+        "sd": "isometric 3D logo of {subject}, {style}, {lighting}, {camera}, {post}, white background",
+        "mj": "isometric 3D logo of {subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 250",
+        "flux": "Isometric 3D logo of {subject}. {style}. {lighting}. {camera}. {post}. White background.",
+        "dalle": "An isometric 3D logo of {subject}, featuring {style}, {lighting}, {camera}, {post}, on a clean white background."
+      },
+      "negative_default": [],
+      "ratio_compatible": ["1:1", "4:5"],
+      "tags_en": ["isometric", "axonometric", "3d", "logo"],
+      "tags_zh": ["等距", "轴测", "3D", "Logo"],
+      "example_subject_en": "an isometric cube with a glowing tech logo inside",
+      "example_subject_zh": "内有发光科技 Logo 的等距立方体"
+    },
+    {
+      "id": "vintage-logo", "category": "logo", "emoji": "🎯",
+      "title_en": "Vintage Logo", "title_zh": "复古 Logo",
+      "description_en": "Vintage retro logo with classic typography and aged feel.",
+      "description_zh": "复古 Logo,经典字体,岁月感。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a vintage brand", "default_zh": "复古品牌", "placeholder_en": "describe the vintage brand…", "placeholder_zh": "描述复古品牌…" },
+        "style": { "type": "multiselect", "options_en": ["vintage logo", "retro", "distressed", "classic"], "options_zh": ["复古 Logo", "复古", "做旧", "经典"] },
+        "lighting": { "type": "multiselect", "options_en": ["even lighting", "soft lighting", "warm lighting"], "options_zh": ["均匀光", "柔光", "暖光"] },
+        "camera": { "type": "multiselect", "options_en": ["centered", "front view", "flat", "perfect framing"], "options_zh": ["居中", "正面", "平面", "完美取景"] },
+        "post": { "type": "multiselect", "options_en": ["distressed texture", "vintage colors", "high detail", "paper texture"], "options_zh": ["做旧质感", "复古色调", "高细节", "纸张质感"] }
+      },
+      "model_syntax": {
+        "sd": "vintage logo of {subject}, {style}, {lighting}, {camera}, {post}, cream background",
+        "mj": "vintage logo of {subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 250",
+        "flux": "Vintage logo of {subject}. {style}. {lighting}. {camera}. {post}. Cream background.",
+        "dalle": "A vintage logo of {subject}, featuring {style}, {lighting}, {camera}, {post}, on a cream background."
+      },
+      "negative_default": ["style"],
+      "ratio_compatible": ["1:1", "4:5"],
+      "tags_en": ["vintage", "retro", "distressed", "logo"],
+      "tags_zh": ["复古", "复古", "做旧", "Logo"],
+      "example_subject_en": "a 1950s coffee shop logo with distressed textures",
+      "example_subject_zh": "50 年代咖啡店 Logo,做旧质感"
+    },
+    {
+      "id": "tech-logo", "category": "logo", "emoji": "🎯",
+      "title_en": "Tech Logo", "title_zh": "科技 Logo",
+      "description_en": "Modern tech logo with clean geometry, futuristic feel.",
+      "description_zh": "现代科技 Logo,干净几何,未来感。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a tech startup", "default_zh": "一家科技初创公司", "placeholder_en": "describe the tech brand…", "placeholder_zh": "描述科技品牌…" },
+        "style": { "type": "multiselect", "options_en": ["tech logo", "modern", "geometric", "futuristic"], "options_zh": ["科技 Logo", "现代", "几何", "未来"] },
+        "lighting": { "type": "multiselect", "options_en": ["even lighting", "studio", "subtle gradient"], "options_zh": ["均匀光", "影棚", "微妙渐变"] },
+        "camera": { "type": "multiselect", "options_en": ["centered", "front view", "flat", "perfect framing"], "options_zh": ["居中", "正面", "平面", "完美取景"] },
+        "post": { "type": "multiselect", "options_en": ["clean lines", "vibrant gradient", "high detail", "vector clean"], "options_zh": ["干净线条", "鲜艳渐变", "高细节", "矢量干净"] }
+      },
+      "model_syntax": {
+        "sd": "tech logo of {subject}, {style}, {lighting}, {camera}, {post}, white background",
+        "mj": "tech logo of {subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 250",
+        "flux": "Tech logo of {subject}. {style}. {lighting}. {camera}. {post}. White background.",
+        "dalle": "A tech logo of {subject}, featuring {style}, {lighting}, {camera}, {post}, on a clean white background."
+      },
+      "negative_default": ["style"],
+      "ratio_compatible": ["1:1", "4:5"],
+      "tags_en": ["tech", "logo", "modern", "geometric"],
+      "tags_zh": ["科技", "Logo", "现代", "几何"],
+      "example_subject_en": "a futuristic tech logo with gradient blue-to-purple",
+      "example_subject_zh": "蓝紫渐变未来科技 Logo"
+    },
+    {
+      "id": "monogram", "category": "logo", "emoji": "🎯",
+      "title_en": "Monogram", "title_zh": "字母组合 Logo",
+      "description_en": "Elegant monogram with intertwined initials, classic luxury feel.",
+      "description_zh": "优雅字母组合,交织首字母,奢华经典感。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "the initials 'AB'", "default_zh": "首字母 'AB'", "placeholder_en": "describe the monogram…", "placeholder_zh": "描述字母组合…" },
+        "style": { "type": "multiselect", "options_en": ["monogram", "intertwined", "luxury", "classic"], "options_zh": ["字母组合", "交织", "奢华", "经典"] },
+        "lighting": { "type": "multiselect", "options_en": ["even lighting", "studio", "soft lighting"], "options_zh": ["均匀光", "影棚", "柔光"] },
+        "camera": { "type": "multiselect", "options_en": ["centered", "front view", "perfect symmetry"], "options_zh": ["居中", "正面", "完美对称"] },
+        "post": { "type": "multiselect", "options_en": ["clean lines", "elegant typography", "high detail", "gold accents"], "options_zh": ["干净线条", "优雅字体", "高细节", "金色点缀"] }
+      },
+      "model_syntax": {
+        "sd": "monogram logo of {subject}, {style}, {lighting}, {camera}, {post}, white background",
+        "mj": "monogram logo of {subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 50",
+        "flux": "Monogram logo of {subject}. {style}. {lighting}. {camera}. {post}. White background.",
+        "dalle": "A monogram logo of {subject}, featuring {style}, {lighting}, {camera}, {post}, on a clean white background."
+      },
+      "negative_default": ["style"],
+      "ratio_compatible": ["1:1", "4:5"],
+      "tags_en": ["monogram", "intertwined", "luxury", "initials"],
+      "tags_zh": ["字母组合", "交织", "奢华", "首字母"],
+      "example_subject_en": "an intertwined monogram of 'AB' in serif font with gold accents",
+      "example_subject_zh": "金色点缀衬线字体的 'AB' 交织字母组合"
+    },
+    {
+      "id": "abstract-icon", "category": "logo", "emoji": "🎯",
+      "title_en": "Abstract Icon", "title_zh": "抽象图标",
+      "description_en": "Abstract icon with geometric shapes, app-icon ready.",
+      "description_zh": "抽象图标,几何形状,App 图标就绪。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "an abstract concept", "default_zh": "一个抽象概念", "placeholder_en": "describe the icon concept…", "placeholder_zh": "描述图标概念…" },
+        "style": { "type": "multiselect", "options_en": ["abstract icon", "geometric", "app icon", "modern"], "options_zh": ["抽象图标", "几何", "App 图标", "现代"] },
+        "lighting": { "type": "multiselect", "options_en": ["even lighting", "studio", "flat"], "options_zh": ["均匀光", "影棚", "平面"] },
+        "camera": { "type": "multiselect", "options_en": ["centered", "front view", "flat", "perfect symmetry"], "options_zh": ["居中", "正面", "平面", "完美对称"] },
+        "post": { "type": "multiselect", "options_en": ["clean lines", "vibrant colors", "high detail", "vector clean"], "options_zh": ["干净线条", "鲜艳色彩", "高细节", "矢量干净"] }
+      },
+      "model_syntax": {
+        "sd": "abstract icon of {subject}, {style}, {lighting}, {camera}, {post}, gradient background",
+        "mj": "abstract icon of {subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 250",
+        "flux": "Abstract icon of {subject}. {style}. {lighting}. {camera}. {post}. Gradient background.",
+        "dalle": "An abstract icon of {subject}, featuring {style}, {lighting}, {camera}, {post}, on a gradient background."
+      },
+      "negative_default": ["style"],
+      "ratio_compatible": ["1:1"],
+      "tags_en": ["icon", "abstract", "geometric", "app"],
+      "tags_zh": ["图标", "抽象", "几何", "App"],
+      "example_subject_en": "an abstract icon combining a circle and triangle",
+      "example_subject_zh": "圆形与三角形结合的抽象图标"
+    },
+    {
+      "id": "app-screen-mockup", "category": "ui", "emoji": "🖥️",
+      "title_en": "App Screen Mockup", "title_zh": "App 屏幕模型",
+      "description_en": "Mobile app screen mockup with realistic device frame.",
+      "description_zh": "移动 App 屏幕模型,真实设备边框。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a mobile app interface", "default_zh": "移动 App 界面", "placeholder_en": "describe the app…", "placeholder_zh": "描述 App…" },
+        "style": { "type": "multiselect", "options_en": ["app mockup", "mobile UI", "modern", "clean"], "options_zh": ["App 模型", "移动 UI", "现代", "干净"] },
+        "lighting": { "type": "multiselect", "options_en": ["studio lighting", "soft screen glow", "even lighting"], "options_zh": ["影棚光", "柔和屏幕光", "均匀光"] },
+        "camera": { "type": "multiselect", "options_en": ["front view", "centered", "eye-level", "perfect framing"], "options_zh": ["正面", "居中", "平视", "完美取景"] },
+        "post": { "type": "multiselect", "options_en": ["high detail", "8k uhd", "professional UI design", "clean typography"], "options_zh": ["高细节", "8K 超清", "专业 UI 设计", "干净字体"] }
+      },
+      "model_syntax": {
+        "sd": "app screen mockup of {subject}, {style}, {lighting}, {camera}, {post}, device frame",
+        "mj": "app screen mockup of {subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 250",
+        "flux": "App screen mockup of {subject}. {style}. {lighting}. {camera}. {post}. Realistic device frame.",
+        "dalle": "An app screen mockup of {subject}, featuring {style}, {lighting}, {camera}, {post}, in a realistic device frame."
+      },
+      "negative_default": [],
+      "ratio_compatible": ["9:16", "4:5", "1:1"],
+      "tags_en": ["app", "mockup", "mobile", "ui"],
+      "tags_zh": ["App", "模型", "移动", "UI"],
+      "example_subject_en": "a fitness tracking app showing workout stats",
+      "example_subject_zh": "显示锻炼数据的健身追踪 App"
+    },
+    {
+      "id": "dashboard-ui", "category": "ui", "emoji": "🖥️",
+      "title_en": "Dashboard UI", "title_zh": "仪表盘 UI",
+      "description_en": "Analytics dashboard UI with charts, KPIs, and sidebar navigation.",
+      "description_zh": "分析仪表盘 UI,图表、KPI 与侧栏导航。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "an analytics dashboard", "default_zh": "分析仪表盘", "placeholder_en": "describe the dashboard…", "placeholder_zh": "描述仪表盘…" },
+        "style": { "type": "multiselect", "options_en": ["dashboard", "analytics", "modern", "data-dense"], "options_zh": ["仪表盘", "分析", "现代", "数据密集"] },
+        "lighting": { "type": "multiselect", "options_en": ["screen glow", "even UI lighting", "subtle shadows"], "options_zh": ["屏幕光", "均匀 UI 光", "微妙阴影"] },
+        "camera": { "type": "multiselect", "options_en": ["front view", "centered", "wide composition"], "options_zh": ["正面", "居中", "宽幅构图"] },
+        "post": { "type": "multiselect", "options_en": ["high detail", "8k uhd", "professional UI design", "data visualization"], "options_zh": ["高细节", "8K 超清", "专业 UI 设计", "数据可视化"] }
+      },
+      "model_syntax": {
+        "sd": "dashboard UI mockup of {subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "dashboard UI mockup of {subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 250",
+        "flux": "Dashboard UI mockup of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "A dashboard UI mockup of {subject}, featuring {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": [],
+      "ratio_compatible": ["16:9", "4:3", "3:2"],
+      "tags_en": ["dashboard", "analytics", "ui", "data"],
+      "tags_zh": ["仪表盘", "分析", "UI", "数据"],
+      "example_subject_en": "an analytics dashboard with 4 charts and a sidebar nav",
+      "example_subject_zh": "带 4 个图表与侧栏导航的分析仪表盘"
+    },
+    {
+      "id": "wireframe-lowfi", "category": "ui", "emoji": "🖥️",
+      "title_en": "Low-Fi Wireframe", "title_zh": "低保真线框",
+      "description_en": "Low-fidelity wireframe for early-stage UI design and iteration.",
+      "description_zh": "低保真线框,用于早期 UI 设计与迭代。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a low-fi wireframe", "default_zh": "低保真线框", "placeholder_en": "describe the wireframe…", "placeholder_zh": "描述线框…" },
+        "style": { "type": "multiselect", "options_en": ["wireframe", "low-fi", "grayscale", "sketch"], "options_zh": ["线框", "低保真", "灰度", "草图"] },
+        "lighting": { "type": "multiselect", "options_en": ["even lighting", "flat", "no shadows"], "options_zh": ["均匀光", "平面", "无阴影"] },
+        "camera": { "type": "multiselect", "options_en": ["front view", "centered", "perfect framing"], "options_zh": ["正面", "居中", "完美取景"] },
+        "post": { "type": "multiselect", "options_en": ["grayscale", "clean lines", "high detail", "annotation marks"], "options_zh": ["灰度", "干净线条", "高细节", "注释标记"] }
+      },
+      "model_syntax": {
+        "sd": "low-fi wireframe of {subject}, {style}, {lighting}, {camera}, {post}, grayscale",
+        "mj": "low-fi wireframe of {subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 50",
+        "flux": "Low-fi wireframe of {subject}. {style}. {lighting}. {camera}. {post}. Grayscale.",
+        "dalle": "A low-fi wireframe of {subject}, featuring {style}, {lighting}, {camera}, {post}, in grayscale."
+      },
+      "negative_default": [],
+      "ratio_compatible": ["16:9", "4:3"],
+      "tags_en": ["wireframe", "low-fi", "ui", "sketch"],
+      "tags_zh": ["线框", "低保真", "UI", "草图"],
+      "example_subject_en": "a grayscale wireframe of a checkout flow",
+      "example_subject_zh": "结账流程的灰度线框"
+    },
+    {
+      "id": "landing-page", "category": "ui", "emoji": "🖥️",
+      "title_en": "Landing Page", "title_zh": "落地页",
+      "description_en": "Marketing landing page UI with hero, features, and CTA sections.",
+      "description_zh": "营销落地页 UI,首屏、特性与 CTA 区块。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a SaaS landing page", "default_zh": "SaaS 落地页", "placeholder_en": "describe the landing page…", "placeholder_zh": "描述落地页…" },
+        "style": { "type": "multiselect", "options_en": ["landing page", "marketing", "modern", "clean"], "options_zh": ["落地页", "营销", "现代", "干净"] },
+        "lighting": { "type": "multiselect", "options_en": ["even lighting", "subtle gradients", "soft shadows"], "options_zh": ["均匀光", "微妙渐变", "柔和阴影"] },
+        "camera": { "type": "multiselect", "options_en": ["front view", "centered", "wide composition"], "options_zh": ["正面", "居中", "宽幅构图"] },
+        "post": { "type": "multiselect", "options_en": ["high detail", "8k uhd", "professional UI design", "clean typography"], "options_zh": ["高细节", "8K 超清", "专业 UI 设计", "干净字体"] }
+      },
+      "model_syntax": {
+        "sd": "landing page UI of {subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "landing page UI of {subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 250",
+        "flux": "Landing page UI of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "A landing page UI of {subject}, featuring {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": [],
+      "ratio_compatible": ["16:9", "4:3", "9:16"],
+      "tags_en": ["landing", "marketing", "ui", "saas"],
+      "tags_zh": ["落地页", "营销", "UI", "SaaS"],
+      "example_subject_en": "a SaaS landing page with hero, features, and pricing",
+      "example_subject_zh": "带首屏、特性和定价的 SaaS 落地页"
+    },
+    {
+      "id": "dark-mode-ui", "category": "ui", "emoji": "🖥️",
+      "title_en": "Dark Mode UI", "title_zh": "深色模式 UI",
+      "description_en": "Dark-themed UI design with rich blacks and accent colors.",
+      "description_zh": "深色主题 UI 设计,浓郁黑色与强调色。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a dark mode interface", "default_zh": "深色模式界面", "placeholder_en": "describe the dark UI…", "placeholder_zh": "描述深色 UI…" },
+        "style": { "type": "multiselect", "options_en": ["dark mode", "dark UI", "modern", "vibrant accents"], "options_zh": ["深色模式", "深色 UI", "现代", "鲜艳强调色"] },
+        "lighting": { "type": "multiselect", "options_en": ["screen glow", "subtle accents", "ambient screen"], "options_zh": ["屏幕光", "微妙强调色", "环境屏幕光"] },
+        "camera": { "type": "multiselect", "options_en": ["front view", "centered", "wide composition"], "options_zh": ["正面", "居中", "宽幅构图"] },
+        "post": { "type": "multiselect", "options_en": ["deep blacks", "vibrant accents", "high detail", "professional UI design"], "options_zh": ["深黑", "鲜艳强调色", "高细节", "专业 UI 设计"] }
+      },
+      "model_syntax": {
+        "sd": "dark mode UI of {subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "dark mode UI of {subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 250",
+        "flux": "Dark mode UI of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "A dark mode UI of {subject}, featuring {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": [],
+      "ratio_compatible": ["16:9", "4:3", "9:16"],
+      "tags_en": ["dark-mode", "ui", "modern", "accent"],
+      "tags_zh": ["深色模式", "UI", "现代", "强调色"],
+      "example_subject_en": "a dark mode chat app with neon blue accents",
+      "example_subject_zh": "霓虹蓝强调色的深色模式聊天 App"
+    },
+    {
+      "id": "glassmorphism-ui", "category": "ui", "emoji": "🖥️",
+      "title_en": "Glassmorphism UI", "title_zh": "玻璃拟态 UI",
+      "description_en": "Frosted-glass UI with blur, transparency, and depth.",
+      "description_zh": "磨砂玻璃 UI,模糊、透明与深度。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a glassmorphism interface", "default_zh": "玻璃拟态界面", "placeholder_en": "describe the glassmorphism UI…", "placeholder_zh": "描述玻璃拟态 UI…" },
+        "style": { "type": "multiselect", "options_en": ["glassmorphism", "frosted glass", "modern", "depth-rich"], "options_zh": ["玻璃拟态", "磨砂玻璃", "现代", "层次丰富"] },
+        "lighting": { "type": "multiselect", "options_en": ["soft glow", "ambient blur", "subtle highlights"], "options_zh": ["柔光", "环境模糊", "微妙高光"] },
+        "camera": { "type": "multiselect", "options_en": ["front view", "centered", "wide composition"], "options_zh": ["正面", "居中", "宽幅构图"] },
+        "post": { "type": "multiselect", "options_en": ["frosted glass effect", "blur background", "high detail", "professional UI design"], "options_zh": ["磨砂玻璃效果", "模糊背景", "高细节", "专业 UI 设计"] }
+      },
+      "model_syntax": {
+        "sd": "glassmorphism UI of {subject}, {style}, {lighting}, {camera}, {post}, frosted glass",
+        "mj": "glassmorphism UI of {subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 500",
+        "flux": "Glassmorphism UI of {subject}. {style}. {lighting}. {camera}. {post}. Frosted glass effect.",
+        "dalle": "A glassmorphism UI of {subject}, featuring {style}, {lighting}, {camera}, {post}, with frosted glass effect."
+      },
+      "negative_default": [],
+      "ratio_compatible": ["16:9", "4:3", "9:16"],
+      "tags_en": ["glassmorphism", "ui", "blur", "modern"],
+      "tags_zh": ["玻璃拟态", "UI", "模糊", "现代"],
+      "example_subject_en": "a glassmorphism dashboard with frosted cards on gradient background",
+      "example_subject_zh": "渐变背景上磨砂卡片的玻璃拟态仪表盘"
+    },
+    {
+      "id": "neumorphism-ui", "category": "ui", "emoji": "🖥️",
+      "title_en": "Neumorphism UI", "title_zh": "新拟态 UI",
+      "description_en": "Soft-shadow neumorphic UI with extruded surfaces.",
+      "description_zh": "柔和阴影新拟态 UI,挤压表面。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a neumorphism interface", "default_zh": "新拟态界面", "placeholder_en": "describe the neumorphism UI…", "placeholder_zh": "描述新拟态 UI…" },
+        "style": { "type": "multiselect", "options_en": ["neumorphism", "soft shadow", "modern", "monochrome"], "options_zh": ["新拟态", "柔和阴影", "现代", "单色"] },
+        "lighting": { "type": "multiselect", "options_en": ["soft dual shadows", "subtle ambient", "even lighting"], "options_zh": ["柔和双重阴影", "微妙环境光", "均匀光"] },
+        "camera": { "type": "multiselect", "options_en": ["front view", "centered", "wide composition"], "options_zh": ["正面", "居中", "宽幅构图"] },
+        "post": { "type": "multiselect", "options_en": ["soft shadows", "extruded effect", "high detail", "professional UI design"], "options_zh": ["柔和阴影", "挤压效果", "高细节", "专业 UI 设计"] }
+      },
+      "model_syntax": {
+        "sd": "neumorphism UI of {subject}, {style}, {lighting}, {camera}, {post}, soft shadows",
+        "mj": "neumorphism UI of {subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 250",
+        "flux": "Neumorphism UI of {subject}. {style}. {lighting}. {camera}. {post}. Soft shadows.",
+        "dalle": "A neumorphism UI of {subject}, featuring {style}, {lighting}, {camera}, {post}, with soft shadows."
+      },
+      "negative_default": [],
+      "ratio_compatible": ["16:9", "4:3", "9:16"],
+      "tags_en": ["neumorphism", "ui", "soft-shadow", "modern"],
+      "tags_zh": ["新拟态", "UI", "柔和阴影", "现代"],
+      "example_subject_en": "a neumorphism music player with soft extruded controls",
+      "example_subject_zh": "柔和挤压控制器的新拟态音乐播放器"
+    },
+    {
+      "id": "mobile-app-icon", "category": "ui", "emoji": "🖥️",
+      "title_en": "Mobile App Icon", "title_zh": "移动应用图标",
+      "description_en": "iOS/Android app icon with rounded square shape and gradient.",
+      "description_zh": "iOS/Android 应用图标,圆角方形与渐变。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a mobile app icon", "default_zh": "移动应用图标", "placeholder_en": "describe the app icon…", "placeholder_zh": "描述应用图标…" },
+        "style": { "type": "multiselect", "options_en": ["app icon", "rounded square", "gradient", "modern"], "options_zh": ["应用图标", "圆角方形", "渐变", "现代"] },
+        "lighting": { "type": "multiselect", "options_en": ["soft glow", "ambient", "subtle highlight"], "options_zh": ["柔光", "环境光", "微妙高光"] },
+        "camera": { "type": "multiselect", "options_en": ["front view", "centered", "perfect framing"], "options_zh": ["正面", "居中", "完美取景"] },
+        "post": { "type": "multiselect", "options_en": ["rounded corners", "vibrant gradient", "high detail", "vector clean"], "options_zh": ["圆角", "鲜艳渐变", "高细节", "矢量干净"] }
+      },
+      "model_syntax": {
+        "sd": "mobile app icon of {subject}, {style}, {lighting}, {camera}, {post}, rounded square",
+        "mj": "mobile app icon of {subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 500",
+        "flux": "Mobile app icon of {subject}. {style}. {lighting}. {camera}. {post}. Rounded square.",
+        "dalle": "A mobile app icon of {subject}, featuring {style}, {lighting}, {camera}, {post}, with rounded square corners."
+      },
+      "negative_default": [],
+      "ratio_compatible": ["1:1"],
+      "tags_en": ["app-icon", "mobile", "ui", "icon"],
+      "tags_zh": ["应用图标", "移动", "UI", "图标"],
+      "example_subject_en": "a music streaming app icon with sound wave gradient",
+      "example_subject_zh": "声波渐变的音乐流媒体应用图标"
+    },
+    {
+      "id": "web-error-page", "category": "ui", "emoji": "🖥️",
+      "title_en": "Web Error Page", "title_zh": "网页错误页",
+      "description_en": "Friendly 404 or error page UI with illustration and helpful navigation.",
+      "description_zh": "友好的 404 或错误页 UI,插画与有用导航。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a 404 error page", "default_zh": "404 错误页", "placeholder_en": "describe the error page…", "placeholder_zh": "描述错误页…" },
+        "style": { "type": "multiselect", "options_en": ["error page", "404", "friendly", "illustrated"], "options_zh": ["错误页", "404", "友好", "插画"] },
+        "lighting": { "type": "multiselect", "options_en": ["soft lighting", "subtle accents", "ambient"], "options_zh": ["柔光", "微妙强调色", "环境光"] },
+        "camera": { "type": "multiselect", "options_en": ["front view", "centered", "wide composition"], "options_zh": ["正面", "居中", "宽幅构图"] },
+        "post": { "type": "multiselect", "options_en": ["clean layout", "friendly illustration", "high detail", "professional UI design"], "options_zh": ["干净布局", "友好插画", "高细节", "专业 UI 设计"] }
+      },
+      "model_syntax": {
+        "sd": "error page UI of {subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "error page UI of {subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 250",
+        "flux": "Error page UI of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "An error page UI of {subject}, featuring {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": [],
+      "ratio_compatible": ["16:9", "4:3", "9:16"],
+      "tags_en": ["error-page", "404", "ui", "illustration"],
+      "tags_zh": ["错误页", "404", "UI", "插画"],
+      "example_subject_en": "a friendly 404 page with a confused robot illustration",
+      "example_subject_zh": "带困惑机器人插画的友好 404 页"
+    },
+    {
+      "id": "settings-panel", "category": "ui", "emoji": "🖥️",
+      "title_en": "Settings Panel", "title_zh": "设置面板",
+      "description_en": "Settings panel UI with toggles, dropdowns, and form controls.",
+      "description_zh": "设置面板 UI,开关、下拉与表单控件。",
+      "fields": {
+        "subject": { "type": "text", "default_en": "a settings panel", "default_zh": "一个设置面板", "placeholder_en": "describe the settings…", "placeholder_zh": "描述设置…" },
+        "style": { "type": "multiselect", "options_en": ["settings panel", "form controls", "modern", "clean"], "options_zh": ["设置面板", "表单控件", "现代", "干净"] },
+        "lighting": { "type": "multiselect", "options_en": ["even lighting", "subtle accents", "soft shadows"], "options_zh": ["均匀光", "微妙强调色", "柔和阴影"] },
+        "camera": { "type": "multiselect", "options_en": ["front view", "centered", "wide composition"], "options_zh": ["正面", "居中", "宽幅构图"] },
+        "post": { "type": "multiselect", "options_en": ["clean layout", "toggle switches", "high detail", "professional UI design"], "options_zh": ["干净布局", "开关切换", "高细节", "专业 UI 设计"] }
+      },
+      "model_syntax": {
+        "sd": "settings panel UI of {subject}, {style}, {lighting}, {camera}, {post}",
+        "mj": "settings panel UI of {subject}, {style}, {lighting}, {camera}, {post} --ar {ratio} --v 6 --s 250",
+        "flux": "Settings panel UI of {subject}. {style}. {lighting}. {camera}. {post}.",
+        "dalle": "A settings panel UI of {subject}, featuring {style}, {lighting}, {camera}, {post}."
+      },
+      "negative_default": [],
+      "ratio_compatible": ["4:3", "16:9", "9:16"],
+      "tags_en": ["settings", "ui", "form", "panel"],
+      "tags_zh": ["设置", "UI", "表单", "面板"],
+      "example_subject_en": "an account settings panel with profile, password, and notification toggles",
+      "example_subject_zh": "带资料、密码与通知开关的账户设置面板"
+    }
+  ]
+}

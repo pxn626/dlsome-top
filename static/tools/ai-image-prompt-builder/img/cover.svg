@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="50%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#312e81"/>
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="50%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#ec4899"/>
+    </linearGradient>
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.02"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bgGrad)"/>
+
+  <!-- Decorative dots -->
+  <g opacity="0.15">
+    <circle cx="100" cy="100" r="3" fill="#a78bfa"/>
+    <circle cx="1100" cy="120" r="3" fill="#f472b6"/>
+    <circle cx="200" cy="500" r="3" fill="#60a5fa"/>
+    <circle cx="1050" cy="540" r="3" fill="#34d399"/>
+    <circle cx="900" cy="80" r="2" fill="#fbbf24"/>
+    <circle cx="300" cy="50" r="2" fill="#f87171"/>
+  </g>
+
+  <!-- Top accent bar -->
+  <rect x="0" y="0" width="1200" height="6" fill="url(#accentGrad)"/>
+
+  <!-- Top-right badge: 60 templates / 6 categories -->
+  <g transform="translate(940, 50)">
+    <rect x="0" y="0" width="200" height="80" rx="12" fill="url(#cardGrad)" stroke="rgba(255,255,255,0.18)" stroke-width="1.5"/>
+    <text x="100" y="35" text-anchor="middle" fill="#ffffff" font-family="-apple-system, sans-serif" font-size="13" font-weight="700" letter-spacing="2">60 TEMPLATES</text>
+    <text x="100" y="62" text-anchor="middle" fill="#a78bfa" font-family="-apple-system, sans-serif" font-size="28" font-weight="800">6 × 4 × ⚡</text>
+  </g>
+
+  <!-- Big AIPB logo mark -->
+  <g transform="translate(80, 200)">
+    <rect x="0" y="0" width="180" height="180" rx="24" fill="url(#accentGrad)"/>
+    <text x="90" y="115" text-anchor="middle" fill="#ffffff" font-family="-apple-system, sans-serif" font-size="64" font-weight="900" letter-spacing="-2">AIPB</text>
+  </g>
+
+  <!-- Main title -->
+  <text x="300" y="240" fill="#ffffff" font-family="-apple-system, sans-serif" font-size="56" font-weight="800" letter-spacing="-1">AI Image Prompt</text>
+  <text x="300" y="305" fill="#ffffff" font-family="-apple-system, sans-serif" font-size="56" font-weight="800" letter-spacing="-1">Builder</text>
+
+  <!-- Subtitle / model chips -->
+  <g transform="translate(300, 340)">
+    <!-- SD chip -->
+    <rect x="0" y="0" width="92" height="34" rx="17" fill="rgba(16, 185, 129, 0.2)" stroke="#10b981" stroke-width="1.5"/>
+    <text x="46" y="22" text-anchor="middle" fill="#10b981" font-family="-apple-system, sans-serif" font-size="14" font-weight="700">SD</text>
+
+    <!-- MJ chip -->
+    <rect x="100" y="0" width="92" height="34" rx="17" fill="rgba(59, 130, 246, 0.2)" stroke="#3b82f6" stroke-width="1.5"/>
+    <text x="146" y="22" text-anchor="middle" fill="#3b82f6" font-family="-apple-system, sans-serif" font-size="14" font-weight="700">MJ v6</text>
+
+    <!-- Flux chip -->
+    <rect x="200" y="0" width="80" height="34" rx="17" fill="rgba(139, 92, 246, 0.2)" stroke="#8b5cf6" stroke-width="1.5"/>
+    <text x="240" y="22" text-anchor="middle" fill="#a78bfa" font-family="-apple-system, sans-serif" font-size="14" font-weight="700">Flux</text>
+
+    <!-- DALL-E chip -->
+    <rect x="288" y="0" width="106" height="34" rx="17" fill="rgba(245, 158, 11, 0.2)" stroke="#f59e0b" stroke-width="1.5"/>
+    <text x="341" y="22" text-anchor="middle" fill="#fbbf24" font-family="-apple-system, sans-serif" font-size="14" font-weight="700">DALL-E 3</text>
+  </g>
+
+  <!-- Tagline -->
+  <text x="300" y="420" fill="#cbd5e1" font-family="-apple-system, sans-serif" font-size="22" font-weight="500">Build polished prompts in one click.</text>
+  <text x="300" y="450" fill="#94a3b8" font-family="-apple-system, sans-serif" font-size="18" font-weight="400">No signup · Browser-only · Zero network to AI APIs</text>
+
+  <!-- Category icons row -->
+  <g transform="translate(80, 510)">
+    <text x="0" y="0" fill="#94a3b8" font-family="-apple-system, sans-serif" font-size="13" font-weight="600" letter-spacing="1">CATEGORIES</text>
+    <g transform="translate(0, 18)">
+      <text x="0" y="30" font-size="32">👤</text>
+      <text x="55" y="30" font-size="32">🏔️</text>
+      <text x="110" y="30" font-size="32">📦</text>
+      <text x="165" y="30" font-size="32">🎨</text>
+      <text x="220" y="30" font-size="32">🎯</text>
+      <text x="275" y="30" font-size="32">🖥️</text>
+    </g>
+    <g transform="translate(0, 56)">
+      <text x="0" y="20" fill="#cbd5e1" font-family="-apple-system, sans-serif" font-size="12" font-weight="600">People</text>
+      <text x="55" y="20" fill="#cbd5e1" font-family="-apple-system, sans-serif" font-size="12" font-weight="600">Scenery</text>
+      <text x="110" y="20" fill="#cbd5e1" font-family="-apple-system, sans-serif" font-size="12" font-weight="600">Product</text>
+      <text x="170" y="20" fill="#cbd5e1" font-family="-apple-system, sans-serif" font-size="12" font-weight="600">Abstract</text>
+      <text x="232" y="20" fill="#cbd5e1" font-family="-apple-system, sans-serif" font-size="12" font-weight="600">Logo</text>
+      <text x="278" y="20" fill="#cbd5e1" font-family="-apple-system, sans-serif" font-size="12" font-weight="600">UI</text>
+    </g>
+  </g>
+
+  <!-- Bottom-right: dlsome.top brand -->
+  <g transform="translate(960, 560)">
+    <text x="180" y="20" text-anchor="end" fill="#94a3b8" font-family="-apple-system, sans-serif" font-size="14" font-weight="600" letter-spacing="1">dlsome.top</text>
+    <text x="180" y="42" text-anchor="end" fill="#64748b" font-family="-apple-system, sans-serif" font-size="11" font-weight="400">/tools/ai-image-prompt-builder</text>
+  </g>
+</svg>
