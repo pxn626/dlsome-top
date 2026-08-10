@@ -1,0 +1,712 @@
+/* ============================================================
+ * jsv.css — JSON Schema Validator
+ * Namespace: --jsv-* / .jsv-* (JSON Schema Validator)
+ * Repo: dlsome-top · Hugo 0.164 + PaperMod v7 (strict mode OK)
+ * PaperMod .dark class compatible. Zero global pollution.
+ * Self-test: all selectors prefixed with .jsv- (or scoped inside .jsv-tool)
+ *
+ * Colors (per task spec):
+ *   --jsv-primary: #2b6cb0 (JSON 深蓝)
+ *   --jsv-primary-hover: #2c5282
+ *   --jsv-accent: #38a169 (验证绿)
+ *   --jsv-error: #e53e3e (错误红)
+ *   --jsv-warning: #d69e2e (警告橙)
+ *   --jsv-bg-card: #f7fafc
+ *   --jsv-bg-elev: #ffffff
+ *   --jsv-bg-elev-2: #edf2f7
+ *   --jsv-border: #e2e8f0
+ *   --jsv-text-primary: #1a202c
+ *   --jsv-text-muted: #4a5568
+ *   --jsv-text-dim: #a0aec0
+ * ============================================================ */
+
+.jsv-tool {
+  /* Color tokens (light mode) */
+  --jsv-primary: #2b6cb0;
+  --jsv-primary-hover: #2c5282;
+  --jsv-primary-soft: #bee3f8;
+  --jsv-accent: #38a169;
+  --jsv-accent-hover: #2f855a;
+  --jsv-accent-soft: #c6f6d5;
+  --jsv-error: #e53e3e;
+  --jsv-error-hover: #c53030;
+  --jsv-error-soft: #fed7d7;
+  --jsv-warning: #d69e2e;
+  --jsv-warning-soft: #fefcbf;
+
+  --jsv-bg-card: #f7fafc;
+  --jsv-bg-elev: #ffffff;
+  --jsv-bg-elev-2: #edf2f7;
+  --jsv-border: #e2e8f0;
+  --jsv-border-strong: #cbd5e1;
+  --jsv-text-primary: #1a202c;
+  --jsv-text-muted: #4a5568;
+  --jsv-text-dim: #a0aec0;
+
+  --jsv-border-radius: 8px;
+  --jsv-radius-sm: 4px;
+  --jsv-radius-lg: 12px;
+  --jsv-grid-cols: 2;
+
+  --jsv-shadow-sm: 0 1px 2px rgba(26, 32, 44, 0.06);
+  --jsv-shadow-md: 0 4px 12px rgba(26, 32, 44, 0.08);
+  --jsv-shadow-lg: 0 10px 30px rgba(26, 32, 44, 0.12);
+
+  --jsv-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --jsv-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
+
+  display: block;
+  margin: 1.5rem 0;
+  padding: 1.25rem;
+  background: var(--jsv-bg-elev);
+  border: 1px solid var(--jsv-border);
+  border-radius: var(--jsv-radius-lg);
+  box-shadow: var(--jsv-shadow-sm);
+  font-family: var(--jsv-sans);
+  color: var(--jsv-text-primary);
+  font-size: 14px;
+  line-height: 1.55;
+  position: relative;
+}
+
+/* ----- Dark mode (PaperMod .dark class) ----- */
+  .dark .jsv-tool {
+    --jsv-primary: #63b3ed;
+    --jsv-primary-hover: #4299e1;
+    --jsv-primary-soft: #2a4365;
+    --jsv-accent: #68d391;
+    --jsv-accent-hover: #48bb78;
+    --jsv-accent-soft: #22543d;
+    --jsv-error: #fc8181;
+    --jsv-error-hover: #f56565;
+    --jsv-error-soft: #742a2a;
+    --jsv-warning: #f6ad55;
+    --jsv-warning-soft: #744210;
+
+    --jsv-bg-card: #1a202c;
+    --jsv-bg-elev: #2d3748;
+    --jsv-bg-elev-2: #1a202c;
+    --jsv-border: #4a5568;
+    --jsv-border-strong: #718096;
+    --jsv-text-primary: #f7fafc;
+    --jsv-text-muted: #cbd5e0;
+    --jsv-text-dim: #718096;
+
+    --jsv-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --jsv-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+    --jsv-shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.5);
+  }
+
+/* ----- Noscript fallback ----- */
+.jsv-noscript-warning {
+  padding: 1rem;
+  background: var(--jsv-warning-soft);
+  border-radius: var(--jsv-border-radius);
+  margin-bottom: 1rem;
+  color: var(--jsv-text-primary);
+}
+
+/* ----- Top disclaimer ----- */
+.jsv-disclaimer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  background: var(--jsv-bg-card);
+  border: 1px solid var(--jsv-border);
+  border-radius: var(--jsv-border-radius);
+  font-size: 13px;
+  color: var(--jsv-text-muted);
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+.jsv-disclaimer-icon {
+  font-size: 16px;
+}
+.jsv-disclaimer-lang {
+  margin-left: auto;
+}
+.jsv-link-btn {
+  background: none;
+  border: none;
+  color: var(--jsv-primary);
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+  text-decoration: underline;
+}
+.jsv-link-btn:hover {
+  color: var(--jsv-primary-hover);
+}
+
+/* ----- Section base ----- */
+.jsv-section {
+  margin-bottom: 1.25rem;
+  padding: 0.875rem 1rem;
+  background: var(--jsv-bg-card);
+  border: 1px solid var(--jsv-border);
+  border-radius: var(--jsv-border-radius);
+}
+.jsv-section-title {
+  margin: 0 0 0.625rem 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--jsv-text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.jsv-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* ----- Chips (draft + preset) ----- */
+.jsv-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+.jsv-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.375rem 0.75rem;
+  background: var(--jsv-bg-elev);
+  border: 1px solid var(--jsv-border-strong);
+  border-radius: 999px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  color: var(--jsv-text-muted);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.jsv-chip:hover {
+  border-color: var(--jsv-primary);
+  color: var(--jsv-primary);
+}
+.jsv-chip.active {
+  background: var(--jsv-primary);
+  color: white;
+  border-color: var(--jsv-primary);
+  font-weight: 600;
+}
+.jsv-chip-preset {
+  font-size: 11.5px;
+}
+
+/* ----- Input grid (Schema + Data double-column) ----- */
+.jsv-input-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.875rem;
+  margin-bottom: 0.625rem;
+}
+.jsv-input-pane {
+  display: flex;
+  flex-direction: column;
+}
+.jsv-input-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--jsv-text-muted);
+  margin-bottom: 0.375rem;
+}
+.jsv-line-count {
+  font-size: 11px;
+  color: var(--jsv-text-dim);
+  font-weight: 400;
+  background: var(--jsv-bg-elev-2);
+  padding: 1px 6px;
+  border-radius: var(--jsv-radius-sm);
+}
+.jsv-textarea {
+  width: 100%;
+  min-height: 220px;
+  padding: 0.625rem;
+  font-family: var(--jsv-mono);
+  font-size: 12.5px;
+  line-height: 1.5;
+  border: 1px solid var(--jsv-border-strong);
+  border-radius: var(--jsv-border-radius);
+  background: var(--jsv-bg-elev);
+  color: var(--jsv-text-primary);
+  resize: vertical;
+  tab-size: 2;
+}
+.jsv-textarea:focus {
+  outline: 2px solid var(--jsv-primary);
+  outline-offset: -1px;
+  border-color: var(--jsv-primary);
+}
+.jsv-input-actions {
+  display: flex;
+  gap: 0.375rem;
+  margin-top: 0.375rem;
+}
+
+/* ----- Buttons ----- */
+.jsv-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  background: var(--jsv-bg-elev);
+  border: 1px solid var(--jsv-border-strong);
+  border-radius: var(--jsv-border-radius);
+  font: inherit;
+  font-size: 13px;
+  color: var(--jsv-text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.jsv-btn:hover {
+  border-color: var(--jsv-primary);
+  color: var(--jsv-primary);
+}
+.jsv-btn-tiny {
+  padding: 0.25rem 0.625rem;
+  font-size: 11.5px;
+}
+.jsv-btn-small {
+  padding: 0.375rem 0.625rem;
+  font-size: 12px;
+}
+.jsv-btn-large {
+  padding: 0.625rem 1.25rem;
+  font-size: 14px;
+  font-weight: 600;
+}
+.jsv-btn-primary {
+  background: var(--jsv-primary);
+  color: white;
+  border-color: var(--jsv-primary);
+}
+.jsv-btn-primary:hover {
+  background: var(--jsv-primary-hover);
+  border-color: var(--jsv-primary-hover);
+  color: white;
+}
+.jsv-btn-export {
+  background: var(--jsv-accent-soft);
+  color: var(--jsv-text-primary);
+  border-color: var(--jsv-accent);
+}
+.jsv-btn-export:hover {
+  background: var(--jsv-accent);
+  color: white;
+}
+
+/* ----- Validate bar ----- */
+.jsv-validate-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  margin-top: 0.625rem;
+}
+.jsv-validate-status {
+  font-size: 12px;
+  color: var(--jsv-text-muted);
+}
+
+/* ----- Result card ----- */
+.jsv-result-card {
+  padding: 1rem 1.25rem;
+  border-radius: var(--jsv-border-radius);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.jsv-result-card.jsv-result-empty {
+  background: var(--jsv-bg-elev-2);
+  color: var(--jsv-text-muted);
+}
+.jsv-result-card.jsv-result-valid {
+  background: var(--jsv-accent-soft);
+  color: var(--jsv-accent-hover);
+  border: 1px solid var(--jsv-accent);
+}
+.jsv-result-card.jsv-result-invalid {
+  background: var(--jsv-error-soft);
+  color: var(--jsv-error-hover);
+  border: 1px solid var(--jsv-error);
+}
+.jsv-result-card.jsv-result-error {
+  background: var(--jsv-warning-soft);
+  color: var(--jsv-text-primary);
+  border: 1px solid var(--jsv-warning);
+}
+.jsv-result-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.jsv-result-text {
+  flex: 1;
+  font-size: 14px;
+}
+
+/* ----- Errors ----- */
+.jsv-error-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  padding: 0 0.5rem;
+  height: 22px;
+  background: var(--jsv-error);
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 11px;
+  margin-left: 0.5rem;
+}
+.jsv-sort-toggle {
+  display: flex;
+  gap: 0.25rem;
+}
+.jsv-sort-toggle .jsv-btn.active {
+  background: var(--jsv-primary);
+  color: white;
+  border-color: var(--jsv-primary);
+}
+.jsv-error-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.jsv-error-item {
+  padding: 0.625rem 0.875rem;
+  background: var(--jsv-bg-elev);
+  border-left: 3px solid var(--jsv-error);
+  border-radius: var(--jsv-radius-sm);
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+.jsv-error-item:hover {
+  background: var(--jsv-bg-elev-2);
+}
+.jsv-error-item.jsv-severity-warning {
+  border-left-color: var(--jsv-warning);
+}
+.jsv-error-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+  font-size: 12px;
+}
+.jsv-error-line-badge {
+  background: var(--jsv-error);
+  color: white;
+  padding: 1px 8px;
+  border-radius: var(--jsv-radius-sm);
+  font-weight: 600;
+  font-size: 11px;
+  font-family: var(--jsv-mono);
+}
+.jsv-error-item.jsv-severity-warning .jsv-error-line-badge {
+  background: var(--jsv-warning);
+  color: var(--jsv-text-primary);
+}
+.jsv-error-pill {
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.jsv-pill-error {
+  background: var(--jsv-error-soft);
+  color: var(--jsv-error);
+}
+.jsv-pill-warning {
+  background: var(--jsv-warning-soft);
+  color: var(--jsv-warning);
+}
+.jsv-error-keyword {
+  font-family: var(--jsv-mono);
+  font-size: 11.5px;
+  color: var(--jsv-text-muted);
+  background: var(--jsv-bg-elev-2);
+  padding: 1px 6px;
+  border-radius: var(--jsv-radius-sm);
+}
+.jsv-error-path {
+  font-family: var(--jsv-mono);
+  font-size: 12px;
+  color: var(--jsv-text-muted);
+  margin-bottom: 0.25rem;
+  word-break: break-all;
+}
+.jsv-error-path code {
+  background: var(--jsv-bg-elev-2);
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+.jsv-error-message {
+  font-size: 13px;
+  color: var(--jsv-text-primary);
+}
+
+/* ----- Tree view ----- */
+.jsv-tree-section {
+  background: var(--jsv-bg-card);
+}
+.jsv-tree-section summary {
+  cursor: pointer;
+  user-select: none;
+}
+.jsv-tree-toolbar {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin: 0.625rem 0;
+  flex-wrap: wrap;
+}
+.jsv-search-input {
+  flex: 1;
+  min-width: 180px;
+  padding: 0.375rem 0.625rem;
+  border: 1px solid var(--jsv-border-strong);
+  border-radius: var(--jsv-border-radius);
+  background: var(--jsv-bg-elev);
+  font: inherit;
+  font-size: 13px;
+}
+.jsv-search-input:focus {
+  outline: 2px solid var(--jsv-primary);
+  outline-offset: -1px;
+}
+.jsv-tree-warning {
+  padding: 0.625rem 0.875rem;
+  background: var(--jsv-warning-soft);
+  border-radius: var(--jsv-border-radius);
+  margin-bottom: 0.625rem;
+  font-size: 13px;
+  color: var(--jsv-text-primary);
+}
+.jsv-tree-content {
+  font-family: var(--jsv-mono);
+  font-size: 12.5px;
+  max-height: 500px;
+  overflow: auto;
+  padding: 0.5rem;
+  background: var(--jsv-bg-elev);
+  border: 1px solid var(--jsv-border);
+  border-radius: var(--jsv-border-radius);
+}
+.jsv-tree-content details {
+  padding-left: 1rem;
+  border-left: 1px dashed var(--jsv-border-strong);
+  margin: 2px 0;
+}
+.jsv-tree-content summary {
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: var(--jsv-radius-sm);
+  user-select: none;
+  list-style: none;
+}
+.jsv-tree-content summary::-webkit-details-marker {
+  display: none;
+}
+.jsv-tree-content summary::before {
+  content: '▶';
+  display: inline-block;
+  margin-right: 0.375rem;
+  font-size: 10px;
+  color: var(--jsv-text-dim);
+  transition: transform 0.1s;
+}
+.jsv-tree-content details[open] > summary::before {
+  transform: rotate(90deg);
+}
+.jsv-tree-content summary:hover {
+  background: var(--jsv-bg-elev-2);
+}
+.jsv-search-hit {
+  background: var(--jsv-primary-soft) !important;
+  outline: 2px solid var(--jsv-primary);
+}
+.jsv-tree-type {
+  color: var(--jsv-primary);
+  font-weight: 600;
+}
+.jsv-tree-format,
+.jsv-tree-pattern,
+.jsv-tree-enum {
+  color: var(--jsv-accent);
+  font-size: 11.5px;
+}
+.jsv-tree-ref {
+  color: var(--jsv-primary);
+  text-decoration: underline dotted;
+  font-size: 11.5px;
+}
+.jsv-tree-req {
+  color: var(--jsv-error);
+  font-size: 11.5px;
+}
+.jsv-tree-pointer {
+  color: var(--jsv-text-dim);
+  font-size: 10.5px;
+  margin-left: 0.5rem;
+}
+.jsv-tree-leaf {
+  color: var(--jsv-text-muted);
+  font-style: italic;
+}
+.jsv-tree-children {
+  padding-left: 0.875rem;
+}
+.jsv-tree-count {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--jsv-text-dim);
+  background: var(--jsv-bg-elev-2);
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-family: var(--jsv-sans);
+}
+
+/* ----- Export section ----- */
+.jsv-export-note {
+  font-size: 12px;
+  color: var(--jsv-text-muted);
+  margin: 0.375rem 0 0.625rem 0;
+}
+.jsv-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 13px;
+  color: var(--jsv-text-muted);
+  margin-bottom: 0.625rem;
+  cursor: pointer;
+}
+.jsv-export-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* ----- OpenAPI convert ----- */
+.jsv-openapi-convert-section {
+  background: var(--jsv-bg-card);
+}
+.jsv-openapi-convert-section summary {
+  cursor: pointer;
+}
+.jsv-openapi-note {
+  font-size: 12px;
+  color: var(--jsv-text-muted);
+  margin: 0.5rem 0;
+}
+.jsv-openapi-note code {
+  background: var(--jsv-bg-elev-2);
+  padding: 1px 4px;
+  border-radius: 2px;
+  font-size: 11.5px;
+}
+.jsv-openapi-status {
+  margin-left: 0.625rem;
+  font-size: 12px;
+  color: var(--jsv-accent);
+  font-weight: 600;
+}
+
+/* ----- Standard footer ----- */
+.jsv-standard {
+  margin-top: 1rem;
+  font-size: 11px;
+  color: var(--jsv-text-dim);
+}
+.jsv-standard-details summary {
+  cursor: pointer;
+  padding: 0.5rem 0;
+}
+.jsv-source-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.jsv-source-list li {
+  word-break: break-all;
+  line-height: 1.5;
+}
+.jsv-source-list code {
+  background: var(--jsv-bg-elev-2);
+  padding: 1px 4px;
+  border-radius: 2px;
+  font-size: 10.5px;
+  color: var(--jsv-text-muted);
+  margin-right: 0.375rem;
+}
+.jsv-source-list a {
+  color: var(--jsv-primary);
+  text-decoration: none;
+}
+.jsv-source-list a:hover {
+  text-decoration: underline;
+}
+
+/* ----- Responsive: stack on mobile ----- */
+@media (max-width: 768px) {
+  .jsv-tool {
+    padding: 0.875rem;
+  }
+  .jsv-input-grid {
+    grid-template-columns: 1fr;  /* double → single column on mobile */
+  }
+  .jsv-disclaimer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.375rem;
+  }
+  .jsv-disclaimer-lang {
+    margin-left: 0;
+  }
+  .jsv-textarea {
+    min-height: 160px;
+    font-size: 12px;
+  }
+  .jsv-export-buttons {
+    flex-direction: column;
+  }
+  .jsv-export-buttons .jsv-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .jsv-section-title {
+    font-size: 13px;
+  }
+}
+
+/* ----- Print (skip in print) ----- */
+@media print {
+  .jsv-tool {
+    box-shadow: none;
+    border: 1px solid #999;
+  }
+  .jsv-input-grid,
+  .jsv-chips,
+  .jsv-export-buttons,
+  .jsv-input-actions {
+    display: none;
+  }
+}
