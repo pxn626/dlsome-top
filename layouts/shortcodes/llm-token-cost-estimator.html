@@ -1,0 +1,225 @@
+{{- /*
+  Shortcode: llm-token-cost-estimator
+
+  Browser-based LLM token cost calculator. 13 models × input/output/cache/batch prices
+  + USD ⇄ CNY toggle + monthly/yearly cost cards + Anthropic prompt caching ROI panel.
+
+  Self-contained HTML + external CSS + external JS + fetched JSON data.
+  Zero AI API calls (data fetched from same-origin static JSON, same pattern as
+  ai-image-prompt-builder's prompts.json). No FX rate fetch (default 7.20 + user-overridable).
+  PaperMod `.dark` class compatible. Hugo 0.164 verified.
+
+  Usage:
+    {{< llm-token-cost-estimator >}}
+
+  CSS namespace: --ltce-* / .ltce-* (LLM Token Cost Estimator)
+  JS data-attr:  data-ltce-*
+  i18n:          inline JS objects (dlsome-top has no i18n/*.yaml)
+  Slug:          llm-token-cost-estimator
+  Acronym:       ltce
+
+  Step 4 of 7 — D29 LLM Token Cost Estimator pipeline.
+  Files: shortcode (this) + static/tools/llm-token-cost-estimator/{css,js,data,img}/
+
+  Handoff: step 5 push subagent creates feat/llm-token-cost-estimator branch from main ee4bb1e
+  and pushes these files. step 6 content-impl writes EN + ZH .md files with inline {{< shortcode >}}
+  call + 4 JSON-LD blocks at MD end.
+*/ -}}
+
+{{- $lang := .Page.Language.Lang | default "en" -}}
+{{- $cssPath := "/tools/llm-token-cost-estimator/css/ltce.css" -}}
+{{- $jsPath := "/tools/llm-token-cost-estimator/js/ltce.js" -}}
+{{- $dataPath := "/tools/llm-token-cost-estimator/data/pricing.json" -}}
+
+<link rel="stylesheet" href="{{ $cssPath }}" />
+
+<div class="ltce-tool" data-ltce-root data-ltce-lang="{{ $lang }}" data-ltce-data="{{ $dataPath }}" data-ltce-mode="compute" role="region" aria-label="LLM Token Cost Calculator">
+
+  <!-- ===== Top disclaimer (price + FX notice + last_updated) ===== -->
+  <div class="ltce-disclaimer" data-ltce-disclaimer>
+    <span class="ltce-disclaimer-icon" aria-hidden="true">💰</span>
+    <span data-ltce-disclaimer-text>Loading pricing data…</span>
+  </div>
+
+  <!-- ===== Section 1: Model selector (multi-select chips) ===== -->
+  <section class="ltce-models" aria-labelledby="ltce-models-label">
+    <h3 class="ltce-section-title" id="ltce-models-label">
+      <span aria-hidden="true">🤖</span>
+      <span data-ltce-models-label>Select Models</span>
+    </h3>
+    <div class="ltce-models-toolbar">
+      <button type="button" class="ltce-btn ltce-btn-small" data-ltce-action="select-default" data-ltce-action-label="select-default">Default</button>
+      <button type="button" class="ltce-btn ltce-btn-small" data-ltce-action="select-all" data-ltce-action-label="select-all">All</button>
+      <button type="button" class="ltce-btn ltce-btn-small" data-ltce-action="select-none" data-ltce-action-label="select-none">None</button>
+      <button type="button" class="ltce-btn ltce-btn-small" data-ltce-action="reset" style="margin-left:auto;">↺ Reset</button>
+    </div>
+    <div class="ltce-chips" data-ltce-chips role="group" aria-label="model selection">
+      <!-- 13 model chips injected by JS from pricing.json -->
+    </div>
+  </section>
+
+  <!-- ===== Section 2: Token inputs (main + advanced toggle) ===== -->
+  <section class="ltce-inputs" aria-labelledby="ltce-inputs-label">
+    <h3 class="ltce-section-title" id="ltce-inputs-label">
+      <span aria-hidden="true">📝</span>
+      <span data-ltce-inputs-label>Token Inputs</span>
+    </h3>
+
+    <div class="ltce-input-grid">
+      <label class="ltce-input-label">
+        <span data-ltce-input-tokens-label>Input tokens</span>
+        <input type="number" min="0" step="100" value="1000" data-ltce-input="inputTokens" class="ltce-input ltce-input-large" aria-label="input tokens" />
+        <div class="ltce-input-quick">
+          <button type="button" class="ltce-btn ltce-btn-tiny" data-ltce-action="add" data-ltce-amount="1000" data-ltce-action-label="add-1k">+1K</button>
+          <button type="button" class="ltce-btn ltce-btn-tiny" data-ltce-action="add" data-ltce-amount="10000" data-ltce-action-label="add-10k">+10K</button>
+          <button type="button" class="ltce-btn ltce-btn-tiny" data-ltce-action="add" data-ltce-amount="100000" data-ltce-action-label="add-100k">+100K</button>
+        </div>
+      </label>
+      <label class="ltce-input-label">
+        <span data-ltce-output-tokens-label>Output tokens</span>
+        <input type="number" min="0" step="100" value="500" data-ltce-input="outputTokens" class="ltce-input ltce-input-large" aria-label="output tokens" />
+      </label>
+    </div>
+
+    <!-- ===== Advanced settings (collapsed by default) ===== -->
+    <details class="ltce-advanced" data-ltce-advanced>
+      <summary data-ltce-advanced-label>⚙️ Advanced settings</summary>
+      <div class="ltce-advanced-body">
+        <label class="ltce-input-label">
+          <span data-ltce-daily-calls-label>Daily API calls</span>
+          <input type="number" min="0" step="10" value="100" data-ltce-input="dailyCalls" class="ltce-input" aria-label="daily API calls" />
+        </label>
+        <label class="ltce-input-label">
+          <span data-ltce-currency-label>Currency</span>
+          <select data-ltce-input="currency" class="ltce-input" aria-label="currency">
+            <option value="USD">USD ($)</option>
+            <option value="CNY">CNY (¥)</option>
+          </select>
+        </label>
+        <label class="ltce-input-label" data-ltce-fx-row>
+          <span data-ltce-fx-rate-label>1 USD = ? CNY</span>
+          <input type="number" min="1" max="20" step="0.01" value="7.20" data-ltce-input="fxRate" class="ltce-input" aria-label="USD to CNY exchange rate" />
+        </label>
+      </div>
+    </details>
+
+    <!-- ===== Cache settings (auto-expanded if Anthropic selected) ===== -->
+    <details class="ltce-cache" data-ltce-cache hidden>
+      <summary data-ltce-cache-label>🧊 Anthropic Cache Settings</summary>
+      <div class="ltce-cache-body">
+        <label class="ltce-input-label">
+          <span data-ltce-cache-hit-label>Cache hit rate (%)</span>
+          <input type="number" min="0" max="100" step="5" value="0" data-ltce-input="cacheHitRate" class="ltce-input" aria-label="cache hit rate percentage" />
+        </label>
+        <label class="ltce-input-label">
+          <span data-ltce-cache-ttl-label>Cache TTL</span>
+          <select data-ltce-input="cacheTtl" class="ltce-input" aria-label="cache TTL">
+            <option value="5min">5 minutes</option>
+            <option value="1h">1 hour</option>
+          </select>
+        </label>
+      </div>
+    </details>
+  </section>
+
+  <!-- ===== Section 3: Output — Cost comparison table ===== -->
+  <section class="ltce-output" aria-labelledby="ltce-output-label">
+    <div class="ltce-output-header">
+      <h3 class="ltce-section-title" id="ltce-output-label">
+        <span aria-hidden="true">💵</span>
+        <span data-ltce-output-label>Cost Comparison</span>
+      </h3>
+      <div class="ltce-sort-toggle" role="group" aria-label="sort">
+        <button type="button" class="ltce-btn ltce-btn-tiny active" data-ltce-action="sort" data-ltce-sort="cost-asc" data-ltce-sort-label-cost>By cost</button>
+        <button type="button" class="ltce-btn ltce-btn-tiny" data-ltce-action="sort" data-ltce-sort="alpha" data-ltce-sort-label-alpha>A–Z</button>
+      </div>
+    </div>
+    <div class="ltce-table-wrap">
+      <table class="ltce-table" data-ltce-table>
+        <thead>
+          <tr>
+            <th data-ltce-th-model scope="col">Model</th>
+            <th data-ltce-th-provider scope="col">Provider</th>
+            <th data-ltce-th-input scope="col" data-ltce-th-num>Input/M</th>
+            <th data-ltce-th-output scope="col" data-ltce-th-num>Output/M</th>
+            <th data-ltce-th-total scope="col" data-ltce-th-num>Total</th>
+            <th data-ltce-th-vs scope="col" data-ltce-th-num>vs Cheapest</th>
+          </tr>
+        </thead>
+        <tbody data-ltce-tbody>
+          <!-- rows injected by JS, sorted by total cost (cheapest first) -->
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== Section 4: Output — Monthly / Yearly cost cards ===== -->
+  <section class="ltce-cards" aria-labelledby="ltce-cards-label">
+    <h3 class="ltce-section-title" id="ltce-cards-label">
+      <span aria-hidden="true">📊</span>
+      <span data-ltce-cards-label>Monthly & Yearly Cost</span>
+    </h3>
+    <div class="ltce-card-grid" data-ltce-cards>
+      <article class="ltce-card" data-ltce-card-kind="single">
+        <header class="ltce-card-header" data-ltce-card-single-label>Per-call cost</header>
+        <div class="ltce-card-value" data-ltce-card-single-value>—</div>
+        <footer class="ltce-card-footer" data-ltce-card-single-model>—</footer>
+      </article>
+      <article class="ltce-card" data-ltce-card-kind="monthly">
+        <header class="ltce-card-header" data-ltce-card-monthly-label>Monthly cost</header>
+        <div class="ltce-card-value" data-ltce-card-monthly-value>—</div>
+        <footer class="ltce-card-footer" data-ltce-card-monthly-model>—</footer>
+      </article>
+      <article class="ltce-card" data-ltce-card-kind="yearly">
+        <header class="ltce-card-header" data-ltce-card-yearly-label>Yearly cost</header>
+        <div class="ltce-card-value" data-ltce-card-yearly-value>—</div>
+        <footer class="ltce-card-footer" data-ltce-card-yearly-model>—</footer>
+      </article>
+    </div>
+    <p class="ltce-savings" data-ltce-savings hidden>
+      <strong data-ltce-savings-text>—</strong>
+    </p>
+  </section>
+
+  <!-- ===== Section 5: Output — Cache ROI panel (auto-shown if Anthropic selected) ===== -->
+  <section class="ltce-roi" data-ltce-roi hidden aria-labelledby="ltce-roi-label">
+    <h3 class="ltce-section-title" id="ltce-roi-label">
+      <span aria-hidden="true">🧊</span>
+      <span data-ltce-roi-label>Anthropic Cache ROI</span>
+    </h3>
+    <div class="ltce-roi-grid" data-ltce-roi-grid>
+      <article class="ltce-roi-card">
+        <header data-ltce-roi-savings-label>Monthly savings</header>
+        <div class="ltce-roi-value" data-ltce-roi-savings-value>—</div>
+      </article>
+      <article class="ltce-roi-card">
+        <header data-ltce-roi-effective-label>Effective input price</header>
+        <div class="ltce-roi-value" data-ltce-roi-effective-value>—</div>
+      </article>
+      <article class="ltce-roi-card">
+        <header data-ltce-roi-breakeven-label>Break-even rate</header>
+        <div class="ltce-roi-value" data-ltce-roi-breakeven-value>—</div>
+      </article>
+    </div>
+    <p class="ltce-warn" data-ltce-cache-warning></p>
+  </section>
+
+  <!-- ===== Section 6: Token estimator (collapsed helper) ===== -->
+  <details class="ltce-token-estimator" data-ltce-estimator>
+    <summary data-ltce-estimator-label>🔤 Estimate tokens from text</summary>
+    <textarea class="ltce-textarea" data-ltce-estimator-input rows="4" maxlength="100000" placeholder="Paste your prompt here…"></textarea>
+    <div class="ltce-estimator-output" data-ltce-estimator-output>~0 tokens</div>
+    <p class="ltce-warn" data-ltce-estimator-disclaimer></p>
+  </details>
+
+  <!-- ===== Section 7: Standard reference (data sources) ===== -->
+  <div class="ltce-standard" data-ltce-standard aria-label="pricing data sources">
+    <!-- injected by JS: 8 source URLs with rel=nofollow noopener -->
+  </div>
+
+  <!-- ===== FX disclaimer (separate from price disclaimer) ===== -->
+  <p class="ltce-warn" data-ltce-fx-disclaimer style="margin-top: 0.5rem; font-size: 11px;"></p>
+
+</div>
+
+<script src="{{ $jsPath }}" defer></script>

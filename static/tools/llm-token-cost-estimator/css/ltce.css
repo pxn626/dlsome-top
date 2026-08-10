@@ -1,0 +1,713 @@
+/* ============================================================
+ * ltce.css — LLM Token Cost Estimator
+ * Namespace: --ltce-* / .ltce-* (LLM Token Cost Estimator)
+ * Repo: dlsome-top · Hugo 0.164 + PaperMod v7 (strict mode OK)
+ * PaperMod .dark class compatible. Zero global pollution.
+ * Self-test: all selectors prefixed with .ltce- (or scoped inside .ltce-tool)
+ * ============================================================ */
+
+/* ----- Light theme variables ----- */
+.ltce-tool {
+  --ltce-bg: #ffffff;
+  --ltce-bg-elev: #f8fafc;
+  --ltce-bg-elev-2: #f1f5f9;
+  --ltce-bg-chip: #f1f5f9;
+  --ltce-border: #e2e8f0;
+  --ltce-border-strong: #cbd5e1;
+  --ltce-fg: #0f172a;
+  --ltce-fg-muted: #64748b;
+  --ltce-fg-dim: #94a3b8;
+  --ltce-primary: #1a73e8;
+  --ltce-primary-hover: #1557b0;
+  --ltce-primary-soft: #dbeafe;
+  --ltce-accent: #10b981;
+  --ltce-accent-hover: #059669;
+  --ltce-accent-soft: #d1fae5;
+  --ltce-warn: #f59e0b;
+  --ltce-warn-soft: #fef3c7;
+  --ltce-err: #ef4444;
+  --ltce-err-soft: #fee2e2;
+
+  --ltce-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --ltce-shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+  --ltce-shadow-lg: 0 10px 30px rgba(15, 23, 42, 0.12);
+  --ltce-radius: 8px;
+  --ltce-radius-sm: 4px;
+  --ltce-radius-lg: 12px;
+  --ltce-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --ltce-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, "Helvetica Neue", Arial, sans-serif;
+
+  display: block;
+  margin: 1.5rem 0;
+  padding: 1.25rem;
+  background: var(--ltce-bg);
+  border: 1px solid var(--ltce-border);
+  border-radius: var(--ltce-radius-lg);
+  box-shadow: var(--ltce-shadow-sm);
+  font-family: var(--ltce-sans);
+  color: var(--ltce-fg);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ----- Dark theme (PaperMod .dark class) ----- */
+.dark .ltce-tool {
+  --ltce-bg: #1e1e24;
+  --ltce-bg-elev: #2a2a32;
+  --ltce-bg-elev-2: #34343c;
+  --ltce-bg-chip: #2a2a32;
+  --ltce-border: #3a3a44;
+  --ltce-border-strong: #4a4a54;
+  --ltce-fg: #e2e8f0;
+  --ltce-fg-muted: #94a3b8;
+  --ltce-fg-dim: #64748b;
+  --ltce-primary: #60a5fa;
+  --ltce-primary-hover: #3b82f6;
+  --ltce-primary-soft: #1e3a8a;
+  --ltce-accent: #34d399;
+  --ltce-accent-hover: #10b981;
+  --ltce-accent-soft: #064e3b;
+  --ltce-warn: #fbbf24;
+  --ltce-warn-soft: #78350f;
+  --ltce-err: #f87171;
+  --ltce-err-soft: #7f1d1d;
+  --ltce-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --ltce-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --ltce-shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* ----- Disclaimer (top banner) ----- */
+.ltce-disclaimer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+  background: var(--ltce-warn-soft);
+  border: 1px solid var(--ltce-warn);
+  border-radius: var(--ltce-radius);
+  font-size: 13px;
+  color: var(--ltce-fg);
+}
+
+.ltce-disclaimer-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.ltce-disclaimer[data-ltce-disclaimer-stale="true"] {
+  background: var(--ltce-err-soft);
+  border-color: var(--ltce-err);
+}
+
+/* ----- Section common ----- */
+.ltce-section-title {
+  margin: 0 0 0.75rem 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ltce-fg);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ----- Models panel (multi-select chips) ----- */
+.ltce-models {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px dashed var(--ltce-border);
+}
+
+.ltce-models-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.ltce-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.ltce-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  background: var(--ltce-bg-chip);
+  border: 1px solid var(--ltce-border);
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ltce-fg);
+  transition: all 120ms ease;
+  user-select: none;
+}
+
+.ltce-chip:hover {
+  border-color: var(--ltce-primary);
+  background: var(--ltce-bg-elev);
+}
+
+.ltce-chip[data-ltce-selected="true"] {
+  background: var(--ltce-primary-soft);
+  border-color: var(--ltce-primary);
+  color: var(--ltce-primary);
+  font-weight: 600;
+}
+
+.ltce-chip[data-ltce-selected="true"] .ltce-chip-dot {
+  background: var(--ltce-primary);
+}
+
+.ltce-chip[data-ltce-tier="flagship"] {
+  border-left: 3px solid #1a73e8;
+}
+
+.ltce-chip[data-ltce-tier="mini"] {
+  border-left: 3px solid #10b981;
+}
+
+.ltce-chip[data-ltce-tier="reasoning"] {
+  border-left: 3px solid #f59e0b;
+}
+
+.ltce-chip[data-ltce-tier="self_hosted"] {
+  border-left: 3px solid #6b7280;
+  opacity: 0.85;
+}
+
+.ltce-chip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ltce-border-strong);
+  flex-shrink: 0;
+}
+
+.ltce-chip-name {
+  white-space: nowrap;
+}
+
+.ltce-chip-price {
+  font-family: var(--ltce-mono);
+  font-size: 11px;
+  color: var(--ltce-fg-muted);
+  margin-left: 0.25rem;
+}
+
+/* ----- Inputs panel ----- */
+.ltce-inputs {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px dashed var(--ltce-border);
+}
+
+.ltce-input-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.ltce-input-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.ltce-input-label > span {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ltce-fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ltce-input {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--ltce-border-strong);
+  border-radius: var(--ltce-radius);
+  background: var(--ltce-bg);
+  color: var(--ltce-fg);
+  font-family: var(--ltce-mono);
+  font-size: 14px;
+  box-sizing: border-box;
+  transition: border-color 120ms ease;
+}
+
+.ltce-input:focus {
+  outline: none;
+  border-color: var(--ltce-primary);
+  box-shadow: 0 0 0 3px var(--ltce-primary-soft);
+}
+
+.ltce-input-large {
+  font-size: 18px;
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+}
+
+.ltce-input-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+}
+
+/* ----- Buttons ----- */
+.ltce-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--ltce-border-strong);
+  border-radius: var(--ltce-radius);
+  background: var(--ltce-bg-elev);
+  color: var(--ltce-fg);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 120ms ease;
+  user-select: none;
+}
+
+.ltce-btn:hover {
+  border-color: var(--ltce-primary);
+  background: var(--ltce-bg);
+}
+
+.ltce-btn:focus-visible {
+  outline: 2px solid var(--ltce-primary);
+  outline-offset: 2px;
+}
+
+.ltce-btn:active {
+  transform: translateY(1px);
+}
+
+.ltce-btn-primary {
+  background: var(--ltce-primary);
+  color: #ffffff;
+  border-color: var(--ltce-primary);
+}
+
+.ltce-btn-primary:hover {
+  background: var(--ltce-primary-hover);
+  border-color: var(--ltce-primary-hover);
+}
+
+.ltce-btn-small {
+  padding: 0.4rem 0.75rem;
+  font-size: 12px;
+}
+
+.ltce-btn-tiny {
+  padding: 0.25rem 0.5rem;
+  font-size: 11px;
+}
+
+.ltce-btn.active {
+  background: var(--ltce-primary-soft);
+  border-color: var(--ltce-primary);
+  color: var(--ltce-primary);
+}
+
+/* ----- Advanced & cache details ----- */
+.ltce-advanced, .ltce-cache, .ltce-token-estimator {
+  margin-top: 0.75rem;
+  border: 1px solid var(--ltce-border);
+  border-radius: var(--ltce-radius);
+  background: var(--ltce-bg-elev);
+}
+
+.ltce-advanced > summary,
+.ltce-cache > summary,
+.ltce-token-estimator > summary {
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ltce-fg);
+  user-select: none;
+  list-style: none;
+}
+
+.ltce-advanced > summary::-webkit-details-marker,
+.ltce-cache > summary::-webkit-details-marker,
+.ltce-token-estimator > summary::-webkit-details-marker {
+  display: none;
+}
+
+.ltce-advanced > summary::before,
+.ltce-cache > summary::before,
+.ltce-token-estimator > summary::before {
+  content: "▶ ";
+  display: inline-block;
+  transition: transform 120ms ease;
+  font-size: 10px;
+  color: var(--ltce-fg-muted);
+}
+
+.ltce-advanced[open] > summary::before,
+.ltce-cache[open] > summary::before,
+.ltce-token-estimator[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.ltce-advanced-body,
+.ltce-cache-body {
+  padding: 0.75rem 1rem 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+
+.ltce-cache[data-ltce-cache-active="true"] > summary {
+  color: var(--ltce-primary);
+}
+
+.ltce-cache[data-ltce-cache-active="true"] {
+  border-color: var(--ltce-primary);
+}
+
+/* ----- Output: table ----- */
+.ltce-output {
+  margin-bottom: 1.25rem;
+}
+
+.ltce-output-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.ltce-sort-toggle {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.ltce-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--ltce-border);
+  border-radius: var(--ltce-radius);
+}
+
+.ltce-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.ltce-table thead {
+  background: var(--ltce-bg-elev);
+}
+
+.ltce-table th {
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ltce-fg-muted);
+  border-bottom: 1px solid var(--ltce-border);
+}
+
+.ltce-table th[data-ltce-th-num],
+.ltce-table td[data-ltce-td-num] {
+  text-align: right;
+  font-family: var(--ltce-mono);
+}
+
+.ltce-table td {
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid var(--ltce-border);
+  vertical-align: middle;
+}
+
+.ltce-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.ltce-table tbody tr {
+  transition: background 100ms ease;
+}
+
+.ltce-table tbody tr:hover {
+  background: var(--ltce-bg-elev);
+}
+
+.ltce-table tbody tr[data-ltce-cheapest="true"] {
+  background: var(--ltce-accent-soft);
+}
+
+.ltce-table tbody tr[data-ltce-cheapest="true"] td {
+  font-weight: 600;
+}
+
+.ltce-table-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ltce-table-provider {
+  font-size: 11px;
+  color: var(--ltce-fg-dim);
+  font-weight: 400;
+}
+
+.ltce-badge-cheapest {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  background: var(--ltce-accent);
+  color: #ffffff;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.ltce-vs-delta {
+  color: var(--ltce-fg-muted);
+  font-size: 11px;
+}
+
+.ltce-vs-delta[data-ltce-delta-up="true"] {
+  color: var(--ltce-err);
+}
+
+/* ----- Cards (monthly/yearly) ----- */
+.ltce-cards {
+  margin-bottom: 1.25rem;
+  padding: 1rem;
+  background: var(--ltce-bg-elev);
+  border-radius: var(--ltce-radius);
+}
+
+.ltce-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.ltce-card {
+  padding: 1rem;
+  background: var(--ltce-bg);
+  border: 1px solid var(--ltce-border);
+  border-radius: var(--ltce-radius);
+  text-align: center;
+  transition: transform 150ms ease;
+}
+
+.ltce-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--ltce-shadow-md);
+}
+
+.ltce-card[data-ltce-card-kind="monthly"],
+.ltce-card[data-ltce-card-kind="yearly"] {
+  border-top: 3px solid var(--ltce-primary);
+}
+
+.ltce-card[data-ltce-card-kind="single"] {
+  border-top: 3px solid var(--ltce-accent);
+}
+
+.ltce-card-header {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ltce-fg-muted);
+  margin-bottom: 0.5rem;
+}
+
+.ltce-card-value {
+  font-family: var(--ltce-mono);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--ltce-fg);
+  margin-bottom: 0.5rem;
+  word-break: break-all;
+}
+
+.ltce-card-footer {
+  font-size: 11px;
+  color: var(--ltce-fg-muted);
+}
+
+.ltce-savings {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  background: var(--ltce-accent-soft);
+  border-radius: var(--ltce-radius);
+  font-size: 13px;
+  color: var(--ltce-fg);
+  text-align: center;
+}
+
+.ltce-savings strong {
+  color: var(--ltce-accent);
+}
+
+/* ----- Cache ROI panel ----- */
+.ltce-roi {
+  margin-bottom: 1.25rem;
+  padding: 1rem;
+  background: var(--ltce-bg-elev);
+  border-left: 4px solid var(--ltce-primary);
+  border-radius: var(--ltce-radius);
+}
+
+.ltce-roi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.ltce-roi-card {
+  padding: 0.75rem;
+  background: var(--ltce-bg);
+  border: 1px solid var(--ltce-border);
+  border-radius: var(--ltce-radius);
+  text-align: center;
+}
+
+.ltce-roi-card header {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ltce-fg-muted);
+  margin-bottom: 0.4rem;
+}
+
+.ltce-roi-value {
+  font-family: var(--ltce-mono);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ltce-accent);
+}
+
+.ltce-warn {
+  margin: 0.5rem 0 0;
+  font-size: 11px;
+  color: var(--ltce-fg-muted);
+  font-style: italic;
+}
+
+/* ----- Token estimator ----- */
+.ltce-textarea {
+  width: 100%;
+  min-height: 80px;
+  margin: 0.5rem 1rem;
+  width: calc(100% - 2rem);
+  resize: vertical;
+  font-family: var(--ltce-mono);
+  font-size: 13px;
+}
+
+.ltce-estimator-output {
+  margin: 0.5rem 1rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--ltce-bg);
+  border: 1px solid var(--ltce-border);
+  border-radius: var(--ltce-radius);
+  font-family: var(--ltce-mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ltce-primary);
+}
+
+/* ----- Standard reference (data sources) ----- */
+.ltce-standard {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--ltce-border);
+  font-size: 11px;
+  color: var(--ltce-fg-muted);
+  line-height: 1.6;
+}
+
+.ltce-standard a {
+  color: var(--ltce-primary);
+  text-decoration: none;
+  margin-right: 0.75rem;
+}
+
+.ltce-standard a:hover {
+  text-decoration: underline;
+}
+
+/* ----- Responsive ----- */
+@media (max-width: 768px) {
+  .ltce-tool {
+    padding: 1rem;
+    font-size: 13px;
+  }
+
+  .ltce-input-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ltce-card-grid,
+  .ltce-roi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ltce-table {
+    font-size: 12px;
+  }
+
+  .ltce-table th,
+  .ltce-table td {
+    padding: 0.4rem 0.5rem;
+  }
+
+  .ltce-card-value {
+    font-size: 18px;
+  }
+
+  .ltce-chips {
+    gap: 0.35rem;
+  }
+
+  .ltce-chip {
+    padding: 0.35rem 0.6rem;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ltce-table th:nth-child(2),
+  .ltce-table td:nth-child(2) {
+    display: none;
+  }
+}
+
+/* ----- A11y: focus indicators ----- */
+.ltce-chip:focus-visible {
+  outline: 2px solid var(--ltce-primary);
+  outline-offset: 2px;
+}
+
+/* ----- Print friendly ----- */
+@media print {
+  .ltce-tool {
+    box-shadow: none;
+    border: 1px solid #000;
+  }
+  .ltce-disclaimer { background: #fff; }
+  .ltce-advanced, .ltce-cache, .ltce-token-estimator { display: none; }
+}
