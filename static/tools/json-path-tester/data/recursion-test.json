@@ -1,0 +1,140 @@
+{
+  "_meta": {
+    "schema_version": "1.0",
+    "tool_name": "JSONPath Tester — Recursive Descent Test Data",
+    "tool_name_zh": "JSONPath 在线测试器 — 递归下降测试数据",
+    "last_updated": "2026-08-11",
+    "disclaimer_en": "Deeply nested JSON for testing recursive descent (..) operator and path highlighting. Not from real production data.",
+    "disclaimer_zh": "深度嵌套 JSON,用于测试递归下降 (..) 操作符和路径高亮。非真实生产数据。",
+    "purpose": "Recursion depth test for JSONPath `$..*` operator across JSONPath / JSONata / JMESPath engines."
+  },
+  "tests": [
+    {
+      "id": "nested-objects-10",
+      "label_en": "Nested Objects (10 levels)",
+      "label_zh": "嵌套对象 (10 层)",
+      "depth": 10,
+      "node_count": 10,
+      "description_en": "Pure object nesting to test recursive descent finds deep keys.",
+      "description_zh": "纯对象嵌套,测试递归下降找深层 key。",
+      "test_expressions": {
+        "jsonpath": "$..j",
+        "jsonata": "$.a.b.c.d.e.f.g.h.i.j",
+        "jmespath": "a.b.c.d.e.f.g.h.i.j"
+      },
+      "expected_match_count": {
+        "jsonpath": 1,
+        "jsonata": 1,
+        "jmespath": 1
+      },
+      "json": {
+        "a": { "b": { "c": { "d": { "e": { "f": { "g": { "h": { "i": { "j": "deep value" } } } } } } } } }
+      }
+    },
+    {
+      "id": "mixed-array-object-12",
+      "label_en": "Mixed Array-Object (12 levels)",
+      "label_zh": "数组+对象混合嵌套 (12 层)",
+      "depth": 12,
+      "node_count": 15,
+      "description_en": "Arrays nested in objects nested in arrays — tests recursion through mixed types.",
+      "description_zh": "数组嵌套对象再嵌套数组,测试递归穿过混合类型。",
+      "test_expressions": {
+        "jsonpath": "$..target",
+        "jsonata": "$.a[0].b[0].c[0].d[0].e[0].f[0].target",
+        "jmespath": "a[0].b[0].c[0].d[0].e[0].f[0].target"
+      },
+      "expected_match_count": {
+        "jsonpath": 1,
+        "jsonata": 1,
+        "jmespath": 1
+      },
+      "json": {
+        "a": [
+          {
+            "b": [
+              {
+                "c": [
+                  {
+                    "d": [
+                      {
+                        "e": [
+                          {
+                            "f": [
+                              { "target": "buried treasure" }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "real-api-response-deep",
+      "label_en": "Real API Response (15 levels)",
+      "label_zh": "真实 API 响应 (15 层)",
+      "depth": 15,
+      "node_count": 20,
+      "description_en": "Simulated API response (user → order → items → inventory → country).",
+      "description_zh": "模拟真实 API 响应(用户 → 订单 → 商品 → 库存 → 国家)。",
+      "test_expressions": {
+        "jsonpath": "$..country",
+        "jsonata": "$..country",
+        "jmespath": "*.order.*.items[*].inventory.*.country"
+      },
+      "expected_match_count": {
+        "jsonpath": 1,
+        "jsonata": 1,
+        "jmespath": 1
+      },
+      "json": {
+        "user": {
+          "id": "u_1",
+          "orders": [
+            {
+              "id": "o_1",
+              "items": [
+                {
+                  "sku": "sku_1",
+                  "inventory": {
+                    "warehouse_id": "wh_1",
+                    "supplier": {
+                        "country": "CN"
+                      }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "performance-stress-1000",
+      "label_en": "Performance Stress (1000+ nodes)",
+      "label_zh": "性能压测 (1000+ 节点)",
+      "depth": 8,
+      "node_count": 1024,
+      "description_en": "1024 nodes for testing Worker thread + Top N limit + Lazy expand.",
+      "description_zh": "1024 节点,用于测试 Worker 线程 + Top N 限制 + Lazy expand。",
+      "test_expressions": {
+        "jsonpath": "$..value",
+        "jsonata": "$..value",
+        "jmespath": "*[].value"
+      },
+      "expected_match_count": {
+        "jsonpath": 256,
+        "jsonata": 256,
+        "jmespath": 256
+      },
+      "_generator_hint": "Generated programmatically — see /tmp/jpt-lib-build/gen-stress.mjs for reference. 4 levels deep × 4 children × 4 grandchildren × 4 leaves with value field.",
+      "json": null
+    }
+  ]
+}

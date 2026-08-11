@@ -186,10 +186,11 @@ Claude Skills 使用 Anthropic 原生 YAML+Markdown 框架,有正式的工具限
 - [Cron 解析器](/zh/tools/cron-parser/) — 跨 4 平台解析 cron 表达式
 - [AI Prompt Helper](/zh/tools/ai-prompt-helper/) — 带语气控制的多模板 Prompt 构建器
 - [JSON Schema 校验器](/zh/tools/json-schema-validator/) — 用 JSON Schema 校验 JSON
+- [JSONPath 测试器](/zh/tools/json-path-tester/) — 在线测试 JSONPath / JSONata / JMESPath 表达式,实时树视图 + 路径高亮
 
 ---
 
-*最后更新:2026-08-08 · Claude Skills 模板库 · 基于 [Anthropic Skills v1.0](https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview)*
+*最后更新:2026-08-11 · Claude Skills 模板库 · 基于 [Anthropic Skills v1.0](https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview)*
 
 <!-- JSON-LD: WebApplication -->
 <script type="application/ld+json">

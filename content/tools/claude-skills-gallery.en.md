@@ -187,10 +187,11 @@ Yes. Export by downloading the `.skill.md` file or using the **Share URL** hash.
 - [Cron Parser](/tools/cron-parser/) — parse cron expressions across 4 platforms
 - [AI Prompt Helper](/tools/ai-prompt-helper/) — build structured prompts with tone control
 - [JSON Schema Validator](/tools/json-schema-validator/) — validate JSON against JSON Schema
+- [JSONPath Tester](/tools/json-path-tester/) — test JSONPath / JSONata / JMESPath expressions with live tree view and path highlighting
 
 ---
 
-*Last updated: 2026-08-08 · Claude Skills Template Gallery · Built on [Anthropic Skills v1.0](https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview)*
+*Last updated: 2026-08-11 · Claude Skills Template Gallery · Built on [Anthropic Skills v1.0](https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview)*
 
 <!-- JSON-LD: WebApplication -->
 <script type="application/ld+json">
