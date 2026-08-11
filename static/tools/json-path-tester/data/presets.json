@@ -1,0 +1,95 @@
+{
+  "_meta": {
+    "schema_version": "1.0",
+    "tool_name": "JSONPath Tester — Common Pattern Presets",
+    "tool_name_zh": "JSONPath 在线测试器 — 常用模式预设",
+    "last_updated": "2026-08-11",
+    "primary_source": "JSONPath Plus documentation (https://github.com/JSONPath-Plus/JSONPath)",
+    "jsonata_source": "JSONata 1.5 spec (https://docs.jsonata.org/)",
+    "jmespath_source": "JMESPath 1.0 spec (https://jmespath.org/specification.html)",
+    "disclaimer_en": "Preset patterns are curated examples for common queries across JSONPath / JSONata / JMESPath. Refer to each syntax's official spec for full coverage.",
+    "disclaimer_zh": "预设模式为 JSONPath / JSONata / JMESPath 三语法常用查询示例,完整语法请参考各引擎官方规范。"
+  },
+  "presets": [
+    {
+      "id": "recursive-descent",
+      "label_en": "Recursive descent (..)",
+      "label_zh": "递归下降 (..)",
+      "category": "navigate",
+      "icon": "🔁",
+      "syntax": {
+        "jsonpath": "$..price",
+        "jsonata": "$..*",
+        "jmespath": "*"
+      },
+      "description_en": "Recursively traverse all values in the JSON tree.",
+      "description_zh": "递归遍历 JSON 树中的所有值。",
+      "example_json_ref": "examples.json#sample-store",
+      "tags": ["navigation", "recursive", "wildcard"]
+    },
+    {
+      "id": "wildcard",
+      "label_en": "Wildcard (*) — All children",
+      "label_zh": "通配符 (*) — 所有子节点",
+      "category": "navigate",
+      "icon": "⭐",
+      "syntax": {
+        "jsonpath": "$.store.book[*].author",
+        "jsonata": "store.book.author",
+        "jmespath": "store.book[*].author"
+      },
+      "description_en": "Match all children at a given level.",
+      "description_zh": "匹配当前层级所有子节点。",
+      "example_json_ref": "examples.json#sample-store",
+      "tags": ["navigation", "wildcard"]
+    },
+    {
+      "id": "filter",
+      "label_en": "Filter — [?(condition)]",
+      "label_zh": "过滤 — [?(条件)]",
+      "category": "filter",
+      "icon": "🔍",
+      "syntax": {
+        "jsonpath": "$[?(@.price > 10)]",
+        "jsonata": "$.store.book[price > 10]",
+        "jmespath": "store.book[?price > `10`]"
+      },
+      "description_en": "Filter array items by predicate condition.",
+      "description_zh": "按条件过滤数组元素。",
+      "example_json_ref": "examples.json#sample-store",
+      "tags": ["filter", "predicate"]
+    },
+    {
+      "id": "slice",
+      "label_en": "Slice — [start:end]",
+      "label_zh": "切片 — [start:end]",
+      "category": "slice",
+      "icon": "✂️",
+      "syntax": {
+        "jsonpath": "$.store.book[0:5]",
+        "jsonata": "$.store.book[0..4]",
+        "jmespath": "store.book[0:5]"
+      },
+      "description_en": "Slice array elements by range (half-open interval).",
+      "description_zh": "按范围切片数组元素(半开区间)。",
+      "example_json_ref": "examples.json#sample-store",
+      "tags": ["slice", "range"]
+    },
+    {
+      "id": "key-search",
+      "label_en": "Recursive key — $..key",
+      "label_zh": "按 key 递归 — $..key",
+      "category": "navigate",
+      "icon": "🔑",
+      "syntax": {
+        "jsonpath": "$..price",
+        "jsonata": "$..price",
+        "jmespath": "*.price"
+      },
+      "description_en": "Find all values of a specific key recursively.",
+      "description_zh": "递归查找指定 key 的所有值。",
+      "example_json_ref": "examples.json#sample-store",
+      "tags": ["navigation", "recursive", "key-search"]
+    }
+  ]
+}
