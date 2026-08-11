@@ -1,0 +1,1413 @@
+{
+  "schema_version": "1.0",
+  "tool_name": "JSON Schema Validator Presets",
+  "tool_name_zh": "JSON Schema 在线验证器 Preset",
+  "last_updated": "2026-08-10",
+  "ajv_version": "^8.17.0",
+  "data_source_note": "Built-in schemas are reference samples. Production validation should use your authoritative schema. Sources: SchemaStore.org (MIT), OpenAPI Initiative (Apache 2.0), self-implemented (dlsome-top MIT).",
+  "source_urls": {
+    "jsonplaceholder": "https://jsonplaceholder.typicode.com/users (public domain)",
+    "openapi_3_0_petstore": "https://github.com/OAI/OpenAPI-Specification/blob/main/examples/v3.0/petstore.yaml (Apache 2.0)",
+    "openapi_3_1_petstore": "https://github.com/OAI/OpenAPI-Specification/blob/main/examples/v3.1/petstore.yaml (Apache 2.0)",
+    "schemastore": "https://json.schemastore.org/ (MIT, 60+ presets)",
+    "github_api_issue": "https://docs.github.com/en/rest/issues/issues (public docs)",
+    "package_json_schema": "https://json.schemastore.org/package.json (MIT, simplified)",
+    "tsconfig_json_schema": "https://json.schemastore.org/tsconfig.json (MIT, simplified)",
+    "eslintrc_schema": "https://json.schemastore.org/eslintrc.json (MIT, simplified)",
+    "docker_compose_schema": "https://json.schemastore.org/docker-compose.json (MIT, simplified)",
+    "vscode_launch_schema": "https://json.schemastore.org/launch.json (MIT, simplified)",
+    "github_actions_schema": "https://json.schemastore.org/github-workflow.json (MIT, simplified)",
+    "kubernetes_pod_schema": "https://json.schemastore.org/kubernetes-pod.json (MIT, full schema too large; simplified by dlsome-top)",
+    "prometheus_alert_rule": "https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/ (Apache 2.0, simplified)",
+    "simple_self_implemented": "self-implemented (dlsome-top MIT) — onboarding demos"
+  },
+  "presets": [
+    {
+      "id": "jsonplaceholder-user",
+      "category": "test",
+      "label_en": "JSONPlaceholder User",
+      "label_zh": "JSONPlaceholder 用户",
+      "draft": "draft-2020-12",
+      "icon": "👤",
+      "description_en": "Single user object from JSONPlaceholder demo API (public domain).",
+      "description_zh": "JSONPlaceholder 示例 API 单个用户对象(公共域)。",
+      "source_url": "https://jsonplaceholder.typicode.com/users",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "username": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_.-]+$"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "address": {
+            "type": "object",
+            "properties": {
+              "street": {
+                "type": "string"
+              },
+              "suite": {
+                "type": "string"
+              },
+              "city": {
+                "type": "string"
+              },
+              "zipcode": {
+                "type": "string",
+                "pattern": "^[0-9-]+$"
+              },
+              "geo": {
+                "type": "object",
+                "properties": {
+                  "lat": {
+                    "type": "string"
+                  },
+                  "lng": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "phone": {
+            "type": "string"
+          },
+          "website": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9-_.]+(\\.[a-zA-Z]{2,})(/.*)?$"
+          },
+          "company": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "catchPhrase": {
+                "type": "string"
+              },
+              "bs": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "username",
+          "email"
+        ]
+      },
+      "sample_data": {
+        "id": 1,
+        "name": "Leanne Graham",
+        "username": "Bret",
+        "email": "Sincere@april.biz",
+        "address": {
+          "street": "Kulas Light",
+          "suite": "Apt. 556",
+          "city": "Gwenborough",
+          "zipcode": "92998-3874",
+          "geo": {
+            "lat": "-37.3159",
+            "lng": "81.1496"
+          }
+        },
+        "phone": "1-770-736-8031 x56442",
+        "website": "hildegard.org",
+        "company": {
+          "name": "Romaguera-Crona",
+          "catchPhrase": "Multi-layered client-server neural-net",
+          "bs": "harness real-time e-markets"
+        }
+      }
+    },
+    {
+      "id": "openapi-petstore-3-0",
+      "category": "openapi",
+      "label_en": "OpenAPI Petstore 3.0",
+      "label_zh": "OpenAPI Petstore 3.0",
+      "draft": "draft-7",
+      "icon": "🌐",
+      "description_en": "Simplified OpenAPI 3.0 Petstore (Apache 2.0).",
+      "description_zh": "OpenAPI 3.0 Petstore 简化版(Apache 2.0)。",
+      "source_url": "https://github.com/OAI/OpenAPI-Specification/blob/main/examples/v3.0/petstore.yaml",
+      "schema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "openapi": {
+            "type": "string",
+            "pattern": "^3\\.0\\."
+          },
+          "info": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "title",
+              "version"
+            ]
+          },
+          "paths": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "components": {
+            "type": "object",
+            "properties": {
+              "schemas": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "required": [
+          "openapi",
+          "info",
+          "paths"
+        ]
+      },
+      "sample_data": {
+        "openapi": "3.0.0",
+        "info": {
+          "title": "Petstore",
+          "version": "1.0.0",
+          "description": "Sample OpenAPI 3.0 Petstore"
+        },
+        "paths": {
+          "/pets": {
+            "get": {
+              "summary": "List pets",
+              "responses": {
+                "200": {
+                  "description": "OK"
+                }
+              }
+            }
+          }
+        },
+        "components": {
+          "schemas": {
+            "Pet": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "name": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "openapi-petstore-3-1",
+      "category": "openapi",
+      "label_en": "OpenAPI Petstore 3.1",
+      "label_zh": "OpenAPI Petstore 3.1",
+      "draft": "draft-2020-12",
+      "icon": "🌐",
+      "description_en": "Simplified OpenAPI 3.1 Petstore (Apache 2.0). OpenAPI 3.1 fully adopts Draft 2020-12.",
+      "description_zh": "OpenAPI 3.1 Petstore 简化版(Apache 2.0)。OpenAPI 3.1 完全采用 Draft 2020-12。",
+      "source_url": "https://github.com/OAI/OpenAPI-Specification/blob/main/examples/v3.1/petstore.yaml",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "openapi": {
+            "type": "string",
+            "pattern": "^3\\.1\\."
+          },
+          "info": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              },
+              "license": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "identifier": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "required": [
+              "title",
+              "version"
+            ]
+          },
+          "paths": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "webhooks": {
+            "type": "object"
+          },
+          "components": {
+            "type": "object",
+            "properties": {
+              "schemas": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "required": [
+          "openapi",
+          "info",
+          "paths"
+        ]
+      },
+      "sample_data": {
+        "openapi": "3.1.0",
+        "info": {
+          "title": "Petstore",
+          "version": "1.0.0",
+          "license": {
+            "name": "MIT",
+            "identifier": "MIT"
+          }
+        },
+        "paths": {
+          "/pets": {
+            "get": {
+              "summary": "List pets",
+              "responses": {
+                "200": {
+                  "description": "OK"
+                }
+              }
+            }
+          }
+        },
+        "webhooks": {
+          "newPet": {
+            "post": {
+              "requestBody": {
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "components": {
+          "schemas": {
+            "Pet": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "name": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "github-api-issue",
+      "category": "api",
+      "label_en": "GitHub Issue (REST API)",
+      "label_zh": "GitHub Issue (REST API)",
+      "draft": "draft-2020-12",
+      "icon": "🐙",
+      "description_en": "GitHub REST API issue object (public docs).",
+      "description_zh": "GitHub REST API issue 对象(公开文档)。",
+      "source_url": "https://docs.github.com/en/rest/issues/issues",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "number": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "body": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "open",
+              "closed"
+            ]
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "name": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "login": {
+                "type": "string"
+              },
+              "id": {
+                "type": "integer"
+              },
+              "avatar_url": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "closed_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "title",
+          "state",
+          "user"
+        ]
+      },
+      "sample_data": {
+        "id": 1,
+        "number": 1347,
+        "title": "Found a bug",
+        "body": "I'm having a problem with this.",
+        "state": "open",
+        "labels": [
+          {
+            "id": 208045946,
+            "name": "bug"
+          }
+        ],
+        "user": {
+          "login": "octocat",
+          "id": 1,
+          "avatar_url": "https://github.com/images/error/octocat_happy.gif"
+        },
+        "created_at": "2011-01-26T19:01:12Z",
+        "updated_at": "2011-01-26T19:14:43Z",
+        "closed_at": null
+      }
+    },
+    {
+      "id": "package-json",
+      "category": "config",
+      "label_en": "package.json (npm)",
+      "label_zh": "package.json (npm)",
+      "draft": "draft-2020-12",
+      "icon": "📦",
+      "description_en": "Simplified npm package.json schema (SchemaStore MIT derived).",
+      "description_zh": "npm package.json 简化版 schema(基于 SchemaStore MIT)。",
+      "source_url": "https://json.schemastore.org/package.json",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^(?:@[a-z0-9-_][a-z0-9-_.]*\\/)?[a-z0-9-_][a-z0-9-_.]*$"
+          },
+          "version": {
+            "type": "string",
+            "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+"
+          },
+          "description": {
+            "type": "string"
+          },
+          "main": {
+            "type": "string"
+          },
+          "scripts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "dependencies": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "devDependencies": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "engines": {
+            "type": "object"
+          },
+          "license": {
+            "type": "string"
+          },
+          "keywords": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "version"
+        ]
+      },
+      "sample_data": {
+        "name": "jsv-json-schema-validator",
+        "version": "1.0.0",
+        "description": "Browser-based JSON Schema Validator with ajv 8.x",
+        "main": "jsv.js",
+        "scripts": {
+          "test": "node smoke-test.js",
+          "build": "esbuild --bundle"
+        },
+        "dependencies": {
+          "ajv": "^8.17.0",
+          "ajv-formats": "^3.0.1",
+          "ajv-draft-04": "^1.0.0",
+          "ajv-i18n": "^4.2.0"
+        },
+        "devDependencies": {
+          "esbuild": "^0.21.0"
+        },
+        "engines": {
+          "node": ">=18.0.0"
+        },
+        "license": "MIT",
+        "keywords": [
+          "json-schema",
+          "validator",
+          "ajv",
+          "browser"
+        ]
+      }
+    },
+    {
+      "id": "tsconfig-json",
+      "category": "config",
+      "label_en": "tsconfig.json (TypeScript)",
+      "label_zh": "tsconfig.json (TypeScript)",
+      "draft": "draft-2020-12",
+      "icon": "🔷",
+      "description_en": "Simplified TypeScript tsconfig.json schema (SchemaStore MIT derived).",
+      "description_zh": "TypeScript tsconfig.json 简化版 schema(基于 SchemaStore MIT)。",
+      "source_url": "https://json.schemastore.org/tsconfig.json",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "compilerOptions": {
+            "type": "object",
+            "properties": {
+              "target": {
+                "type": "string",
+                "enum": [
+                  "ES3",
+                  "ES5",
+                  "ES6",
+                  "ES2015",
+                  "ES2016",
+                  "ES2017",
+                  "ES2018",
+                  "ES2019",
+                  "ES2020",
+                  "ES2021",
+                  "ES2022",
+                  "ESNext"
+                ]
+              },
+              "module": {
+                "type": "string",
+                "enum": [
+                  "CommonJS",
+                  "AMD",
+                  "System",
+                  "UMD",
+                  "ES6",
+                  "ES2015",
+                  "ES2020",
+                  "ES2022",
+                  "ESNext",
+                  "Node16",
+                  "NodeNext"
+                ]
+              },
+              "strict": {
+                "type": "boolean"
+              },
+              "esModuleInterop": {
+                "type": "boolean"
+              },
+              "skipLibCheck": {
+                "type": "boolean"
+              },
+              "forceConsistentCasingInFileNames": {
+                "type": "boolean"
+              },
+              "resolveJsonModule": {
+                "type": "boolean"
+              },
+              "paths": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "include": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "exclude": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "sample_data": {
+        "compilerOptions": {
+          "target": "ES2020",
+          "module": "ESNext",
+          "strict": true,
+          "esModuleInterop": true,
+          "skipLibCheck": true,
+          "forceConsistentCasingInFileNames": true,
+          "resolveJsonModule": true,
+          "paths": {
+            "@/*": [
+              "src/*"
+            ]
+          }
+        },
+        "include": [
+          "src/**/*"
+        ],
+        "exclude": [
+          "node_modules",
+          "dist"
+        ]
+      }
+    },
+    {
+      "id": "eslint-rc",
+      "category": "config",
+      "label_en": ".eslintrc.json (ESLint)",
+      "label_zh": ".eslintrc.json (ESLint)",
+      "draft": "draft-2020-12",
+      "icon": "🔍",
+      "description_en": "Simplified ESLint config schema (SchemaStore MIT derived).",
+      "description_zh": "ESLint 配置简化版 schema(基于 SchemaStore MIT)。",
+      "source_url": "https://json.schemastore.org/eslintrc.json",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "env": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "boolean"
+            }
+          },
+          "parserOptions": {
+            "type": "object"
+          },
+          "rules": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "extends": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          "plugins": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "globals": {
+            "type": "object"
+          }
+        }
+      },
+      "sample_data": {
+        "env": {
+          "browser": true,
+          "node": true,
+          "es2020": true
+        },
+        "parserOptions": {
+          "ecmaVersion": 2020,
+          "sourceType": "module"
+        },
+        "rules": {
+          "no-unused-vars": "warn",
+          "no-console": "off",
+          "semi": [
+            "error",
+            "always"
+          ]
+        },
+        "extends": [
+          "eslint:recommended"
+        ],
+        "plugins": [],
+        "globals": {}
+      }
+    },
+    {
+      "id": "docker-compose",
+      "category": "config",
+      "label_en": "docker-compose.json",
+      "label_zh": "docker-compose.json",
+      "draft": "draft-2020-12",
+      "icon": "🐳",
+      "description_en": "Simplified Docker Compose v3 schema (SchemaStore MIT derived).",
+      "description_zh": "Docker Compose v3 简化版 schema(基于 SchemaStore MIT)。",
+      "source_url": "https://json.schemastore.org/docker-compose.json",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string"
+          },
+          "services": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "image": {
+                  "type": "string"
+                },
+                "ports": {
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  }
+                },
+                "environment": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "volumes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "depends_on": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "networks": {
+            "type": "object"
+          },
+          "volumes": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "services"
+        ]
+      },
+      "sample_data": {
+        "version": "3.8",
+        "services": {
+          "web": {
+            "image": "nginx:latest",
+            "ports": [
+              "80:80"
+            ],
+            "environment": {
+              "NGINX_HOST": "example.com"
+            },
+            "volumes": [
+              "./html:/usr/share/nginx/html:ro"
+            ],
+            "depends_on": {
+              "api": {
+                "condition": "service_started"
+              }
+            }
+          },
+          "api": {
+            "image": "myapi:latest",
+            "ports": [
+              3000
+            ],
+            "environment": {
+              "NODE_ENV": "production"
+            },
+            "volumes": []
+          }
+        },
+        "networks": {
+          "default": {
+            "driver": "bridge"
+          }
+        }
+      }
+    },
+    {
+      "id": "vscode-launch",
+      "category": "config",
+      "label_en": "VS Code launch.json",
+      "label_zh": "VS Code launch.json",
+      "draft": "draft-2020-12",
+      "icon": "⚙️",
+      "description_en": "Simplified VS Code launch.json schema (SchemaStore MIT derived).",
+      "description_zh": "VS Code launch.json 简化版 schema(基于 SchemaStore MIT)。",
+      "source_url": "https://json.schemastore.org/launch.json",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string",
+            "pattern": "^0\\.2\\."
+          },
+          "configurations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "node",
+                    "chrome",
+                    "pwa-node",
+                    "pwa-chrome"
+                  ]
+                },
+                "request": {
+                  "type": "string",
+                  "enum": [
+                    "launch",
+                    "attach"
+                  ]
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "program": {
+                  "type": "string"
+                },
+                "args": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "env": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "preLaunchTask": {
+                  "type": "string"
+                },
+                "presentation": {
+                  "type": "object"
+                }
+              },
+              "required": [
+                "type",
+                "request",
+                "name"
+              ]
+            }
+          }
+        },
+        "required": [
+          "version",
+          "configurations"
+        ]
+      },
+      "sample_data": {
+        "version": "0.2.0",
+        "configurations": [
+          {
+            "type": "pwa-node",
+            "request": "launch",
+            "name": "Launch Program",
+            "program": "${workspaceFolder}/src/index.js",
+            "args": [
+              "--env=dev"
+            ],
+            "env": {
+              "NODE_ENV": "development"
+            },
+            "preLaunchTask": "build"
+          }
+        ]
+      }
+    },
+    {
+      "id": "github-actions-workflow",
+      "category": "config",
+      "label_en": "GitHub Actions workflow",
+      "label_zh": "GitHub Actions workflow",
+      "draft": "draft-2020-12",
+      "icon": "⚡",
+      "description_en": "Simplified GitHub Actions workflow schema (SchemaStore MIT derived).",
+      "description_zh": "GitHub Actions workflow 简化版 schema(基于 SchemaStore MIT)。",
+      "source_url": "https://json.schemastore.org/github-workflow.json",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "on": {
+            "type": "object",
+            "properties": {
+              "push": {
+                "type": "object"
+              },
+              "pull_request": {
+                "type": "object"
+              },
+              "schedule": {
+                "type": "array"
+              },
+              "workflow_dispatch": {
+                "type": "object"
+              }
+            }
+          },
+          "jobs": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "runs-on": {
+                  "type": "string"
+                },
+                "steps": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "uses": {
+                        "type": "string"
+                      },
+                      "run": {
+                        "type": "string"
+                      },
+                      "with": {
+                        "type": "object"
+                      },
+                      "env": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "required": [
+                "runs-on",
+                "steps"
+              ]
+            }
+          }
+        },
+        "required": [
+          "jobs"
+        ]
+      },
+      "sample_data": {
+        "name": "CI",
+        "on": {
+          "push": {
+            "branches": [
+              "main"
+            ]
+          },
+          "pull_request": {
+            "branches": [
+              "main"
+            ]
+          },
+          "schedule": [
+            {
+              "cron": "0 0 * * *"
+            }
+          ],
+          "workflow_dispatch": {}
+        },
+        "jobs": {
+          "build": {
+            "runs-on": "ubuntu-latest",
+            "steps": [
+              {
+                "uses": "actions/checkout@v4"
+              },
+              {
+                "uses": "actions/setup-node@v4",
+                "with": {
+                  "node-version": "20"
+                }
+              },
+              {
+                "run": "npm ci",
+                "env": {
+                  "CI": "true"
+                }
+              },
+              {
+                "run": "npm test"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "kubernetes-pod",
+      "category": "config",
+      "label_en": "Kubernetes Pod manifest",
+      "label_zh": "Kubernetes Pod manifest",
+      "draft": "draft-2020-12",
+      "icon": "☸️",
+      "description_en": "Self-implemented simplified Kubernetes Pod manifest (full SchemaStore K8s is too large for browser).",
+      "description_zh": "自实现简化版 Kubernetes Pod manifest(完整 SchemaStore K8s schema 过大不适合浏览器)。",
+      "source_url": "https://json.schemastore.org/kubernetes-pod.json (full, MIT); simplified by dlsome-top",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "apiVersion": {
+            "type": "string",
+            "enum": [
+              "v1"
+            ]
+          },
+          "kind": {
+            "type": "string",
+            "const": "Pod"
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "namespace": {
+                "type": "string"
+              },
+              "labels": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "name"
+            ]
+          },
+          "spec": {
+            "type": "object",
+            "properties": {
+              "containers": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "image": {
+                      "type": "string"
+                    },
+                    "ports": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "containerPort": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 65535
+                          },
+                          "protocol": {
+                            "type": "string",
+                            "enum": [
+                              "TCP",
+                              "UDP",
+                              "SCTP"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "containerPort"
+                        ]
+                      }
+                    },
+                    "env": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "image"
+                  ]
+                },
+                "minItems": 1
+              }
+            },
+            "required": [
+              "containers"
+            ]
+          }
+        },
+        "required": [
+          "apiVersion",
+          "kind",
+          "metadata",
+          "spec"
+        ]
+      },
+      "sample_data": {
+        "apiVersion": "v1",
+        "kind": "Pod",
+        "metadata": {
+          "name": "nginx-pod",
+          "namespace": "default",
+          "labels": {
+            "app": "nginx"
+          }
+        },
+        "spec": {
+          "containers": [
+            {
+              "name": "nginx",
+              "image": "nginx:1.25",
+              "ports": [
+                {
+                  "containerPort": 80,
+                  "protocol": "TCP"
+                }
+              ],
+              "env": [
+                {
+                  "name": "ENV",
+                  "value": "production"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "prometheus-alert-rule",
+      "category": "api",
+      "label_en": "Prometheus Alert Rule",
+      "label_zh": "Prometheus 告警规则",
+      "draft": "draft-2020-12",
+      "icon": "🔥",
+      "description_en": "Simplified Prometheus alerting rule schema (Apache 2.0).",
+      "description_zh": "Prometheus 告警规则简化版 schema(Apache 2.0)。",
+      "source_url": "https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "groups": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "interval": {
+                  "type": "string"
+                },
+                "rules": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "alert": {
+                        "type": "string"
+                      },
+                      "expr": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "for": {
+                        "type": "string"
+                      },
+                      "labels": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "string"
+                        }
+                      },
+                      "annotations": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "alert",
+                      "expr"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "name",
+                "rules"
+              ]
+            }
+          }
+        },
+        "required": [
+          "groups"
+        ]
+      },
+      "sample_data": {
+        "groups": [
+          {
+            "name": "example",
+            "interval": "30s",
+            "rules": [
+              {
+                "alert": "HighRequestLatency",
+                "expr": "job:request_latency_seconds:mean5m{job=\"myjob\"} > 0.5",
+                "for": "10m",
+                "labels": {
+                  "severity": "page"
+                },
+                "annotations": {
+                  "summary": "High request latency",
+                  "description": "Request latency is above 500ms"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "simple-object-required",
+      "category": "test",
+      "label_en": "Simple Object (Required)",
+      "label_zh": "简单对象(必填演示)",
+      "draft": "draft-2020-12",
+      "icon": "🧪",
+      "description_en": "Onboarding demo: object with required name + email + age fields.",
+      "description_zh": "演示用 schema:对象包含必填 name + email + age 字段。",
+      "source_url": "self-implemented (dlsome-top MIT)",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "age": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 150
+          }
+        },
+        "required": [
+          "name",
+          "email"
+        ]
+      },
+      "sample_data": {
+        "name": "Alice",
+        "email": "alice@example.com",
+        "age": 30
+      }
+    },
+    {
+      "id": "simple-array-strings",
+      "category": "test",
+      "label_en": "Array of Unique Strings",
+      "label_zh": "字符串数组(去重)",
+      "draft": "draft-2020-12",
+      "icon": "🧪",
+      "description_en": "Onboarding demo: array of unique strings (1-10 items).",
+      "description_zh": "演示用 schema:字符串数组(1-10 项,自动去重)。",
+      "source_url": "self-implemented (dlsome-top MIT)",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "array",
+        "items": {
+          "type": "string",
+          "minLength": 1
+        },
+        "minItems": 1,
+        "maxItems": 10,
+        "uniqueItems": true
+      },
+      "sample_data": [
+        "apple",
+        "banana",
+        "cherry",
+        "date"
+      ]
+    },
+    {
+      "id": "simple-enum",
+      "category": "test",
+      "label_en": "Color Enum",
+      "label_zh": "颜色枚举",
+      "draft": "draft-2020-12",
+      "icon": "🧪",
+      "description_en": "Onboarding demo: string enum (4 colors).",
+      "description_zh": "演示用 schema:字符串枚举(4 种颜色)。",
+      "source_url": "self-implemented (dlsome-top MIT)",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "string",
+        "enum": [
+          "red",
+          "green",
+          "blue",
+          "yellow"
+        ],
+        "default": "red"
+      },
+      "sample_data": "green"
+    }
+  ]
+}

@@ -1,0 +1,229 @@
+{{- /*
+  Shortcode: json-schema-validator
+
+  Browser-based JSON Schema validator. 5 Draft versions (Draft 4/6/7/2019-09/2020-12)
+  + bilingual error messages (zh/EN) with line numbers + JSON Pointer paths + tree view
+  + 10+ preset schemas + exportable reports (JSON / Markdown / HTML).
+  Zero AI API calls, zero remote fetch — pure ajv 8.x ESM bundle + static data files.
+
+  Self-contained HTML + external CSS + external JS + fetched JSON data.
+  PaperMod `.dark` class compatible. Hugo 0.164 verified.
+
+  Usage:
+    {{< json-schema-validator >}}
+
+  CSS namespace: --jsv-* / .jsv-* (JSON Schema Validator)
+  JS data-attr:  data-jsv-*
+  i18n:          inline JS objects (dlsome-top has no i18n/*.yaml)
+  Slug:          json-schema-validator
+  Acronym:       jsv
+
+  Step 4 of 7 — D33 JSON Schema Validator pipeline.
+  Files: shortcode (this) + static/tools/json-schema-validator/{css,js,data,img}/
+
+  Handoff: step 5 push subagent creates feat/json-schema-validator branch from main 8693384
+  and pushes these files. step 6 content-impl writes EN + ZH .md files with inline {{< shortcode >}}
+  call at /tools/json-schema-validator/ + /zh/tools/json-schema-validator/.
+*/ -}}
+
+{{- $lang := .Page.Language.Lang | default "en" -}}
+{{- $cssPath := "/tools/json-schema-validator/css/jsv.css" -}}
+{{- $jsPath := "/tools/json-schema-validator/js/jsv.js" -}}
+{{- $dataPresetsPath := "/tools/json-schema-validator/data/presets.json" -}}
+{{- $dataMetaSchemasPath := "/tools/json-schema-validator/data/meta-schemas.json" -}}
+
+<link rel="stylesheet" href="{{ $cssPath }}" />
+
+<div class="jsv-tool" data-jsv-root data-jsv-lang="{{ $lang }}"
+     data-jsv-data-presets="{{ $dataPresetsPath }}"
+     data-jsv-data-meta-schemas="{{ $dataMetaSchemasPath }}"
+     data-jsv-mode="compute" role="region" aria-label="JSON Schema Validator">
+
+  <noscript>
+    <div class="jsv-noscript-warning">
+      ⚠️ Please enable JavaScript to use the JSON Schema Validator. 请启用 JavaScript 以使用 JSON Schema 验证器。
+    </div>
+  </noscript>
+
+  <!-- ===== Top disclaimer (Draft + AJV + bundle + privacy) ===== -->
+  <div class="jsv-disclaimer" data-jsv-disclaimer>
+    <span class="jsv-disclaimer-icon" aria-hidden="true">🔍</span>
+    <span data-jsv-disclaimer-text>Loading…</span>
+    <span class="jsv-disclaimer-lang">
+      🌐 <button type="button" class="jsv-link-btn" data-jsv-action="toggle-lang">中文 / EN</button>
+    </span>
+  </div>
+
+  <!-- ===== Section 1: Draft selector (5 chip segmented control) ===== -->
+  <section class="jsv-section jsv-draft-section" aria-labelledby="jsv-draft-label">
+    <h3 class="jsv-section-title" id="jsv-draft-label">
+      <span aria-hidden="true">📜</span>
+      <span data-jsv-draft-section-label>JSON Schema Draft</span>
+    </h3>
+    <div class="jsv-chips" data-jsv-draft-selector role="group" aria-label="JSON Schema Draft selector">
+      <!-- 5 draft chips injected by JS from meta-schemas.json (lazy) -->
+    </div>
+  </section>
+
+  <!-- ===== Section 2: Preset selector (12+ chip row, optional) ===== -->
+  <section class="jsv-section jsv-preset-section" aria-labelledby="jsv-preset-label">
+    <h3 class="jsv-section-title" id="jsv-preset-label">
+      <span aria-hidden="true">🎯</span>
+      <span data-jsv-preset-section-label>Built-in Schema Presets</span>
+    </h3>
+    <div class="jsv-chips" data-jsv-preset-selector role="group" aria-label="JSON Schema preset selector">
+      <!-- 12+ preset chips injected by JS from presets.json -->
+    </div>
+  </section>
+
+  <!-- ===== Section 3: Schema + Data double-column input grid ===== -->
+  <section class="jsv-section jsv-input-section" aria-labelledby="jsv-input-label">
+    <h3 class="jsv-section-title" id="jsv-input-label">
+      <span aria-hidden="true">📝</span>
+      <span data-jsv-input-section-label>Input — Schema + Data</span>
+    </h3>
+    <div class="jsv-input-grid">
+      <div class="jsv-input-pane jsv-schema-pane">
+        <label class="jsv-input-label" for="jsv-schema-input">
+          <span data-jsv-schema-input-label>JSON Schema</span>
+          <span class="jsv-line-count" data-jsv-schema-line-count>1 line</span>
+        </label>
+        <textarea id="jsv-schema-input" class="jsv-textarea jsv-schema-input"
+                  data-jsv-input="schema"
+                  spellcheck="false"
+                  placeholder='{ "type": "object", "properties": { "name": { "type": "string" } }, "required": ["name"] }'
+                  aria-label="JSON Schema input"></textarea>
+        <div class="jsv-input-actions">
+          <button type="button" class="jsv-btn jsv-btn-tiny" data-jsv-action="format-schema" data-jsv-format-label>Format</button>
+          <button type="button" class="jsv-btn jsv-btn-tiny" data-jsv-action="clear-schema" data-jsv-clear-label>Clear</button>
+          <button type="button" class="jsv-btn jsv-btn-tiny" data-jsv-action="load-sample" data-jsv-sample-label>Load sample</button>
+        </div>
+      </div>
+      <div class="jsv-input-pane jsv-data-pane">
+        <label class="jsv-input-label" for="jsv-data-input">
+          <span data-jsv-data-input-label>JSON Data</span>
+          <span class="jsv-line-count" data-jsv-data-line-count>1 line</span>
+        </label>
+        <textarea id="jsv-data-input" class="jsv-textarea jsv-data-input"
+                  data-jsv-input="data"
+                  spellcheck="false"
+                  placeholder='{ "name": "Alice", "age": 30 }'
+                  aria-label="JSON data input"></textarea>
+        <div class="jsv-input-actions">
+          <button type="button" class="jsv-btn jsv-btn-tiny" data-jsv-action="format-data" data-jsv-format-data-label>Format</button>
+          <button type="button" class="jsv-btn jsv-btn-tiny" data-jsv-action="clear-data" data-jsv-clear-data-label>Clear</button>
+        </div>
+      </div>
+    </div>
+    <div class="jsv-validate-bar">
+      <button type="button" class="jsv-btn jsv-btn-primary jsv-btn-large" data-jsv-action="validate" data-jsv-validate-label>▶ Validate</button>
+      <span class="jsv-validate-status" data-jsv-status></span>
+    </div>
+  </section>
+
+  <!-- ===== Section 4: Validation result card ===== -->
+  <section class="jsv-section jsv-result-section" aria-labelledby="jsv-result-label">
+    <h3 class="jsv-section-title" id="jsv-result-label">
+      <span aria-hidden="true">✅</span>
+      <span data-jsv-result-section-label>Validation Result</span>
+    </h3>
+    <div class="jsv-result-card" data-jsv-result role="status" aria-live="polite">
+      <div class="jsv-result-empty" data-jsv-result-empty>
+        <span data-jsv-result-empty-text>Paste your JSON Schema + Data, then click Validate.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Section 5: Error list (clickable, sortable) ===== -->
+  <section class="jsv-section jsv-errors-section" aria-labelledby="jsv-errors-label" hidden data-jsv-errors-section>
+    <div class="jsv-section-header">
+      <h3 class="jsv-section-title" id="jsv-errors-label">
+        <span aria-hidden="true">❌</span>
+        <span data-jsv-errors-section-label>Errors</span>
+        <span class="jsv-error-count" data-jsv-error-count>0</span>
+      </h3>
+      <div class="jsv-sort-toggle" role="group" aria-label="error sort">
+        <button type="button" class="jsv-btn jsv-btn-tiny active" data-jsv-action="sort-errors" data-jsv-sort-by="line" data-jsv-sort-by-line-label>By line</button>
+        <button type="button" class="jsv-btn jsv-btn-tiny" data-jsv-action="sort-errors" data-jsv-sort-by="path" data-jsv-sort-by-path-label>By path</button>
+      </div>
+    </div>
+    <ol class="jsv-error-list" data-jsv-error-list>
+      <!-- error items injected by JS -->
+    </ol>
+  </section>
+
+  <!-- ===== Section 6: Tree view (collapsible, with search) ===== -->
+  <details class="jsv-section jsv-tree-section" data-jsv-tree-section>
+    <summary class="jsv-section-title">
+      <span aria-hidden="true">🌲</span>
+      <span data-jsv-tree-section-label>Schema Tree View</span>
+      <span class="jsv-tree-count" data-jsv-tree-count>0 nodes</span>
+    </summary>
+    <div class="jsv-tree-toolbar">
+      <input type="search" class="jsv-search-input" data-jsv-tree-search
+             data-jsv-tree-search-placeholder
+             placeholder="Search keyword (email, $ref, enum...)"
+             aria-label="search schema tree" />
+      <button type="button" class="jsv-btn jsv-btn-tiny" data-jsv-action="expand-all" data-jsv-expand-all-label>Expand all</button>
+      <button type="button" class="jsv-btn jsv-btn-tiny" data-jsv-action="collapse-all" data-jsv-collapse-all-label>Collapse all</button>
+    </div>
+    <div class="jsv-tree-warning" data-jsv-tree-warning hidden></div>
+    <div class="jsv-tree-content" data-jsv-tree-content>
+      <!-- tree nodes injected by JS as <details>/<summary> -->
+    </div>
+  </details>
+
+  <!-- ===== Section 7: Export reports (JSON / Markdown / HTML) ===== -->
+  <section class="jsv-section jsv-export-section" aria-labelledby="jsv-export-label">
+    <h3 class="jsv-section-title" id="jsv-export-label">
+      <span aria-hidden="true">📥</span>
+      <span data-jsv-export-section-label>Export Validation Report</span>
+    </h3>
+    <p class="jsv-export-note" data-jsv-export-note>Reports generated client-side via Blob + URL.createObjectURL — no server processing.</p>
+    <label class="jsv-checkbox-label">
+      <input type="checkbox" data-jsv-export-include-input />
+      <span data-jsv-export-include-label>Include original schema + JSON input in the report (privacy opt-in)</span>
+    </label>
+    <div class="jsv-export-buttons">
+      <button type="button" class="jsv-btn jsv-btn-export" data-jsv-action="export" data-jsv-export-format="json">
+        <span aria-hidden="true">📦</span> <span data-jsv-export-json-label>Download JSON</span>
+      </button>
+      <button type="button" class="jsv-btn jsv-btn-export" data-jsv-action="export" data-jsv-export-format="markdown">
+        <span aria-hidden="true">📄</span> <span data-jsv-export-md-label>Download Markdown</span>
+      </button>
+      <button type="button" class="jsv-btn jsv-btn-export" data-jsv-action="export" data-jsv-export-format="html">
+        <span aria-hidden="true">🌐</span> <span data-jsv-export-html-label>Download HTML</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ===== Section 8: OpenAPI 3.0 → 3.1 converter (Bonus-1) ===== -->
+  <details class="jsv-section jsv-openapi-convert-section" data-jsv-openapi-convert-section>
+    <summary class="jsv-section-title">
+      <span aria-hidden="true">🔁</span>
+      <span data-jsv-openapi-label>OpenAPI 3.0 → 3.1 Schema Converter</span>
+    </summary>
+    <p class="jsv-openapi-note" data-jsv-openapi-note>
+      Convert <code>draft-7</code> / OpenAPI 3.0 schema to <code>draft-2020-12</code> / OpenAPI 3.1 compatible:
+      <code>definitions</code> → <code>$defs</code>, <code>nullable: true</code> → <code>type: ["…", "null"]</code>,
+      <code>exclusiveMinimum/Maximum</code> number → array form.
+    </p>
+    <button type="button" class="jsv-btn" data-jsv-action="openapi-convert" data-jsv-openapi-btn-label>Convert Schema to OpenAPI 3.1</button>
+    <span class="jsv-openapi-status" data-jsv-openapi-status></span>
+  </details>
+
+  <!-- ===== Footer: standard data sources ===== -->
+  <div class="jsv-standard" data-jsv-standard aria-label="data sources">
+    <!-- source URLs injected by JS with rel="nofollow noopener noreferrer" -->
+  </div>
+
+</div>
+
+<script type="module" src="{{ $jsPath }}"></script>
+<script type="module">
+  // Pre-load ajv bundle (decision B: separate lazy chunk — keeps jsv.js readable + cacheable)
+  // The bundle auto-registers itself as window.__AJV_BUNDLE__ for jsv.js to pick up.
+  import('/tools/json-schema-validator/js/ajv.bundle.js')
+    .then(mod => { window.__AJV_BUNDLE__ = mod; window.dispatchEvent(new CustomEvent('jsv:ajv-ready')); })
+    .catch(err => { console.error('[jsv] failed to load ajv.bundle.js', err); window.dispatchEvent(new CustomEvent('jsv:ajv-error', { detail: err })); });
+</script>
