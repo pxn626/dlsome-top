@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600" role="img" aria-label="JSONPath Tester — JSONPath / JSONata / JMESPath">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2c5282"/>
+      <stop offset="100%" stop-color="#2a4365"/>
+    </linearGradient>
+    <linearGradient id="jsonpath-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+    <linearGradient id="jsonata-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#16a34a"/>
+      <stop offset="100%" stop-color="#15803d"/>
+    </linearGradient>
+    <linearGradient id="jmespath-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ea580c"/>
+      <stop offset="100%" stop-color="#c2410c"/>
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+    </pattern>
+    <filter id="softShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+      <feOffset dx="0" dy="2"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.25"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <rect width="800" height="600" fill="url(#grid)"/>
+
+  <!-- Decorative circuit dots -->
+  <g opacity="0.18" fill="#ffffff">
+    <circle cx="80" cy="100" r="3"/>
+    <circle cx="160" cy="60" r="2"/>
+    <circle cx="700" cy="120" r="3"/>
+    <circle cx="640" cy="80" r="2"/>
+    <circle cx="120" cy="540" r="2"/>
+    <circle cx="700" cy="500" r="3"/>
+    <circle cx="50" cy="320" r="2"/>
+    <circle cx="760" cy="280" r="2"/>
+  </g>
+
+  <!-- Title block -->
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" text-anchor="middle">
+    <text x="400" y="140" font-size="56" font-weight="700" fill="#ffffff" letter-spacing="-1">JSONPath Tester</text>
+    <text x="400" y="180" font-size="22" font-weight="400" fill="rgba(255,255,255,0.85)">JSONPath · JSONata · JMESPath — One Tool, Three Syntaxes</text>
+  </g>
+
+  <!-- Three syntax color blocks -->
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" filter="url(#softShadow)">
+    <!-- JSONPath block -->
+    <g transform="translate(110, 240)">
+      <rect width="180" height="120" rx="14" fill="url(#jsonpath-grad)" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
+      <text x="90" y="40" font-size="20" font-weight="700" fill="#ffffff" text-anchor="middle">JSONPath</text>
+      <text x="90" y="68" font-size="14" font-weight="400" fill="rgba(255,255,255,0.9)" text-anchor="middle" font-family="ui-monospace, monospace">$.store.book[*]</text>
+      <text x="90" y="92" font-size="12" font-weight="400" fill="rgba(255,255,255,0.7)" text-anchor="middle">2007 · Stefan Gössner</text>
+    </g>
+
+    <!-- JSONata block -->
+    <g transform="translate(310, 240)">
+      <rect width="180" height="120" rx="14" fill="url(#jsonata-grad)" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
+      <text x="90" y="40" font-size="20" font-weight="700" fill="#ffffff" text-anchor="middle">JSONata</text>
+      <text x="90" y="68" font-size="14" font-weight="400" fill="rgba(255,255,255,0.9)" text-anchor="middle" font-family="ui-monospace, monospace">store.book[*]</text>
+      <text x="90" y="92" font-size="12" font-weight="400" fill="rgba(255,255,255,0.7)" text-anchor="middle">IBM · 2016</text>
+    </g>
+
+    <!-- JMESPath block -->
+    <g transform="translate(510, 240)">
+      <rect width="180" height="120" rx="14" fill="url(#jmespath-grad)" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
+      <text x="90" y="40" font-size="20" font-weight="700" fill="#ffffff" text-anchor="middle">JMESPath</text>
+      <text x="90" y="68" font-size="14" font-weight="400" fill="rgba(255,255,255,0.9)" text-anchor="middle" font-family="ui-monospace, monospace">store.book[*]</text>
+      <text x="90" y="92" font-size="12" font-weight="400" fill="rgba(255,255,255,0.7)" text-anchor="middle">AWS · 2014</text>
+    </g>
+  </g>
+
+  <!-- Path highlight demo (浅黄 #fef3c7 dashed rect) -->
+  <g transform="translate(180, 400)" font-family="ui-monospace, monospace" font-size="14">
+    <text x="0" y="0" fill="rgba(255,255,255,0.65)">{"store": {</text>
+    <text x="0" y="20" fill="rgba(255,255,255,0.65)">  "book": [</text>
+    <rect x="20" y="32" width="380" height="22" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4,2" rx="3"/>
+    <text x="30" y="48" fill="#1a202c" font-weight="600">{"title": "Moby Dick", "price": 8.99}</text>
+    <text x="0" y="68" fill="rgba(255,255,255,0.65)">  ]}}</text>
+  </g>
+
+  <!-- Feature bullets -->
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" fill="rgba(255,255,255,0.85)" font-size="13">
+    <text x="80" y="510" text-anchor="start">🌳 Tree View + Path Highlight</text>
+    <text x="320" y="510" text-anchor="start">⚡ Live Preview 250ms</text>
+    <text x="510" y="510" text-anchor="start">🔗 Shareable URL</text>
+    <text x="660" y="510" text-anchor="start">🔒 100% Client-Side</text>
+  </g>
+
+  <!-- Bottom URL bar -->
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" text-anchor="middle">
+    <rect x="200" y="540" width="400" height="40" rx="20" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+    <text x="400" y="565" font-size="14" font-weight="500" fill="#ffffff">dlsome.top/tools/json-path-tester</text>
+  </g>
+</svg>
