@@ -1,0 +1,152 @@
+{{- /*
+  Shortcode: json-path-tester
+
+  Browser-based JSONPath / JSONata / JMESPath query tester with live preview,
+  tree view + path highlighting, presets, examples, localStorage history,
+  and shareable URL.
+
+  Self-contained HTML + external CSS + external JS + fetched JSON data.
+  100% client-side, zero network (3 engines + 3 data JSON + CSS all same-origin).
+  PaperMod `.dark` class compatible. Hugo 0.164 verified.
+
+  Usage:
+    {{< json-path-tester >}}
+
+  CSS namespace: --jpt-* / .jpt-* (JSONPath Tester)
+  JS data-attr:  data-jpt-*
+  i18n:          inline JS objects (dlsome-top has no i18n/*.yaml)
+  Slug:          json-path-tester
+
+  Step 4 of 7 — D32 JSONPath Tester pipeline.
+  Files: shortcode (this) + static/tools/json-path-tester/{css,js,data,lib,img}/
+
+  Handoff: step 5 push subagent creates feat/json-path-tester branch from main 8693384
+  and pushes these files. step 6 content-impl writes EN + ZH .md files with inline {{< shortcode >}}
+  call + 5 JSON-LD blocks at MD end.
+
+  Step 7 verifier runs 12 QA gates. Step 8 main agent merges to main + Cloudflare Pages deploy.
+*/ -}}
+
+{{- $lang := .Page.Language.Lang | default "en" -}}
+{{- $cssPath := "/tools/json-path-tester/css/jpt.css" -}}
+{{- $jsPath := "/tools/json-path-tester/js/jpt.js" -}}
+{{- $presetsPath := "/tools/json-path-tester/data/presets.json" -}}
+{{- $examplesPath := "/tools/json-path-tester/data/examples.json" -}}
+
+<link rel="stylesheet" href="{{ $cssPath }}" />
+
+<noscript>
+  <div class="jpt-noscript-warning">
+    ⚠️ Please enable JavaScript to use the JSONPath Tester. 请启用 JavaScript 以使用 JSONPath 在线测试器。
+  </div>
+</noscript>
+
+<div class="jpt-tool jpt-syntax-jsonpath" id="jpt-tool" data-jpt-root data-jpt-lang="{{ $lang }}" data-jpt-data-presets="{{ $presetsPath }}" data-jpt-data-examples="{{ $examplesPath }}" data-jpt-mode="compute" role="region" aria-label="JSONPath Tester">
+
+  <!-- ===== Top disclaimer (100% client-side notice) ===== -->
+  <div class="jpt-disclaimer" data-jpt-disclaimer>
+    <span class="jpt-disclaimer-icon" aria-hidden="true">🔒</span>
+    <span data-jpt-disclaimer-text>Loading...</span>
+  </div>
+
+  <!-- ===== Hero + Syntax Tabs ===== -->
+  <header class="jpt-hero">
+    <h1 data-jpt-i18n="title">JSONPath Tester</h1>
+    <p class="jpt-hero-sub" data-jpt-i18n="subtitle">Test JSONPath / JSONata / JMESPath expressions with live preview, tree view, and shareable URL.</p>
+
+    <ul class="jpt-syntax-tabs" role="tablist">
+      <li><button type="button" class="jpt-syntax-tab active" data-jpt-syntax="jsonpath" role="tab" aria-selected="true">JSONPath</button></li>
+      <li><button type="button" class="jpt-syntax-tab" data-jpt-syntax="jsonata" role="tab" aria-selected="false">JSONata</button></li>
+      <li><button type="button" class="jpt-syntax-tab" data-jpt-syntax="jmespath" role="tab" aria-selected="false">JMESPath</button></li>
+    </ul>
+    <p class="jpt-syntax-hint" data-jpt-syntax-hint>Use <code>$</code> for root, e.g. <code>$.store.book[0].title</code></p>
+  </header>
+
+  <!-- ===== Input Grid: Expression + JSON ===== -->
+  <div class="jpt-input-grid">
+
+    <!-- ===== Left: Expression pane ===== -->
+    <section class="jpt-pane" aria-labelledby="jpt-expression-label">
+      <div class="jpt-pane-header">
+        <h2 class="jpt-pane-title" id="jpt-expression-label" data-jpt-i18n="expressionLabel">Expression</h2>
+      </div>
+      <input type="text" class="jpt-expression-input" data-jpt-input="expression" placeholder="Type your expression here…" aria-label="JSONPath expression" autocomplete="off" spellcheck="false" />
+
+      <div style="margin-top: 0.5rem;">
+        <h3 class="jpt-pane-title" data-jpt-i18n="presetsLabel">Presets</h3>
+        <div class="jpt-preset-chips" data-jpt-preset-chips role="group" aria-label="presets">
+          <!-- 5 preset chips injected by JS from presets.json -->
+        </div>
+      </div>
+
+      <div style="margin-top: 0.75rem;">
+        <h3 class="jpt-pane-title" data-jpt-i18n="examplesLabel">Load Example</h3>
+        <div class="jpt-example-chips" data-jpt-example-chips role="group" aria-label="examples">
+          <!-- 4 example chips injected by JS from examples.json -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Right: JSON Input pane ===== -->
+    <section class="jpt-pane" aria-labelledby="jpt-json-label">
+      <div class="jpt-pane-header">
+        <h2 class="jpt-pane-title" id="jpt-json-label" data-jpt-i18n="jsonLabel">JSON Input</h2>
+      </div>
+      <div class="jpt-json-textarea-wrap">
+        <textarea class="jpt-json-input" data-jpt-input="json" rows="14" spellcheck="false" placeholder="Paste your JSON here…" aria-label="JSON input"></textarea>
+      </div>
+      <div class="jpt-json-actions">
+        <button type="button" class="jpt-btn" data-jpt-action="format" data-jpt-i18n="format">Format</button>
+        <button type="button" class="jpt-btn" data-jpt-action="validate" data-jpt-i18n="validate">Validate</button>
+        <button type="button" class="jpt-btn" data-jpt-action="clear-json" data-jpt-i18n="clear">Clear</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===== Result Section ===== -->
+  <section class="jpt-result-section" aria-labelledby="jpt-result-label">
+    <div class="jpt-result-header">
+      <h2 class="jpt-result-title" id="jpt-result-label" data-jpt-i18n="resultLabel">Result</h2>
+      <span class="jpt-match-count zero" data-jpt-match-count></span>
+      <div class="jpt-result-mode-tabs" role="group" aria-label="result display mode">
+        <button type="button" class="jpt-result-mode-tab active" data-jpt-mode="raw" role="tab" aria-selected="true">Raw JSON</button>
+        <button type="button" class="jpt-result-mode-tab" data-jpt-mode="tree" role="tab" aria-selected="false">Tree View</button>
+        <button type="button" class="jpt-result-mode-tab" data-jpt-mode="compact" role="tab" aria-selected="false">Compact</button>
+      </div>
+    </div>
+    <div class="jpt-result-content" data-jpt-result-content role="region" aria-live="polite" aria-atomic="true">
+      <!-- result injected by JS -->
+    </div>
+  </section>
+
+  <!-- ===== History Panel ===== -->
+  <details class="jpt-history-panel" data-jpt-history-panel>
+    <summary data-jpt-i18n="historyLabel">History</summary>
+    <ul class="jpt-history-list" data-jpt-history-list role="list">
+      <!-- 10 most recent executions injected by JS from localStorage -->
+    </ul>
+    <div style="margin-top: 0.5rem;">
+      <button type="button" class="jpt-btn jpt-btn-tiny" data-jpt-action="clear-history" data-jpt-i18n="historyClear">Clear all</button>
+    </div>
+  </details>
+
+  <!-- ===== Share Section ===== -->
+  <details class="jpt-share-section" data-jpt-share-section>
+    <summary data-jpt-i18n="shareLabel">Share / Export</summary>
+    <div class="jpt-share-body">
+      <div class="jpt-json-actions">
+        <button type="button" class="jpt-btn jpt-btn-primary" data-jpt-action="share" data-jpt-i18n="shareGenerate">Generate Share URL</button>
+        <button type="button" class="jpt-btn" data-jpt-action="share-copy" data-jpt-i18n="shareCopy">Copy URL</button>
+        <button type="button" class="jpt-btn" data-jpt-action="download" data-jpt-i18n="shareDownload">Download as .json</button>
+      </div>
+      <textarea class="jpt-share-url-display" data-jpt-share-url readonly rows="2" style="margin-top: 0.5rem; resize: vertical;"></textarea>
+      <div class="jpt-share-status" data-jpt-share-status></div>
+      <div class="jpt-share-fallback" data-jpt-share-fallback style="display: none;"></div>
+    </div>
+  </details>
+
+  <!-- ===== Toast (transient message) ===== -->
+  <div class="jpt-toast" data-jpt-toast role="status" aria-live="polite"></div>
+</div>
+
+<script type="module" src="{{ $jsPath }}"></script>
