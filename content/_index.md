@@ -20,17 +20,18 @@ layout: "home"
 | [AI Image Prompt Builder](/tools/ai-image-prompt-builder/) | AI · 图像生成 | SD / MJ v6 / Flux / DALL-E 3 Prompt 构造器,60+ 模板 |
 | [Claude Skills Template Gallery](/tools/claude-skills-gallery/) | AI · Claude | 50+ 复制即用的 Claude Project Skills 模板 |
 | [LLM Token Cost Estimator](/tools/llm-token-cost-estimator/) | AI · LLM | 估算 GPT / Claude / Gemini / Llama 调用成本 |
+| [JSONPath Tester](/tools/json-path-tester/) | Dev · JSON | JSONPath / JSONata / JMESPath 三引擎测试器 + 树视图 + 分享 URL |
+| [JSON Schema Validator](/tools/json-schema-validator/) | Dev · JSON | Draft 4/6/7/2019-09/2020-12 验证 + 自动生成,中英双语错误 |
 
 [→ 完整工具列表](/tools/)
 
 ## 🚧 路线图
 
-按流量优先级,持续上线新工具。下一个候选:
+按流量优先级,持续上线新工具。最近上线:JSONPath Tester(8/11)、JSON Schema Validator(8/11)。下一个候选:
 
-- **JSON Path Tester** — JSONPath 表达式测试器
-- **JSON Schema Validator** — JSON Schema 验证 + 自动生成
 - **Markdown Slug Generator** — 兼容 GitHub/知乎/CSDN 的 slug 工具
 - **TypeScript Type Generator** — JSON → TypeScript interface
+- **Cron Expression Parser** — Quartz 兼容 cron 表达式解析 + 下次运行时间
 
 ## 📡 数据承诺
 
